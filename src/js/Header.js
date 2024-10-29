@@ -24,7 +24,7 @@ export default class Header extends Component(HTMLElement) {
               <div class="offcanvas-body justify-content-end align-items-center">
                 <ul class="navbar-nav">
                   <li class="nav-item">
-                    <button class="btn btn-outline-secondary me-4" is="${Translate}" data-lang="ru, en"></button>
+                    <button class="btn btn-outline-secondary me-3" is="${Translate}" data-lang="ru, en"></button>
                   </li>
                   <li class="nav-item">
                     <span class="nav-link" about="${Backend.user}" property="rdfs:label"></span>

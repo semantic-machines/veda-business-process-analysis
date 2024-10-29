@@ -1,5 +1,4 @@
 /*
-
 // API calls caching service worker
 
 const watchTimeout = 60 * 1000;
