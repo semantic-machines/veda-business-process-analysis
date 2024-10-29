@@ -1,0 +1,6 @@
+*.geany
+**/node_modules
+**/coverage
+dist
+pnpm-lock.yaml
+package-lock.json

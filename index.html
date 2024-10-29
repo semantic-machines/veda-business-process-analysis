@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" class="notranslate" translate="no">
+  <head>
+    <style>
+      #load-indicator {
+        background-color: white;
+        z-index: 9999;
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        opacity: 0.5;
+        text-align: center;
+      }
+      #load-indicator > .loader {
+        position: relative;
+        top: 35%;
+        width: 2em;
+        height: 2em;
+        border-width: 0.2em;
+        margin: 0;
+      }
+      .loader {
+        display: inline-block;
+        border: 0.125em solid #555;
+        border-top: 0.125em solid transparent;
+        border-radius: 50%;
+        width: 1.25em;
+        height: 1.25em;
+        margin-left: 0.5em;
+        vertical-align: middle;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+    <meta name="google" content="notranslate"/>
+    <meta charset="utf-8"/>
+    <title>Портал</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
+    <link rel="shortcut icon" href="/favicon.ico"/>
+
+    <link rel="manifest" href="./manifest">
+    <link rel="stylesheet" type="text/css" href="./node_modules/bootstrap-icons/font/bootstrap-icons.css"/>
+    <link rel="stylesheet" type="text/css" href="./assets/css/portal.css"/>
+
+    <script type="text/javascript" src="./node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
+    <script type="text/javascript" src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="./node_modules/masonry-layout/dist/masonry.pkgd.min.js"></script>
+
+    <!-- SystemJS -->
+    <script type="systemjs-importmap" src="./importmap.json"></script>
+    <script type="text/javascript" src="./node_modules/systemjs/dist/system.min.js"></script>
+    <script type="text/javascript" src="./node_modules/systemjs/dist/extras/amd.min.js"></script>
+    <script type="text/javascript" src="./node_modules/systemjs/dist/extras/named-register.min.js"></script>
+
+    <script type="text/javascript">
+      document.addEventListener("DOMContentLoaded", function (e) {
+        System.import("/js/browser/main.js").then(function (module) {
+          window.veda = module.default;
+        });
+      });
+    </script>
+
+    <meta http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        frame-src 'self' *.slpk.local youtube.com https://www.youtube.com;
+        img-src 'self' data:;
+        style-src 'self' 'unsafe-inline';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;
+        connect-src 'self' ws: wss:;
+        font-src 'self' data:;
+      "
+    />
+  </head>
+  <body>
+    <!-- Load indicator -->
+    <div id="load-indicator">
+      <span class="loader"></span>
+    </div>
+
+    <!-- Login form -->
+    <form style="display:none; max-width: 400px; margin: 10% auto; padding: 2em;" id="login-form" name="login-form" role="form" target="autocomplete-frame" method="post" action="about:invalid">
+      <h3>Войдите / Sign in</h3>
+      <div id="network-error" style="display:none;" class="alert alert-danger">
+        <p><strong>Ошибка!</strong> Отсутствует сетевое соединение с системой.</p>
+        <p><strong>Error!</strong> Network connection to the system is unavailable.</p>
+      </div>
+      <div id="unavailable-error" style="display:none;" class="alert alert-danger">
+        <p><strong>Ошибка!</strong> Система недоступна.</p>
+        <p><strong>Error!</strong> System unavailable.</p>
+      </div>
+      <div id="login-failed-error" style="display:none;" class="alert alert-danger">
+        <p><strong>Ошибка!</strong> Неверное имя пользователя или пароль.</p>
+        <p><strong>Error!</strong> Wrong login or password.</p>
+        <hr>
+        <div id="captcha-form" class="form-inline">
+          <input id="captcha-input" type="text" placeholder="Введите ответ / Type in result" class="form-control">
+          <button id="captcha-submit" type="button" class="btn btn-default">Ok</button>
+        </div>
+      </div>
+      <div id="invalid-secret-warning" style="display:none;" class="alert alert-warning">
+        <p><strong>Отказ!</strong> Неверный код.</p>
+        <p><strong>Fail!</strong> Invalid secret code.</p>
+      </div>
+      <div id="empty-password-warning" style="display:none;" class="alert alert-warning">
+        <p><strong>Отказ!</strong> Вы ввели пустой пароль.</p>
+        <p><strong>Fail!</strong> You have entered empty password.</p>
+      </div>
+      <div id="equal-password-warning" style="display:none;" class="alert alert-warning">
+        <p><strong>Отказ!</strong> Новый пароль совпадает с предыдущим.</p>
+        <p><strong>Fail!</strong> New password is equal to previous.</p>
+      </div>
+      <div id="invalid-password-warning" style="display:none;" class="alert alert-warning">
+        <p><strong>Отказ!</strong> Новый пароль не принят.</p>
+        <p><strong>Fail!</strong> New password was not accepted.</p>
+      </div>
+      <div id="frequent-pass-change-warning" style="display:none;" class="alert alert-warning">
+        <p><strong>Отказ!</strong> Пароль можно менять не чаще 1 раза в сутки.</p>
+        <p><strong>Fail!</strong> Password may be changed only once a day.</p>
+      </div>
+      <div id="pass-change-not-allowed-warning" style="display:none;" class="alert alert-warning">
+        <p><strong>Отказ!</strong> Смена пароля для учетной записи запрещена.</p>
+        <p><strong>Fail!</strong> Password change is not allowed.</p>
+      </div>
+      <div id="secret-expired-warning" style="display:none;" class="alert alert-warning">
+        <p><strong>Отказ!</strong> Код просрочен.</p>
+        <p><strong>Fail!</strong> Secret code expired.</p>
+      </div>
+      <div id="password-expired-error" style="display:none;" class="alert alert-danger">
+        <p><strong>Ошибка!</strong> Истекло время действия пароля.</p>
+        <p><strong>Error!</strong> Password expired.</p>
+      </div>
+      <div id="auth-locked-error" style="display:none;" class="alert alert-danger">
+        <p><strong>Ошибка!</strong> Слишком много неудачных попыток аутентификации. Учетная запись заблокирована на 30 минут.</p>
+        <p><strong>Error!</strong> Too many failed authentication attempts. Account is locked for 30 minutes.</p>
+      </div>
+      <div id="pass-change-locked-error" style="display:none;" class="alert alert-danger">
+        <p><strong>Ошибка!</strong> Слишком много неудачных попыток сменить пароль. Учетная запись заблокирована на 30 минут.</p>
+        <p><strong>Error!</strong> Too many failed password change attempts. Account is locked for 30 minutes.</p>
+      </div>
+      <div id="secret-request-info" style="display:none;" class="alert alert-info">
+        <p><strong>Инфо!</strong> Вам выслан новый код для смены пароля. Пожалуйста, измените пароль, используя код.</p>
+        <p><strong>Info!</strong> Secret code was sent to you. Please, change your password using secret code.</p>
+      </div>
+      <button style="display:none;" class="ok btn btn-lg btn-block btn-primary">Ok</button>
+      <div class="fieldset" id="enter-login-password">
+        <div class="form-floating" id="enter-login-password">
+          <input class="form-control input-lg" id="login" placeholder="Логин / login" type="text" name="login" autofocus="autofocus"/>
+          <label for="login">Логин / login</label>
+        </div>
+        <div class="input-group mb-2">
+          <div class="form-floating">
+            <input class="form-control input-lg password" id="password" placeholder="Пароль / password" type="password" name="password"/>
+            <label for="password">Пароль / password</label>
+          </div>
+          <button class="btn btn-light show-password" type="button" style="border-width:1px;">&#128065;</button>
+        </div>
+        <button type="submit" id="submit-login-password" class="btn btn-primary btn-lg">Войти / Sign in</button>
+        <button type="submit" id="change-password" class="btn btn-link">Изменить пароль / Change password</button>
+      </div>
+      <div class="fieldset form-floating" id="enter-new-password" style="display:none;">
+        <div class="input-group">
+          <input class="form-control input-lg password" id="new-password" placeholder="Новый пароль / New password" type="password" name="new-password" autocomplete="off"/>
+          <span class="input-group-btn">
+            <button class="btn btn-default btn-lg show-password" type="button">&#128065;</button>
+          </span>
+        </div>
+        <div class="input-group margin-lg">
+          <input class="form-control input-lg password" id="confirm-new-password" placeholder="Повторите пароль / Confirm password" type="password" name="confirm-new-password" autocomplete="off"/>
+          <span class="input-group-btn">
+            <button class="btn btn-default btn-lg show-password" type="button">&#128065;</button>
+          </span>
+        </div>
+        <span class="help-block password-strength" style="display:none;">Не менее 8 символов, должен содержать минимум 1 латинскую строчную букву, 1 латинскую прописную букву, 1 цифру</span>
+        <span class="help-block password-strength" style="display:none;">At least 8 characters and contain at least 1 lowercase latin letter, 1 uppercase latin letter, 1 digit</span>
+        <span class="help-block password-must-match" style="display:none;">Пароли должны совпадать</span>
+        <span class="help-block password-must-match" style="display:none;">Passwords must match</span>
+        <input class="form-control input-lg margin-lg" id="secret" placeholder="Код из письма / Code from e-mail" type="text" name="secret" autocomplete="off"/>
+        <span class="help-block enter-secret" style="display:none;">Введите код из письма</span>
+        <span class="help-block enter-secret" style="display:none;">Enter secret form e-mail</span>
+        <button disabled="disabled" type="submit" id="submit-new-password" class="btn btn-lg btn-primary btn-block margin-lg">Отправить / Submit</button>
+      </div>
+    </form>
+
+    <!-- Autocomplete feature -->
+    <iframe name="autocomplete-frame" style="display:none" src="about:blank" title="Autocomplete frame"></iframe>
+    <form name="autocomplete-form" target="autocomplete-frame" method="post" action="about:invalid" autocomplete="on">
+      <!-- Application container -->
+      <div id="app"></div>
+    </form>
+
+    <!-- TEMPLATES -->
+
+    <!-- MODALS -->
+
+    <!-- Minimal modal -->
+    <script type="html/template" id="minimal-modal-template">
+      <div class="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-body">
+               <button type="button" class="close" data-dismiss="modal"><span class="fa fa-times"></span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <!-- Confirm modal -->
+    <script type="html/template" id="confirm-modal-template">
+      <div class="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary ok" data-dismiss="modal">Ok</button>
+              <button type="button" class="btn btn-default cancel" data-dismiss="modal">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <!-- Individual modal -->
+    <script type="html/template" id="individual-modal-template">
+      <div class="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-body">
+               <button type="button" class="close" data-dismiss="modal"><span class="fa fa-times"></span></button>
+               <div class="holder"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary pull-left" id="ok" data-dismiss="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <!-- Notification modal -->
+    <script type="html/template" id="notification-modal-template">
+      <div class="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-body">
+              <button id="follow" class="close" style="margin-right:20px;"><span class="fa fa-window-maximize"></span></button>
+              <button type="button" class="close" data-dismiss="modal"><span class="fa fa-times"></span></button>
+              <div class="holder"></div>
+            </div>
+            <div class="modal-footer hide">
+              <button type="button" class="btn btn-primary pull-left" id="ok" data-dismiss="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </script>
+
+  </body>
+</html>

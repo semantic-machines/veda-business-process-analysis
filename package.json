@@ -1,0 +1,37 @@
+{
+  "name": "veda-business-process-analysis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build.mjs",
+    "watch": "node watch.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/semantic-machines/veda-business-process-analysis.git"
+  },
+  "author": "Valery Bushenev, Roman Karpov, Artem Bushenev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/semantic-machines/veda-business-process-analysis/issues"
+  },
+  "homepage": "https://github.com/semantic-machines/veda-business-process-analysis#readme",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.11.3",
+    "tiny-sha256": "^1.0.2",
+    "veda-client": "github:semantic-machines/veda-client"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "baretest": "^2.0.0",
+    "c8": "^10.1.2",
+    "esbuild": "^0.24.0",
+    "esbuild-plugin-copy": "^2.1.1",
+    "esbuild-sass-plugin": "^3.3.1",
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0"
+  }
+}
