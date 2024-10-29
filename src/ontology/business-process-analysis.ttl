@@ -4,10 +4,10 @@
 @prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix v-ui: <http://semantic-machines.com/veda/veda-ui/> .
-@prefix v-bp: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
 
 # Онтология для анализа бизнес-процессов
-v-bp:BusinessProcessAnalysis
+v-bpa:BusinessProcessAnalysis
   rdf:type owl:Ontology ;
   rdfs:label "Онтология анализа бизнес-процессов"@ru ;
   rdfs:label "Business Process Analysis Ontology"@en ;
@@ -15,160 +15,160 @@ v-bp:BusinessProcessAnalysis
 .
 
 # Бизнес-процесс
-v-bp:BusinessProcess
+v-bpa:BusinessProcess
   rdf:type owl:Class ;
   rdfs:subClassOf v-s:UserThing ;
   rdfs:label "Бизнес-процесс"@ru ;
   rdfs:label "Business Process"@en ;
 .
 
-v-bp:processDescription
+v-bpa:processDescription
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Описание процесса"@ru ;
   rdfs:label "Process description"@en ;
-  rdfs:domain v-bp:BusinessProcess ;
+  rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:string ;
 .
 
-v-bp:processParticipant
+v-bpa:processParticipant
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Участник процесса"@ru ;
   rdfs:label "Process participant"@en ;
-  rdfs:domain v-bp:BusinessProcess ;
+  rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:string ;
 .
 
-v-bp:responsibleDepartment
+v-bpa:responsibleDepartment
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Ответственный департамент"@ru ;
   rdfs:label "Responsible department"@en ;
-  rdfs:domain v-bp:BusinessProcess ;
+  rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:string ;
 .
 
-v-bp:processFrequency
+v-bpa:processFrequency
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Частота выполнения (в год)"@ru ;
   rdfs:label "Execution frequency (per year)"@en ;
-  rdfs:domain v-bp:BusinessProcess ;
+  rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:integer ;
 .
 
-v-bp:processRelevance
+v-bpa:processRelevance
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Оценка релевантности"@ru ;
   rdfs:label "Relevance assessment"@en ;
-  rdfs:domain v-bp:BusinessProcess ;
+  rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:decimal ;
 .
 
-v-bp:laborCosts
+v-bpa:laborCosts
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Трудозатраты (человеко-часов)"@ru ;
   rdfs:label "Labor costs (person-hours)"@en ;
-  rdfs:domain v-bp:BusinessProcess ;
+  rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:decimal ;
 .
 
-v-bp:processJustification
+v-bpa:processJustification
   rdf:type owl:ObjectProperty ;
   rdfs:label "Обоснование процесса"@ru ;
   rdfs:label "Process justification"@en ;
-  rdfs:domain v-bp:BusinessProcess ;
-  rdfs:range v-bp:ProcessDocument ;
+  rdfs:domain v-bpa:BusinessProcess ;
+  rdfs:range v-bpa:ProcessDocument ;
 .
 
-v-bp:ProcessDocument
+v-bpa:ProcessDocument
   rdf:type owl:Class ;
   rdfs:subClassOf v-s:UserThing ;
   rdfs:label "Документ описания процесса"@ru ;
   rdfs:label "Process description document"@en ;
 .
 
-v-bp:documentName
+v-bpa:documentName
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Название документа"@ru ;
   rdfs:label "Document name"@en ;
-  rdfs:domain v-bp:ProcessDocument ;
+  rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
 .
 
-v-bp:documentContent 
+v-bpa:documentContent 
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Содержание документа"@ru ;
   rdfs:label "Document content"@en ;
-  rdfs:domain v-bp:ProcessDocument ;
+  rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
 .
 
 # Кластер процессов
-v-bp:ProcessCluster
+v-bpa:ProcessCluster
   rdf:type owl:Class ;
   rdfs:subClassOf v-s:UserThing ;
   rdfs:label "Кластер процессов"@ru ;
   rdfs:label "Process Cluster"@en ;
 .
 
-v-bp:hasProcess
+v-bpa:hasProcess
   rdf:type owl:ObjectProperty ;
   rdfs:label "Включает процесс"@ru ;
   rdfs:label "Contains process"@en ;
-  rdfs:domain v-bp:ProcessCluster ;
-  rdfs:range v-bp:BusinessProcess ;
+  rdfs:domain v-bpa:ProcessCluster ;
+  rdfs:range v-bpa:BusinessProcess ;
 .
 
-v-bp:clusterResponsibleDepartment
+v-bpa:clusterResponsibleDepartment
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Ответственный департамент за кластер"@ru ;
   rdfs:label "Cluster responsible department"@en ;
-  rdfs:domain v-bp:ProcessCluster ;
+  rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
 
-v-bp:clusterSimilarities
+v-bpa:clusterSimilarities
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Общие характеристики"@ru ;
   rdfs:label "Common characteristics"@en ;
-  rdfs:domain v-bp:ProcessCluster ;
+  rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
 
-v-bp:clusterDifferences
+v-bpa:clusterDifferences
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Различия"@ru ;
   rdfs:label "Differences"@en ;
-  rdfs:domain v-bp:ProcessCluster ;
+  rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
 
-v-bp:optimizationProposal
+v-bpa:optimizationProposal
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Предложения по оптимизации процесса"@ru ;
   rdfs:label "Process optimization proposal"@en ;
-  rdfs:domain v-bp:ProcessCluster ;
+  rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
 
-v-bp:aggregatedFrequency
+v-bpa:aggregatedFrequency
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Суммарная частота выполнения"@ru ;
   rdfs:label "Aggregated execution frequency"@en ;
-  rdfs:domain v-bp:ProcessCluster ;
+  rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:integer ;
 .
 
-v-bp:proposedParticipants
+v-bpa:proposedParticipants
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Предлагаемые участники"@ru ;
   rdfs:label "Proposed participants"@en ;
-  rdfs:domain v-bp:ProcessCluster ;
+  rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
 
-v-bp:estimatedOptimizationEffect
+v-bpa:estimatedOptimizationEffect
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Ожидаемый эффект оптимизации"@ru ;
   rdfs:label "Estimated optimization effect"@en ;
-  rdfs:domain v-bp:ProcessCluster ;
+  rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .

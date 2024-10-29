@@ -6,19 +6,23 @@ export default class Breadcrumb extends Component(HTMLElement) {
   static toString () {
     return 'bpa-breadcrumb';
   }
+
   static get observedAttributes () {
     return ['about'];
   }
+
   attributeChangedCallback (name, prev, curr) {
     if (curr !== prev && prev) {
       this.model = new Model(curr);
       this.update();
     }
   }
+
   added () {
     location.hash.replace(/#\/([^/]+)/g, (_, id) => this.model = new Model(id));
     router.add('#/:id', (id) => this.setAttribute('about', id));
   }
+
   async render () {
     return html`
       <div class="container my-2">
@@ -37,6 +41,7 @@ class BreadcrumbItem extends Component(HTMLOListElement) {
   static toString () {
     return 'bpa-breadcrumb-item';
   }
+
   async render () {
     let model = this.model;
     const items = [];

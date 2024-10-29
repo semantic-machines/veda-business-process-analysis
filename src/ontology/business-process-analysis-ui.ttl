@@ -18,5 +18,5 @@ v-bpa:BusinessProcessAnalysisUI
 v-bpa:BusinessProcessAnalysisApplication
   rdf:type rdfs:Resource ;
   rdfs:label "Приложение анализа бизнес-процессов"@ru ;
-  rdfs:label "Business Process Analysis Application"@en ;
+  rdfs:label "Business process analysis application"@en ;
 .
