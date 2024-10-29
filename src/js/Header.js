@@ -11,8 +11,8 @@ export default class Header extends Component(HTMLElement) {
       <header>
         <nav class="navbar navbar-expand-lg p-0" style="height:80px;">
           <div class="container px-3">
-            <a class="navbar-brand position-relative me-3 p-0" href="#/portal:Main"><img src="images/semantic-machines-logo-long.svg" alt="logo" style="height:32px;"></a>
-            <a class="navbar-brand position-relative me-3 p-0" href="#/portal:Main"><img src="images/optiflow.png" alt="logo" style="height:32px;"></a>
+            <a class="navbar-brand position-relative me-3 p-0" href=""><img src="images/semantic-machines-logo-long.svg" alt="logo" style="height:32px;"></a>
+            <a class="navbar-brand position-relative me-3 p-0" href=""><img src="images/optiflow.png" alt="logo" style="height:32px;"></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
               <span class="navbar-toggler-icon"></span>
             </button>

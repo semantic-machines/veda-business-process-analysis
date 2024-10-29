@@ -4,10 +4,10 @@
 @prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix v-ui: <http://semantic-machines.com/veda/veda-ui/> .
-@prefix v-bp: <http://semantic-machines.com/veda/veda-business-process/> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process/> .
 
 # Онтология для анализа бизнес-процессов. UI
-v-bp:BusinessProcessAnalysisUI
+v-bpa:BusinessProcessAnalysisUI
   rdf:type owl:Ontology ;
   rdfs:label "Онтология анализа бизнес-процессов. UI"@ru ;
   rdfs:label "Business Process Analysis Ontology. UI"@en ;
@@ -15,7 +15,7 @@ v-bp:BusinessProcessAnalysisUI
 .
 
 # Приложение анализа бизнес-процессов
-v-bp:BusinessProcessAnalysisApplication
+v-bpa:BusinessProcessAnalysisApplication
   rdf:type rdfs:Resource ;
   rdfs:label "Приложение анализа бизнес-процессов"@ru ;
   rdfs:label "Business Process Analysis Application"@en ;

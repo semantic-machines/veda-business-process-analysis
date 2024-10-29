@@ -22,7 +22,7 @@ export default class App extends Component(HTMLElement) {
   attributeChangedCallback(name, oldValue, newValue) {
     if (this.hasAttribute('authenticated')) {
       const router = new Router;
-      router.go(location.hash || '#/bpa:BusinessProcessAnalysisApplication');
+      router.go(location.hash || '#/v-bpa:BusinessProcessAnalysisApplication');
     }
     this.update();
   }
