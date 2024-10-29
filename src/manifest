@@ -1,12 +1,12 @@
 {
-  "name": "Veda portal",
-  "short_name": "Veda portal",
-  "start_url": "/portal/#",
+  "name": "Veda business process analysis",
+  "short_name": "Veda BPA",
+  "start_url": "/bpa/#",
   "display": "minimal-ui",
   "background_color": "#fff",
   "theme_color": "white",
-  "description": "Veda - business process automation platform.",
-  "serviceworker": {"src": "/sw-simple.js" },
+  "description": "Veda business process analysis",
+  "serviceworker": {"src": "/ServiceWorker.js" },
   "icons": [{
     "src": "/images/sm-192.png",
     "sizes": "192x192",
@@ -15,8 +15,5 @@
     "src": "/images/sm-512.png",
     "sizes": "512x512",
     "type": "image/png"
-  }],
-  "veda_layout": "portal:Layout",
-  "veda_main": "portal:Main",
-  "veda_version": 20210416202615
+  }]
 }
