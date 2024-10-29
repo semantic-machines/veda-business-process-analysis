@@ -1,5 +1,9 @@
-import {Backend, Subscription} from 'veda-client';
+import './routes.js';
+import './install_sw.js';
+import '../scss/app.scss';
+import '../../node_modules/bootstrap/dist/js/bootstrap.min.js';
 import App from './App.js';
+import {Backend, Subscription} from 'veda-client';
 
 Backend.init('http://localhost');
 Subscription.init('ws://localhost/ccus');

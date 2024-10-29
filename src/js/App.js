@@ -1,8 +1,3 @@
-import './routes.js';
-import './install_sw.js';
-import '../scss/app.scss';
-import '../../node_modules/bootstrap/dist/js/bootstrap.min.js';
-
 import {Component, html, Router} from 'veda-client';
 import Auth from './Auth.js';
 import Header from './Header.js';
