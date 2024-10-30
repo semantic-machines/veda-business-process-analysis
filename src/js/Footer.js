@@ -1,9 +1,7 @@
 import {Component, html} from 'veda-client';
 
 export default class Footer extends Component(HTMLElement) {
-  static toString() {
-    return 'bpa-footer'; 
-  }
+  static tag = 'bpa-footer';
 
   render() {
     return html`
@@ -13,4 +11,4 @@ export default class Footer extends Component(HTMLElement) {
     `;
   }
 }
-customElements.define(Footer.toString(), Footer);
+customElements.define(Footer.tag, Footer);

@@ -1,9 +1,7 @@
 import {Component, html} from 'veda-client';
 
 export default class AuthError extends Component(HTMLElement) {
-  static toString () {
-    return 'bpa-auth-error';
-  }
+  static tag = 'bpa-auth-error';
 
   pre () {
     this.root.querySelector('button').addEventListener('click', () => this.remove());
@@ -34,4 +32,4 @@ export default class AuthError extends Component(HTMLElement) {
   };
 }
 
-customElements.define(AuthError.toString(), AuthError);
+customElements.define(AuthError.tag, AuthError);

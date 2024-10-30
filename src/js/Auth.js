@@ -8,9 +8,7 @@ const show = (el) => el.style.display = 'block';
 const hide = (el) => el.style.display = 'none';
 
 export default class Auth extends Component(HTMLElement) {
-  static toString () {
-    return 'bpa-auth';
-  }
+  static tag = 'bpa-auth';
 
   async pre () {
     this.init();
@@ -191,4 +189,4 @@ export default class Auth extends Component(HTMLElement) {
   }
 }
 
-customElements.define(Auth.toString(), Auth);
+customElements.define(Auth.tag, Auth);

@@ -1,9 +1,7 @@
 import {Component} from 'veda-client';
 
 export default class Translate extends Component(HTMLButtonElement) {
-  static toString () {
-    return 'bpa-translate';
-  }
+  static tag = 'bpa-translate';
 
   added () {
     document.documentElement.lang = localStorage.lang ?? document.documentElement.lang;
@@ -26,4 +24,4 @@ export default class Translate extends Component(HTMLButtonElement) {
   }
 }
 
-customElements.define(Translate.toString(), Translate, {extends: 'button'});
+customElements.define(Translate.tag, Translate, {extends: 'button'});

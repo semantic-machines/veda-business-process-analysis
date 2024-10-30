@@ -1,20 +1,18 @@
-import {Component, html, Router, timeout} from 'veda-client';
+import {Component, html} from 'veda-client';
 import Auth from './Auth.js';
 import Header from './Header.js';
-import BpaRouter from './BpaRouter.js';
+import Router from './Router.js';
 import Footer from './Footer.js';
 
 export default class App extends Component(HTMLElement) {
-  static toString() {
-    return 'bpa-app';
-  }
-
+  static tag = 'bpa-application';
+    
   static get observedAttributes() {
     return ['authenticated'];
   }
 
-  async attributeChangedCallback(name, oldValue, newValue) {
-    await this.update();
+  attributeChangedCallback(name, oldValue, newValue) {
+    this.update();
   }
 
   async render() {
@@ -24,12 +22,10 @@ export default class App extends Component(HTMLElement) {
     return html`
       <div class="container p-0">
         <${Header}></${Header}>
-        <${BpaRouter}></${BpaRouter}>
+        <${Router}></${Router}>
         <${Footer}></${Footer}>
       </div>
     `;
   }
 }
-
-
-customElements.define(App.toString(), App);
+customElements.define(App.tag, App);
