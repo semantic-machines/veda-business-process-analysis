@@ -15,6 +15,8 @@ use v_common::onto::individual::Individual;
 use v_common::onto::parser::parse_raw;
 use v_common::storage::common::StorageMode;
 use v_common::v_api::obj::ResultCode;
+use v_common::module::module_impl::init_log;
+use v_common::v_api::api_client::IndvOp;
 
 struct BusinessProcessAnalysisModule {
     client: Client,
@@ -29,6 +31,11 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
     }
 
     fn prepare(&mut self, queue_element: &mut Individual) -> Result<bool, PrepareError> {
+        let event_id = queue_element.get_first_literal("event_id").unwrap_or_default();
+        if event_id == "BPA" {
+            return Ok(true);
+        }
+
         // Парсим элемент очереди
         if let Err(e) = parse_raw(queue_element) {
             error!("Failed to parse queue element: {:?}", e);
@@ -57,7 +64,7 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
                 error!("Error processing BusinessProcess: {:?}", e);
             }
         } else {
-            info!("Processing queue element with ID: {}", queue_element.get_id());
+            //info!("Processing queue element with ID: {}", queue_element.get_id());
         }
 
         Ok(true)
@@ -74,6 +81,35 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
     fn before_start(&mut self) {}
 
     fn before_exit(&mut self) {}
+}
+
+// Добавляем перечисление JustificationLevel с маппингом на текстовые метки из OpenAI
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+enum JustificationLevel {
+    #[serde(rename = "Полностью обоснован")]
+    CompletelyJustified,
+    #[serde(rename = "Частично обоснован")]
+    PartlyJustified,
+    #[serde(rename = "Не обоснован")]
+    NotJustified,
+}
+
+impl JustificationLevel {
+    // Преобразование уровня обоснованности в URI онтологии
+    fn to_uri(&self) -> &'static str {
+        match self {
+            JustificationLevel::CompletelyJustified => "v-bpa:CompletelyJustified",
+            JustificationLevel::PartlyJustified => "v-bpa:PartlyJustified",
+            JustificationLevel::NotJustified => "v-bpa:NotJustified",
+        }
+    }
+}
+
+// Структура для десериализации ответа OpenAI
+#[derive(Debug, Serialize, Deserialize)]
+struct ProcessJustification {
+    level: JustificationLevel,
 }
 
 impl BusinessProcessAnalysisModule {
@@ -211,11 +247,17 @@ impl BusinessProcessAnalysisModule {
                 // Успешно распарсили
                 info!("Parsed process justification from text: {:?}", process_justification);
 
-                // Сохраняем результат в индивидуале
-                bp_individual.set_string("v-bpa:justificationLevel", &format!("{:?}", process_justification.level), Lang::none());
+                // Используем URI из онтологии вместо текстовой метки
+                let justification_uri = process_justification.level.to_uri();
+
+                // Устанавливаем новый уровень обоснованности, используя URI
+                bp_individual.set_uri("v-bpa:justificationLevel", justification_uri);
 
                 if let Err(e) = self.backend.mstorage_api.update_or_err(&self.ticket, "BPA", "", IndvOp::Put, bp_individual) {
-                    return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update BusinessProcess object, err={:?}", e)).into());
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        format!("Failed to update BusinessProcess object, err={:?}", e)
+                    ).into());
                 }
             } else {
                 error!("Unexpected message format in response");
@@ -256,32 +298,14 @@ struct OpenAIConfig {
     model: String,
 }
 
-// Добавляем перечисление JustificationLevel
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-enum JustificationLevel {
-    #[serde(rename = "Полностью обоснован")]
-    FullyJustified,
-    #[serde(rename = "Частично обоснован")]
-    PartiallyJustified,
-    #[serde(rename = "Не обоснован")]
-    NotJustified,
-}
-
-// Добавляем структуру ProcessJustification
-#[derive(Debug, Serialize, Deserialize)]
-struct ProcessJustification {
-    level: JustificationLevel,
-}
-use v_common::module::module_impl::init_log;
-use v_common::onto::datatype::Lang;
-use v_common::v_api::api_client::IndvOp;
-
 fn main() -> std::io::Result<()> {
     init_module_log!("BUSINESS_PROCESS_ANALYSIS");
 
     // Читаем настройки из файла business-process-analysis.toml
-    let settings = config::Config::builder().add_source(config::File::with_name("business-process-analysis")).build().expect("Failed to read configuration");
+    let settings = config::Config::builder()
+        .add_source(config::File::with_name("business-process-analysis"))
+        .build()
+        .expect("Failed to read configuration");
 
     // Парсим настройки в структуру Config
     let config: Config = settings.try_deserialize().expect("Failed to deserialize configuration");
