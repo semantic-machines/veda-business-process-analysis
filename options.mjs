@@ -32,7 +32,7 @@ const options = {
     '.woff2': 'copy',
   },
   plugins: [
-    htmlMin,
+    // htmlMin,
     sassPlugin(),
     copy({
       assets: {
