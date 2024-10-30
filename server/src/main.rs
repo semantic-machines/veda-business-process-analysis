@@ -4,16 +4,11 @@
 extern crate log;
 
 use openai_dive::v1::api::Client;
-use openai_dive::v1::resources::chat::{
-    ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent,
-    JsonSchemaBuilder,
-};
+use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 use v_common::init_module_log;
-use v_common::module::module_impl::{
-    get_inner_binobj_as_individual, Module, PrepareError,
-};
+use v_common::module::module_impl::{get_inner_binobj_as_individual, Module, PrepareError};
 use v_common::module::veda_backend::Backend;
 use v_common::module::veda_module::VedaQueueModule;
 use v_common::onto::individual::Individual;
@@ -25,7 +20,7 @@ struct BusinessProcessAnalysisModule {
     client: Client,
     backend: Backend,
     model: String,
-    ticket: String
+    ticket: String,
 }
 
 impl VedaQueueModule for BusinessProcessAnalysisModule {
@@ -55,10 +50,7 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
 
         // Проверяем, является ли новый индивидуал типом 'v-bpa:BusinessProcess'
         if new_state.any_exists("rdf:type", &[&"v-bpa:BusinessProcess".to_string()]) {
-            info!(
-                "Found a saved object of type 'v-bpa:BusinessProcess' with ID: {}",
-                new_state.get_id()
-            );
+            info!("Found a saved object of type 'v-bpa:BusinessProcess' with ID: {}", new_state.get_id());
 
             // Обрабатываем бизнес-процесс
             if let Err(e) = self.process_business_process_async(&mut new_state) {
@@ -85,30 +77,54 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
 }
 
 impl BusinessProcessAnalysisModule {
-    fn process_business_process_async(
-        &mut self,
-        bp_individual: &mut Individual,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        // Извлекаем поля из объекта BusinessProcess
-        let process_name = bp_individual
-            .get_first_literal("v-bpa:processName")
-            .ok_or("Missing 'v-bpa:processName'")?;
+    fn collect_related_documents(&mut self, bp_individual: &Individual) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error>> {
+        let mut documents = Vec::new();
 
-        let process_description = bp_individual
-            .get_first_literal("v-bpa:processDescription")
-            .unwrap_or_default();
+        let justification_refs = bp_individual.get_literals_nm("v-bpa:processJustification").unwrap_or_default();
+        for ref_id in justification_refs {
+            let mut document = Individual::default();
+            if self.backend.storage.get_individual(&ref_id, &mut document) == ResultCode::Ok {
+                document.parse_all();
+                let document_json = serde_json::json!({
+                    "name": document.get_first_literal("v-bpa:documentName").unwrap_or_default(),
+                    "content": document.get_first_literal("v-bpa:documentContent").unwrap_or_default()
+                });
+                documents.push(document_json);
+            } else {
+                error!("Не удалось загрузить документ обоснования с ID: {}", ref_id);
+            }
+        }
+        Ok(documents)
+    }
 
+    fn process_business_process_async(&mut self, bp_individual: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
         // Получаем системный промпт из онтологии
         let mut system_prompt = self.get_system_prompt("v-bpa:AnalyzeBusinessPrompt")?;
 
         // Добавляем инструкцию вернуть ответ в формате JSON
         system_prompt.push_str("\nПожалуйста, верни ответ в формате JSON, соответствующий указанной схеме.");
 
-        // Формируем сообщение пользователя
-        let user_content = format!(
-            "Название процесса: {}\nОписание процесса: {}",
-            process_name, process_description
-        );
+        // Извлекаем поля из объекта BusinessProcess
+        let process_name = bp_individual.get_first_literal("v-bpa:processName").ok_or("Отсутствует название процесса")?;
+        let process_description = bp_individual.get_first_literal("v-bpa:processDescription").unwrap_or_default();
+        let process_participants = bp_individual.get_first_literal("v-bpa:processParticipant").unwrap_or_default();
+        let responsible_department = bp_individual.get_first_literal("v-bpa:responsibleDepartment").unwrap_or_default();
+        let process_frequency = bp_individual.get_first_literal("v-bpa:processFrequency").unwrap_or_default();
+        let labor_costs = bp_individual.get_first_literal("v-bpa:laborCosts").unwrap_or_default();
+
+        let documents = self.collect_related_documents(bp_individual)?;
+        let documents_value: serde_json::Value = serde_json::to_value(documents.clone()).expect("Failed to convert documents to JSON Value");
+
+        let user_content = serde_json::json!({
+            "processName": process_name,
+            "processDescription": process_description,
+            "participants": process_participants,
+            "responsibleDepartment": responsible_department,
+            "frequency": process_frequency,
+            "laborCosts": labor_costs,
+            "justificationDocuments": documents_value
+        });
+        info!("Justification documents collected: {:?}", documents);
 
         // Добавляем отладочную информацию
         info!("Process Name: {}", process_name);
@@ -135,6 +151,8 @@ impl BusinessProcessAnalysisModule {
             "additionalProperties": false
         });
 
+        info!("Сформированный JSON для OpenAI: {}", user_content);
+
         // Создаем параметры для запроса, включая формат ответа
         let parameters = ChatCompletionParametersBuilder::default()
             .model(self.model.clone())
@@ -144,16 +162,12 @@ impl BusinessProcessAnalysisModule {
                     name: None,
                 },
                 ChatMessage::User {
-                    content: ChatMessageContent::Text(user_content),
+                    content: ChatMessageContent::Text(user_content.to_string()),
                     name: None,
                 },
             ])
             .response_format(ChatCompletionResponseFormat::JsonSchema(
-                JsonSchemaBuilder::default()
-                    .name("process_justification")
-                    .schema(json_schema)
-                    .strict(true)
-                    .build()?,
+                JsonSchemaBuilder::default().name("process_justification").schema(json_schema).strict(true).build()?,
             ))
             .build()?;
 
@@ -195,21 +209,14 @@ impl BusinessProcessAnalysisModule {
                 let process_justification: ProcessJustification = serde_json::from_str(text)?;
 
                 // Успешно распарсили
-                info!(
-                    "Parsed process justification from text: {:?}",
-                    process_justification
-                );
+                info!("Parsed process justification from text: {:?}", process_justification);
 
                 // Сохраняем результат в индивидуале
-                bp_individual.set_string(
-                    "v-bpa:justificationLevel",
-                    &format!("{:?}", process_justification.level), Lang::none());
+                bp_individual.set_string("v-bpa:justificationLevel", &format!("{:?}", process_justification.level), Lang::none());
 
                 if let Err(e) = self.backend.mstorage_api.update_or_err(&self.ticket, "BPA", "", IndvOp::Put, bp_individual) {
                     return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update BusinessProcess object, err={:?}", e)).into());
                 }
-
-
             } else {
                 error!("Unexpected message format in response");
             }
@@ -220,27 +227,17 @@ impl BusinessProcessAnalysisModule {
         Ok(())
     }
 
-    fn get_system_prompt(
-        &mut self,
-        prompt_id: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    fn get_system_prompt(&mut self, prompt_id: &str) -> Result<String, Box<dyn std::error::Error>> {
         // Получаем индивидуал промпта из хранилища
         let mut prompt_individual = Individual::default();
-        if self
-            .backend
-            .storage
-            .get_individual(prompt_id, &mut prompt_individual)
-            != ResultCode::Ok
-        {
+        if self.backend.storage.get_individual(prompt_id, &mut prompt_individual) != ResultCode::Ok {
             return Err(format!("Failed to get prompt with ID: {}", prompt_id).into());
         }
 
         prompt_individual.parse_all();
 
         // Получаем текст промпта
-        let prompt_text = prompt_individual
-            .get_first_literal("v-bpa:promptText")
-            .ok_or("Prompt text not found")?;
+        let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
 
         Ok(prompt_text)
     }
@@ -284,15 +281,10 @@ fn main() -> std::io::Result<()> {
     init_module_log!("BUSINESS_PROCESS_ANALYSIS");
 
     // Читаем настройки из файла business-process-analysis.toml
-    let settings = config::Config::builder()
-        .add_source(config::File::with_name("business-process-analysis"))
-        .build()
-        .expect("Failed to read configuration");
+    let settings = config::Config::builder().add_source(config::File::with_name("business-process-analysis")).build().expect("Failed to read configuration");
 
     // Парсим настройки в структуру Config
-    let config: Config = settings
-        .try_deserialize()
-        .expect("Failed to deserialize configuration");
+    let config: Config = settings.try_deserialize().expect("Failed to deserialize configuration");
 
     // Инициализируем клиент OpenAI с использованием API ключа из настроек
     let client = Client::new(config.openai.api_key.clone());
@@ -305,10 +297,9 @@ fn main() -> std::io::Result<()> {
     let systicket = if let Ok(t) = backend.get_sys_ticket_id() {
         t
     } else {
-        error!("failed to get systicket");
+        error!("Cannot load sys ticket");
         return Ok(());
     };
-
 
     let mut my_module = BusinessProcessAnalysisModule {
         client,
