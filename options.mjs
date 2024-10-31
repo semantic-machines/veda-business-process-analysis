@@ -26,9 +26,10 @@ const options = {
   platform: 'browser',
   mainFields: ['module', 'main'],
   logLevel: 'info',
+  external: ['./options.js'],
   loader: {
     '.otf': 'copy',
-    '.woff': 'copy',
+    '.woff': 'copy', 
     '.woff2': 'copy',
   },
   plugins: [
