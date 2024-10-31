@@ -7,28 +7,11 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
 
   added() {
     this.showClusters = false;
-    this.transitioning = false;
   }
 
-  async toggleView() {
-    if (this.transitioning) return;
-    this.transitioning = true;
-
-    const container = this.lastElementChild;
-    container.style.opacity = '0';
-
-    await timeout(300);
-    
+  toggleView() {
     this.showClusters = !this.showClusters;
     this.update();
-
-    requestAnimationFrame(() => {
-      container.style.opacity = '1';
-    });
-
-    setTimeout(() => {
-      this.transitioning = false;
-    }, 300);
   }
   
   render() {
@@ -41,7 +24,7 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
         </div>
       </div>
 
-      <div style="transition: opacity 0.3s">
+      <div>
         ${this.showClusters ? 
           html`<${ProcessClusterList}></${ProcessClusterList}>` :
           html`<${BusinessProcessList}></${BusinessProcessList}>`
