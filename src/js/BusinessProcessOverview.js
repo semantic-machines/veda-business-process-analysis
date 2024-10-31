@@ -1,11 +1,9 @@
 import {Component, html} from 'veda-client';
 
-export default class BusinessProcess extends Component(HTMLElement) {
-  static tag = 'bpa-process';
+export default class BusinessProcessOverview extends Component(HTMLElement) {
+  static tag = 'bpa-process-overview';
 
-  
   async render() {
-    console.log(this.model);
     return html`
       <style>
         .card {
@@ -22,4 +20,4 @@ export default class BusinessProcess extends Component(HTMLElement) {
   }
 }
 
-customElements.define(BusinessProcess.tag, BusinessProcess);
+customElements.define(BusinessProcessOverview.tag, BusinessProcessOverview);

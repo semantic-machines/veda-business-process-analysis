@@ -1,5 +1,5 @@
 import {Component, html, Backend, Model} from 'veda-client';
-import BusinessProcess from './BusinessProcess.js';
+import BusinessProcessOverview from './BusinessProcessOverview.js';
 
 export default class BusinessProcessList extends Component(HTMLElement) {
   static tag = 'bpa-process-list';
@@ -19,7 +19,7 @@ export default class BusinessProcessList extends Component(HTMLElement) {
         <h3>Список бизнес-процессов</h3>
         <hr>
         ${this.processes.map(process => html`
-        <${BusinessProcess} about=${process.id}></${BusinessProcess}>
+        <${BusinessProcessOverview} about=${process.id}></${BusinessProcessOverview}>
         `).join('')}
       </div>
     `;
