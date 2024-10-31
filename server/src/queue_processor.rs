@@ -1,17 +1,20 @@
 // queue_processor.rs
 
-use crate::business_process_handler::analyze_process_justification;
 use openai_dive::v1::api::Client;
+use v_common::ft_xapian::xapian_reader::XapianReader;
 use v_common::module::module_impl::{get_inner_binobj_as_individual, PrepareError};
 use v_common::module::veda_backend::Backend;
 use v_common::module::veda_module::VedaQueueModule;
 use v_common::onto::individual::Individual;
 use v_common::onto::parser::parse_raw;
+
+use crate::business_process_handler::analyze_process_justification;
 use crate::clustering_handler::analyze_process_clusters;
 
 pub struct BusinessProcessAnalysisModule {
     pub client: Client,
     pub backend: Backend,
+    pub xr: XapianReader,
     pub model: String,
     pub ticket: String,
 }
@@ -46,24 +49,20 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
             return Ok(false);
         }
 
-        // Проверяем, является ли новый индивидуал типом 'v-bpa:BusinessProcess'
+        // Обработка в зависимости от типа индивида
         if new_state.any_exists("rdf:type", &[&"v-bpa:BusinessProcess".to_string()]) {
             info!("Found a saved object of type 'v-bpa:BusinessProcess' with ID: {}", new_state.get_id());
 
-            // Обрабатываем бизнес-процесс
+            // Анализируем обоснованность бизнес-процесса
             if let Err(e) = analyze_process_justification(self, &mut new_state) {
-                error!("Error processing BusinessProcess: {:?}", e);
+                error!("Error analyzing business process justification: {:?}", e);
             }
         } else if new_state.any_exists("rdf:type", &[&"v-bpa:ClusterizationAttempt".to_string()]) {
             info!("Found a saved object of type 'v-bpa:ClusterizationAttempt' with ID: {}", new_state.get_id());
 
-            // Проверяем статус кластеризации
-            let status = new_state.get_first_literal("v-bpa:clusteringStatus").unwrap_or_default();
-            if status.is_empty() || status == "v-bpa:Pending" {
-                // Выполняем кластеризацию только для новых или ожидающих попыток
-                if let Err(e) = analyze_process_clusters(self, &mut new_state) {
-                    error!("Error analyzing process clusters: {:?}", e);
-                }
+            // Выполняем шаг кластеризации
+            if let Err(e) = analyze_process_clusters(self, &mut new_state) {
+                error!("Error analyzing process clusters: {:?}", e);
             }
         }
 

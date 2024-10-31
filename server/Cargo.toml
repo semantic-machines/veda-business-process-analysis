@@ -18,3 +18,4 @@ tokio = "1.0"
 
 #v_common = { package = "v-common", version = "=0.10.18", features = ["tokio-1"] }
 v_common = { package = "v-common", path = "../../v-common", features = ["tokio-1"]}
+uuid = "0.8.2"

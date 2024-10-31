@@ -4,18 +4,19 @@
 extern crate log;
 
 use crate::queue_processor::BusinessProcessAnalysisModule;
+use v_common::module::module_impl::{init_log, Module};
+use v_common::storage::common::StorageMode;
+use v_common::module::veda_backend::Backend;
 use openai_dive::v1::api::Client;
 use serde::{Deserialize, Serialize};
+use v_common::ft_xapian::xapian_reader::XapianReader;
 use v_common::init_module_log;
-use v_common::module::module_impl::{init_log, Module};
-use v_common::module::veda_backend::Backend;
-use v_common::storage::common::StorageMode;
 
-mod business_process_handler;
-mod prompt_manager;
 mod queue_processor;
-mod types;
+mod business_process_handler;
 mod clustering_handler;
+mod types;
+mod prompt_manager;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Config {
@@ -32,7 +33,10 @@ fn main() -> std::io::Result<()> {
     init_module_log!("BUSINESS_PROCESS_ANALYSIS");
 
     // Читаем настройки из файла business-process-analysis.toml
-    let settings = config::Config::builder().add_source(config::File::with_name("business-process-analysis")).build().expect("Failed to read configuration");
+    let settings = config::Config::builder()
+        .add_source(config::File::with_name("business-process-analysis"))
+        .build()
+        .expect("Failed to read configuration");
 
     // Парсим настройки в структуру Config
     let config: Config = settings.try_deserialize().expect("Failed to deserialize configuration");
@@ -42,6 +46,10 @@ fn main() -> std::io::Result<()> {
 
     // Инициализируем бэкенд для доступа к хранилищу онтологии
     let mut backend = Backend::create(StorageMode::ReadOnly, false);
+
+    // Инициализируем XapianReader
+    let xr = XapianReader::new("russian", &mut backend.storage)
+        .expect("Failed to create XapianReader");
 
     let mut module = Module::new_with_name("business-process-analysis");
 
@@ -55,6 +63,7 @@ fn main() -> std::io::Result<()> {
     let mut my_module = BusinessProcessAnalysisModule {
         client,
         backend,
+        xr,
         model: config.openai.model.clone(),
         ticket: systicket,
     };
