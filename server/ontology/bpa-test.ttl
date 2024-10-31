@@ -17,6 +17,66 @@ v-bpa:QuarterlyFinancialReportingProcess
   v-bpa:processJustification v-bpa:GovernmentDirective , v-bpa:CEODirective , v-bpa:InterdepartmentalMemo ;
 .
 
+# Экземпляр бизнес-процесса "Анализ рынка в Европе"
+v-bpa:EuropeMarketAnalysisProcess
+  rdf:type v-bpa:BusinessProcess ;
+  v-bpa:processName "Анализ рынка в Европе"@ru ;
+  v-bpa:processDescription "Процесс анализа рыночных тенденций и конкурентов в Европейском регионе"@ru ;
+  v-bpa:processParticipant "Маркетолог-аналитик, менеджер по развитию"@ru ;
+  v-bpa:responsibleDepartment "Европейский отдел продаж"@ru ;
+  v-bpa:processFrequency "12"^^xsd:integer ;
+  v-bpa:laborCosts "180"^^xsd:decimal ;
+  v-bpa:processJustification v-bpa:EuropeMarketAnalysisDirective ;
+.
+
+# Экземпляр бизнес-процесса "Анализ рынка в Азии"
+v-bpa:AsiaMarketAnalysisProcess
+  rdf:type v-bpa:BusinessProcess ;
+  v-bpa:processName "Анализ рынка в Азии"@ru ;
+  v-bpa:processDescription "Процесс анализа рыночных тенденций и конкурентов в Азиатском регионе"@ru ;
+  v-bpa:processParticipant "Маркетолог-аналитик, менеджер по развитию"@ru ;
+  v-bpa:responsibleDepartment "Азиатский отдел продаж"@ru ;
+  v-bpa:processFrequency "12"^^xsd:integer ;
+  v-bpa:laborCosts "175"^^xsd:decimal ;
+  v-bpa:processJustification v-bpa:AsiaMarketAnalysisDirective ;
+.
+
+# Экземпляр бизнес-процесса "Анализ рынка в Америке"
+v-bpa:AmericaMarketAnalysisProcess
+  rdf:type v-bpa:BusinessProcess ;
+  v-bpa:processName "Анализ рынка в Америке"@ru ;
+  v-bpa:processDescription "Процесс анализа рыночных тенденций и конкурентов в Американском регионе"@ru ;
+  v-bpa:processParticipant "Маркетолог-аналитик, менеджер по развитию"@ru ;
+  v-bpa:responsibleDepartment "Американский отдел продаж"@ru ;
+  v-bpa:processFrequency "12"^^xsd:integer ;
+  v-bpa:laborCosts "190"^^xsd:decimal ;
+  v-bpa:processJustification v-bpa:AmericaMarketAnalysisDirective ;
+.
+
+# Экземпляр бизнес-процесса "Разработка новых продуктов"
+v-bpa:ProductDevelopmentProcess
+  rdf:type v-bpa:BusinessProcess ;
+  v-bpa:processName "Разработка новых продуктов"@ru ;
+  v-bpa:processDescription "Процесс создания и тестирования новых продуктов"@ru ;
+  v-bpa:processParticipant "Продуктовый менеджер, инженер-разработчик, дизайнер"@ru ;
+  v-bpa:responsibleDepartment "Отдел разработки продуктов"@ru ;
+  v-bpa:processFrequency "6"^^xsd:integer ;
+  v-bpa:laborCosts "450"^^xsd:decimal ;
+  v-bpa:processJustification v-bpa:ProductDevelopmentDirective ;
+.
+
+# Экземпляр бизнес-процесса "Управление персоналом"
+v-bpa:HRManagementProcess
+  rdf:type v-bpa:BusinessProcess ;
+  v-bpa:processName "Управление персоналом"@ru ;
+  v-bpa:processDescription "Процесс найма, обучения и развития сотрудников"@ru ;
+  v-bpa:processParticipant "HR-менеджер, рекрутер, тренинг-менеджер"@ru ;
+  v-bpa:responsibleDepartment "Отдел кадров"@ru ;
+  v-bpa:processFrequency "12"^^xsd:integer ;
+  v-bpa:laborCosts "200"^^xsd:decimal ;
+  v-bpa:processJustification v-bpa:HRManagementDirective ;
+.
+
 # Документ обоснования процесса - Директива о финансовом контроле правительства
 v-bpa:GovernmentDirective
   rdf:type v-bpa:ProcessDocument ;
@@ -36,4 +96,36 @@ v-bpa:InterdepartmentalMemo
   rdf:type v-bpa:ProcessDocument ;
   v-bpa:documentName "Межведомственная записка о требованиях к финансовой отчетности"@ru ;
   v-bpa:documentContent """Согласно меморандуму Финансового и Операционного департаментов 2023-OPR-44, выданному Операционным департаментом, ежеквартальный финансовый отчет признан критически важным инструментом для междепартаментного планирования и управления ресурсами. В данном меморандуме подчеркивается, что точные ежеквартальные финансовые данные необходимы для синхронизации прогнозов операционного бюджета с текущими финансовыми результатами, что позволяет согласованно распределять ресурсы между департаментами. Эти данные также необходимы для планирования бюджета в департаменте НИОКР для приоритетных проектов по инновациям в продуктах и улучшению обслуживания клиентов. Несоблюдение этого стандарта отчетности может поставить под угрозу эффективность операций и согласованность бюджета в масштабах всей организации."""@ru ;
+.
+
+# Документы обоснования для анализа рынка в разных регионах
+v-bpa:EuropeMarketAnalysisDirective
+  rdf:type v-bpa:ProcessDocument ;
+  v-bpa:documentName "Директива по анализу рынка в Европе"@ru ;
+  v-bpa:documentContent """Согласно стратегии развития компании в Европейском регионе, необходимо проводить регулярный анализ рынка для выявления новых возможностей, оценки конкурентной среды и адаптации продуктов под локальные требования. Анализ должен включать исследование потребительских предпочтений, мониторинг конкурентов и оценку регуляторных изменений в ЕС."""@ru ;
+.
+
+v-bpa:AsiaMarketAnalysisDirective
+  rdf:type v-bpa:ProcessDocument ;
+  v-bpa:documentName "Директива по анализу рынка в Азии"@ru ;
+  v-bpa:documentContent """Согласно стратегии развития компании в Азиатском регионе, необходимо проводить регулярный анализ рынка для выявления новых возможностей, оценки конкурентной среды и адаптации продуктов под локальные требования. Анализ должен включать исследование потребительских предпочтений, мониторинг конкурентов и оценку регуляторных изменений в странах Азии."""@ru ;
+.
+
+v-bpa:AmericaMarketAnalysisDirective
+  rdf:type v-bpa:ProcessDocument ;
+  v-bpa:documentName "Директива по анализу рынка в Америке"@ru ;
+  v-bpa:documentContent """Согласно стратегии развития компании в Американском регионе, необходимо проводить регулярный анализ рынка для выявления новых возможностей, оценки конкурентной среды и адаптации продуктов под локальные требования. Анализ должен включать исследование потребительских предпочтений, мониторинг конкурентов и оценку регуляторных изменений в странах Северной и Южной Америки."""@ru ;
+.
+
+# Документы обоснования для других процессов
+v-bpa:ProductDevelopmentDirective
+  rdf:type v-bpa:ProcessDocument ;
+  v-bpa:documentName "Директива по разработке новых продуктов"@ru ;
+  v-bpa:documentContent """В соответствии с инновационной стратегией компании, процесс разработки новых продуктов должен следовать установленной методологии, включающей этапы концептуальной разработки, прототипирования, тестирования и подготовки к производству. Каждый новый продукт должен проходить оценку технической осуществимости и рыночного потенциала."""@ru ;
+.
+
+v-bpa:HRManagementDirective
+  rdf:type v-bpa:ProcessDocument ;
+  v-bpa:documentName "Директива по управлению персоналом"@ru ;
+  v-bpa:documentContent """В целях обеспечения эффективного управления человеческими ресурсами, необходимо поддерживать систематический подход к найму, обучению и развитию персонала. Процесс включает оценку потребностей в персонале, проведение собеседований, организацию обучающих программ и регулярную оценку эффективности сотрудников."""@ru ;
 .

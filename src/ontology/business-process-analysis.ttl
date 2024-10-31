@@ -198,3 +198,27 @@ v-bpa:estimatedOptimizationEffect
   rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
+
+# Clusterization Analysis
+v-bpa:ClusterizationAttempt
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Попытка кластеризации"@ru ;
+  rdfs:label "Clusterization Attempt"@en ;
+.
+
+v-bpa:startDate
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Дата начала кластеризации"@ru ;
+  rdfs:label "Clusterization start date"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:dateTime ;
+.
+
+v-bpa:endDate
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Дата завершения кластеризации"@ru ;
+  rdfs:label "Clusterization end date"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:dateTime ;
+.
