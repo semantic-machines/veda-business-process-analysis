@@ -1,15 +1,20 @@
 import {Component, html, Backend, Model} from 'veda-client';
 import BusinessProcessCard from './BusinessProcessCard.js';
 
+let queryResult;
+
 export default class BusinessProcessList extends Component(HTMLElement) {
   static tag = 'bpa-process-list';
 
   async added() {
-    const params = new Model;
-    params['rdf:type'] = 'v-s:QueryParams';
-    params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
-    const {rows: processes} = await Backend.stored_query(params);
-    this.processes = processes;
+    if (!queryResult) {
+      const params = new Model;
+      params['rdf:type'] = 'v-s:QueryParams';
+      params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
+      const {rows: processes} = await Backend.stored_query(params);
+      queryResult = processes;
+    }
+    this.processes = queryResult;
   }
     
   async render() {
