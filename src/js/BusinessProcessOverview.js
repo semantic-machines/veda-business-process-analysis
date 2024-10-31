@@ -17,7 +17,7 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
     const container = this.lastElementChild;
     container.style.opacity = '0';
 
-    await timeout(200);
+    await timeout(300);
     
     this.showClusters = !this.showClusters;
     this.update();
@@ -28,7 +28,7 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
 
     setTimeout(() => {
       this.transitioning = false;
-    }, 200);
+    }, 300);
   }
 
   render() {
