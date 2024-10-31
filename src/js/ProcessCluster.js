@@ -26,7 +26,7 @@ export default class ProcessCluster extends Component(HTMLElement) {
           </span>
         </div>
         <div>
-          <small class="text-muted" property="v-bpa:proposedParticipants"></small>
+          <small property="v-bpa:proposedParticipants"></small>
         </div>
       </div>
       <div rel="v-bpa:hasProcess" class="ms-4">
