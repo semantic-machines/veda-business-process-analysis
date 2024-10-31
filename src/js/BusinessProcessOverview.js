@@ -37,7 +37,7 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" role="switch" 
             id="viewSwitch" @change="toggleView" ${this.showClusters ? 'checked' : ''}>
-          <label class="form-check-label" for="viewSwitch">Показать кластеры</label>
+          <label class="form-check-label" for="viewSwitch" about="v-bpa:ShowClusters" property="rdfs:label"></label>
         </div>
       </div>
 

@@ -108,7 +108,7 @@ td:PaymentProcessingProcess
   v-bpa:responsibleDepartment "Финансовый отдел"@ru ;
   v-bpa:responsibleDepartment "Finance Department"@en ;
   v-bpa:processFrequency 250 ;
-  v-bpa:processRelevance 0.95 ;
+  v-bpa:processRelevance v-bpa:NotJustified ;
   v-bpa:laborCosts 3.0 ;
 .
 

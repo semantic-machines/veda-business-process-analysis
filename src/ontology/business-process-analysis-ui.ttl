@@ -17,6 +17,36 @@ v-bpa:BusinessProcessAnalysisUI
 # Приложение анализа бизнес-процессов
 v-bpa:BusinessProcessAnalysisApplication
   rdf:type rdfs:Resource ;
-  rdfs:label "Приложение анализа бизнес-процессов"@ru ;
-  rdfs:label "Business process analysis application"@en ;
+  rdfs:label "Анализ бизнес-процессов"@ru ;
+  rdfs:label "Business process analysis"@en ;
+.
+
+v-bpa:BusinessProcesses
+  rdf:type rdfs:Resource ;
+  rdfs:label "Бизнес-процессы"@ru ;
+  rdfs:label "Business processes"@en ;
+.
+
+v-bpa:ShowClusters
+  rdf:type rdfs:Resource ;
+  rdfs:label "Показать кластеры"@ru ;
+  rdfs:label "Show clusters"@en ;
+.
+
+v-bpa:TimesPerYear
+  rdf:type rdfs:Resource ;
+  rdfs:label "раз в год"@ru ;
+  rdfs:label "times per year"@en ;
+.
+
+v-bpa:HoursPerYear
+  rdf:type rdfs:Resource ;
+  rdfs:label "часов в год"@ru ;
+  rdfs:label "hours per year"@en ;
+.
+
+v-bpa:TotalTimeEffort
+  rdf:type rdfs:Resource ;
+  rdfs:label "Общие затраты времени"@ru ;
+  rdfs:label "Total time effort"@en ;
 .

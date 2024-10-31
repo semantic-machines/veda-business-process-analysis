@@ -11,6 +11,7 @@ export default class Header extends Component(HTMLElement) {
           <div class="container px-3">
             <a class="navbar-brand position-relative me-3 p-0" href="#/"><img src="images/semantic-machines-logo-long.svg" alt="logo" style="height:32px;"></a>
             <a class="navbar-brand position-relative me-3 p-0" href="#/"><img src="images/optiflow.png" alt="logo" style="height:32px;"></a>
+            <span class="navbar-brand me-3" about="v-bpa:BusinessProcessAnalysisApplication" property="rdfs:label"></span>
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
               <span class="navbar-toggler-icon"></span>
             </button>
