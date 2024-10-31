@@ -30,10 +30,10 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
       this.transitioning = false;
     }, 300);
   }
-
+  
   render() {
     return html`
-      <div class="mb-3">
+      <div class="mb-2 ms-3">
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" role="switch" 
             id="viewSwitch" @change="toggleView" ${this.showClusters ? 'checked' : ''}>
