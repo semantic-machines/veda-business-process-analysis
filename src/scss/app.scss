@@ -32,6 +32,7 @@ html, body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'calibri', sans-serif;
+  font-weight: bold;
 }
 
 h1 {
@@ -60,4 +61,13 @@ h6 {
 
 a {
   text-decoration: none;
+}
+
+.sheet {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  padding: 20px;
+  margin-bottom: 20px;
 }

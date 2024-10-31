@@ -1,0 +1,41 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix v-ui: <http://semantic-machines.com/veda/veda-ui/> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process/> .
+
+# Онтология для анализа бизнес-процессов. Запросы
+v-bpa:BusinessProcessAnalysisQuery
+  rdf:type owl:Ontology ;
+  rdfs:label "Онтология анализа бизнес-процессов. Запросы"@ru ;
+  rdfs:label "Business Process Analysis Ontology. Queries"@en ;
+  v-s:loadPriority 6 ;
+.
+
+v-bpa:AllBusinessProcesses
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Все бизнес-процессы"@ru ;
+  rdfs:label "Query: All business processes"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "cols" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT id 
+    FROM veda_tt."v-bpa:BusinessProcess" FINAL
+""" ;
+.
+
+v-bpa:AllProcessClusters
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Все кластеры процессов"@ru ;
+  rdfs:label "Query: All process clusters"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "cols" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT id, 
+    FROM veda_tt."v-bpa:ProcessCluster" FINAL
+""" ;
+.

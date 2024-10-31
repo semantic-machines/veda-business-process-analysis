@@ -1,0 +1,173 @@
+@prefix td: <http://semantic-machines.com/veda/test-data/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix v-ui: <http://semantic-machines.com/veda/veda-ui/> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+
+# Онтология для анализа бизнес-процессов. Тестовые данные
+v-bpa:BusinessProcessAnalysisTestData
+  rdf:type owl:Ontology ;
+  rdfs:label "Онтология анализа бизнес-процессов. Тестовые данные"@ru ;
+  rdfs:label "Business Process Analysis Ontology. Test Data"@en ;
+  v-s:loadPriority 6 ;
+.
+# Тестовые бизнес-процессы
+
+# Процесс 1: Обработка заявок на отпуск
+td:VacationRequestProcess
+  rdf:type v-bpa:BusinessProcess ;
+  rdfs:label "Обработка заявок на отпуск"@ru ;
+  rdfs:label "Vacation request processing"@en ;
+  v-bpa:processDescription "Процесс обработки и согласования заявок сотрудников на отпуск"@ru ;
+  v-bpa:processDescription "Process of handling and approving employee vacation requests"@en ;
+  v-bpa:processParticipant "HR специалист, Руководитель отдела, Сотрудник"@ru ;
+  v-bpa:processParticipant "HR specialist, Department head, Employee"@en ;
+  v-bpa:responsibleDepartment "Отдел кадров"@ru ;
+  v-bpa:responsibleDepartment "HR Department"@en ;
+  v-bpa:processFrequency 500 ;
+  v-bpa:processRelevance 0.8 ;
+  v-bpa:laborCosts 2.5 ;
+.
+
+# Процесс 2: Закупка канцтоваров
+td:OfficeSuppliesPurchaseProcess
+  rdf:type v-bpa:BusinessProcess ;
+  rdfs:label "Закупка канцелярских товаров"@ru ;
+  rdfs:label "Office supplies purchase"@en ;
+  v-bpa:processDescription "Процесс заказа и получения канцелярских товаров для офиса"@ru ;
+  v-bpa:processDescription "Process of ordering and receiving office supplies"@en ;
+  v-bpa:processParticipant "Офис-менеджер, Бухгалтер"@ru ;
+  v-bpa:processParticipant "Office manager, Accountant"@en ;
+  v-bpa:responsibleDepartment "Административный отдел"@ru ;
+  v-bpa:responsibleDepartment "Administrative Department"@en ;
+  v-bpa:processFrequency 12 ;
+  v-bpa:processRelevance 0.4 ;
+  v-bpa:laborCosts 4.0 ;
+.
+
+# Процесс 3: Подготовка финансовой отчетности
+td:FinancialReportingProcess
+  rdf:type v-bpa:BusinessProcess ;
+  rdfs:label "Подготовка финансовой отчетности"@ru ;
+  rdfs:label "Financial reporting"@en ;
+  v-bpa:processDescription "Ежемесячная подготовка и проверка финансовой отчетности"@ru ;
+  v-bpa:processDescription "Monthly preparation and verification of financial reports"@en ;
+  v-bpa:processParticipant "Финансовый аналитик, Главный бухгалтер, Финансовый директор"@ru ;
+  v-bpa:processParticipant "Financial analyst, Chief accountant, Financial director"@en ;
+  v-bpa:responsibleDepartment "Финансовый отдел"@ru ;
+  v-bpa:responsibleDepartment "Finance Department"@en ;
+  v-bpa:processFrequency 12 ;
+  v-bpa:processRelevance 0.9 ;
+  v-bpa:laborCosts 16.0 ;
+.
+
+# Процесс 4: Техническая поддержка пользователей
+td:ITSupportProcess
+  rdf:type v-bpa:BusinessProcess ;
+  rdfs:label "Техническая поддержка пользователей"@ru ;
+  rdfs:label "IT user support"@en ;
+  v-bpa:processDescription "Обработка заявок на техническую поддержку от сотрудников"@ru ;
+  v-bpa:processDescription "Processing technical support requests from employees"@en ;
+  v-bpa:processParticipant "IT специалист, Системный администратор"@ru ;
+  v-bpa:processParticipant "IT specialist, System administrator"@en ;
+  v-bpa:responsibleDepartment "IT отдел"@ru ;
+  v-bpa:responsibleDepartment "IT Department"@en ;
+  v-bpa:processFrequency 1000 ;
+  v-bpa:processRelevance 0.7 ;
+  v-bpa:laborCosts 1.5 ;
+.
+
+# Процесс 5: Прием новых сотрудников
+td:NewEmployeeOnboardingProcess
+  rdf:type v-bpa:BusinessProcess ;
+  rdfs:label "Прием новых сотрудников"@ru ;
+  rdfs:label "New employee onboarding"@en ;
+  v-bpa:processDescription "Процесс оформления и адаптации новых сотрудников"@ru ;
+  v-bpa:processDescription "Process of onboarding and adaptation of new employees"@en ;
+  v-bpa:processParticipant "HR специалист, Руководитель отдела, IT специалист"@ru ;
+  v-bpa:processParticipant "HR specialist, Department head, IT specialist"@en ;
+  v-bpa:responsibleDepartment "Отдел кадров"@ru ;
+  v-bpa:responsibleDepartment "HR Department"@en ;
+  v-bpa:processFrequency 100 ;
+  v-bpa:processRelevance 0.9 ;
+  v-bpa:laborCosts 8.0 ;
+.
+
+# Процесс 6: Обработка платежей
+td:PaymentProcessingProcess
+  rdf:type v-bpa:BusinessProcess ;
+  rdfs:label "Обработка платежей"@ru ;
+  rdfs:label "Payment processing"@en ;
+  v-bpa:processDescription "Процесс обработки входящих и исходящих платежей"@ru ;
+  v-bpa:processDescription "Process of handling incoming and outgoing payments"@en ;
+  v-bpa:processParticipant "Бухгалтер, Финансовый контролер"@ru ;
+  v-bpa:processParticipant "Accountant, Financial controller"@en ;
+  v-bpa:responsibleDepartment "Финансовый отдел"@ru ;
+  v-bpa:responsibleDepartment "Finance Department"@en ;
+  v-bpa:processFrequency 250 ;
+  v-bpa:processRelevance 0.95 ;
+  v-bpa:laborCosts 3.0 ;
+.
+
+# Кластер процессов HR
+td:HRProcessCluster
+  rdf:type v-bpa:ProcessCluster ;
+  rdfs:label "Кластер HR процессов"@ru ;
+  rdfs:label "HR processes cluster"@en ;
+  v-bpa:hasProcess td:VacationRequestProcess ;
+  v-bpa:hasProcess td:NewEmployeeOnboardingProcess ;
+  v-bpa:clusterResponsibleDepartment "Отдел кадров"@ru ;
+  v-bpa:clusterResponsibleDepartment "HR Department"@en ;
+  v-bpa:clusterSimilarities "Работа с персоналом, документооборот"@ru ;
+  v-bpa:clusterSimilarities "HR work, document flow"@en ;
+  v-bpa:optimizationProposal "Автоматизация согласования, электронный документооборот"@ru ;
+  v-bpa:optimizationProposal "Approval automation, electronic document flow"@en ;
+  v-bpa:aggregatedFrequency 600 ;
+  v-bpa:proposedParticipants "HR специалист, Система электронного документооборота"@ru ;
+  v-bpa:proposedParticipants "HR specialist, Electronic document management system"@en ;
+  v-bpa:estimatedOptimizationEffect "Сокращение времени обработки на 40%"@ru ;
+  v-bpa:estimatedOptimizationEffect "Processing time reduction by 40%"@en ;
+.
+
+# Кластер финансовых процессов
+td:FinanceProcessCluster
+  rdf:type v-bpa:ProcessCluster ;
+  rdfs:label "Кластер финансовых процессов"@ru ;
+  rdfs:label "Finance processes cluster"@en ;
+  v-bpa:hasProcess td:FinancialReportingProcess ;
+  v-bpa:hasProcess td:PaymentProcessingProcess ;
+  v-bpa:clusterResponsibleDepartment "Финансовый отдел"@ru ;
+  v-bpa:clusterResponsibleDepartment "Finance Department"@en ;
+  v-bpa:clusterSimilarities "Финансовые операции, отчетность"@ru ;
+  v-bpa:clusterSimilarities "Financial operations, reporting"@en ;
+  v-bpa:optimizationProposal "Внедрение автоматизированной системы учета"@ru ;
+  v-bpa:optimizationProposal "Implementation of automated accounting system"@en ;
+  v-bpa:aggregatedFrequency 262 ;
+  v-bpa:proposedParticipants "Финансовый аналитик, Автоматизированная система учета"@ru ;
+  v-bpa:proposedParticipants "Financial analyst, Automated accounting system"@en ;
+  v-bpa:estimatedOptimizationEffect "Повышение точности на 30%, сокращение времени на 25%"@ru ;
+  v-bpa:estimatedOptimizationEffect "Accuracy increase by 30%, time reduction by 25%"@en ;
+.
+
+# Кластер административных процессов
+td:AdminProcessCluster
+  rdf:type v-bpa:ProcessCluster ;
+  rdfs:label "Кластер административных процессов"@ru ;
+  rdfs:label "Administrative processes cluster"@en ;
+  v-bpa:hasProcess td:OfficeSuppliesPurchaseProcess ;
+  v-bpa:hasProcess td:ITSupportProcess ;
+  v-bpa:clusterResponsibleDepartment "Административный отдел"@ru ;
+  v-bpa:clusterResponsibleDepartment "Administrative Department"@en ;
+  v-bpa:clusterSimilarities "Обеспечение работы офиса, поддержка инфраструктуры"@ru ;
+  v-bpa:clusterSimilarities "Office operations, infrastructure support"@en ;
+  v-bpa:optimizationProposal "Внедрение системы автоматизированных заявок"@ru ;
+  v-bpa:optimizationProposal "Implementation of automated request system"@en ;
+  v-bpa:aggregatedFrequency 1012 ;
+  v-bpa:proposedParticipants "Офис-менеджер, IT специалист, Система заявок"@ru ;
+  v-bpa:proposedParticipants "Office manager, IT specialist, Request system"@en ;
+  v-bpa:estimatedOptimizationEffect "Сокращение времени обработки заявок на 50%"@ru ;
+  v-bpa:estimatedOptimizationEffect "Request processing time reduction by 50%"@en ;
+.
