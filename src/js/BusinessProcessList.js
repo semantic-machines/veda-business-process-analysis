@@ -19,7 +19,7 @@ export default class BusinessProcessList extends Component(HTMLElement) {
         <h3>Список бизнес-процессов</h3>
         <hr>
         ${this.processes.map(process => html`
-        <${BusinessProcessOverview} about=${process.id}></${BusinessProcessOverview}>
+          <${BusinessProcessOverview} about=${process.id}></${BusinessProcessOverview}>
         `).join('')}
       </div>
     `;
