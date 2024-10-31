@@ -1,27 +1,20 @@
-// clustering_handler.rs
-
 use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
 use serde_json;
-use std::{thread, time, io};
+use std::collections::{HashMap, HashSet};
+use std::{io, thread, time};
 use tokio::runtime::Runtime;
 use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
-use v_common::ft_xapian::xapian_reader::XapianReader;
-use v_common::module::module_impl::{get_cmd, get_inner_binobj_as_individual, PrepareError};
 use v_common::onto::datatype::Lang;
 use v_common::search::common::{FTQuery, QueryResult};
 
-
-use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::prompt_manager::get_system_prompt;
+use crate::queue_processor::BusinessProcessAnalysisModule;
 
 /// Анализирует бизнес-процессы и определяет кластеры схожих процессов
-pub fn analyze_process_clusters(
-    module: &mut BusinessProcessAnalysisModule,
-    clustering_attempt: &mut Individual,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     // Проверяем текущий статус
     let status = if let Some(statuses) = clustering_attempt.get_literals("v-bpa:clusterizationStatus") {
         statuses.first().cloned().unwrap_or_default()
@@ -33,23 +26,23 @@ pub fn analyze_process_clusters(
         "" => {
             info!("Starting new clustering attempt: {}", clustering_attempt.get_id());
             initialize_clustering(module, clustering_attempt)?;
-        }
+        },
         "v-bpa:ComparingPairs" => {
             info!("Continuing pair comparison for attempt: {}", clustering_attempt.get_id());
             compare_next_pair(module, clustering_attempt)?;
-        }
+        },
         "v-bpa:PairsCompared" => {
             info!("Building clusters for attempt: {}", clustering_attempt.get_id());
             build_clusters(module, clustering_attempt)?;
-        }
+        },
         "v-bpa:Completed" => {
             info!("Clustering already completed for attempt: {}", clustering_attempt.get_id());
             return Ok(());
-        }
+        },
         _ => {
             error!("Unknown clustering status: {}", status);
             return Err("Invalid clustering status".into());
-        }
+        },
     }
 
     Ok(())
@@ -62,16 +55,10 @@ fn find_all_business_processes(module: &mut BusinessProcessAnalysisModule) -> Re
 
     // Пытаемся получить результаты, повторяем при ошибках синхронизации
     while res.result_code == ResultCode::NotReady || res.result_code == ResultCode::DatabaseModifiedError {
-        res = module.xr.query(
-            FTQuery::new_with_user("cfg:VedaSystem", "'rdf:type' === 'v-bpa:BusinessProcess'"),
-            &mut module.backend.storage
-        );
+        res = module.xr.query(FTQuery::new_with_user("cfg:VedaSystem", "'rdf:type' === 'v-bpa:BusinessProcess'"), &mut module.backend.storage);
 
         if res.result_code == ResultCode::InternalServerError {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("Search failed with error: {:?}", res.result_code)
-            ).into());
+            return Err(io::Error::new(io::ErrorKind::Other, format!("Search failed with error: {:?}", res.result_code)).into());
         }
 
         if res.result_code != ResultCode::Ok {
@@ -92,10 +79,7 @@ fn find_all_business_processes(module: &mut BusinessProcessAnalysisModule) -> Re
 }
 
 /// Инициализирует процесс кластеризации
-fn initialize_clustering(
-    module: &mut BusinessProcessAnalysisModule,
-    clustering_attempt: &mut Individual,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn initialize_clustering(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     // Получаем список всех бизнес-процессов
     let process_ids = find_all_business_processes(module)?;
 
@@ -111,15 +95,12 @@ fn initialize_clustering(
     // Инициализируем прогресс сравнения
     clustering_attempt.add_string(
         "v-bpa:currentPairIndex",
-        "0,1",  // Начинаем с первой пары
-        Lang::none()
+        "0,1", // Начинаем с первой пары
+        Lang::none(),
     );
 
     // Устанавливаем статус
-    clustering_attempt.add_uri(
-        "v-bpa:clusterizationStatus",
-        "v-bpa:ComparingPairs"
-    );
+    clustering_attempt.add_uri("v-bpa:clusterizationStatus", "v-bpa:ComparingPairs");
 
     update_individual(module, clustering_attempt)?;
     info!("Initialized clustering attempt {} with {} processes", clustering_attempt.get_id(), process_ids.len());
@@ -128,10 +109,7 @@ fn initialize_clustering(
 }
 
 /// Сравнивает следующую пару процессов
-fn compare_next_pair(
-    module: &mut BusinessProcessAnalysisModule,
-    clustering_attempt: &mut Individual,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn compare_next_pair(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     // Получаем текущие индексы
     let current_pair = if let Some(pairs) = clustering_attempt.get_literals("v-bpa:currentPairIndex") {
         pairs.first().cloned().ok_or("No current pair index found")?
@@ -139,20 +117,14 @@ fn compare_next_pair(
         return Err("No current pair index found".into());
     };
 
-    let indices: Vec<usize> = current_pair.split(',')
-        .map(|s| s.parse::<usize>())
-        .collect::<Result<Vec<_>, _>>()?;
+    let indices: Vec<usize> = current_pair.split(',').map(|s| s.parse::<usize>()).collect::<Result<Vec<_>, _>>()?;
 
-    let processes = clustering_attempt.get_literals("v-bpa:processesToAnalyze")
-        .ok_or("No processes to analyze found")?;
+    let processes = clustering_attempt.get_literals("v-bpa:processesToAnalyze").ok_or("No processes to analyze found")?;
 
     if indices[0] >= processes.len() || indices[1] >= processes.len() {
         // Все пары сравнены
         clustering_attempt.remove("v-bpa:clusterizationStatus");
-        clustering_attempt.add_uri(
-            "v-bpa:clusterizationStatus",
-            "v-bpa:PairsCompared",
-        );
+        clustering_attempt.add_uri("v-bpa:clusterizationStatus", "v-bpa:PairsCompared");
         update_individual(module, clustering_attempt)?;
         info!("Completed comparing all pairs for attempt: {}", clustering_attempt.get_id());
         return Ok(());
@@ -161,20 +133,12 @@ fn compare_next_pair(
     info!("Comparing processes {} and {}", processes[indices[0]], processes[indices[1]]);
 
     // Сравниваем текущую пару
-    let is_similar = compare_processes(
-        module,
-        &processes[indices[0]],
-        &processes[indices[1]],
-    )?;
+    let is_similar = compare_processes(module, &processes[indices[0]], &processes[indices[1]])?;
 
     if is_similar {
         // Сохраняем похожую пару
         let pair = format!("{},{}", processes[indices[0]], processes[indices[1]]);
-        clustering_attempt.add_string(
-            "v-bpa:similarPairs",
-            &pair,
-            Lang::none()
-        );
+        clustering_attempt.add_string("v-bpa:similarPairs", &pair, Lang::none());
         info!("Found similar processes: {}", pair);
     }
 
@@ -187,11 +151,7 @@ fn compare_next_pair(
 
     // Обновляем индексы
     clustering_attempt.remove("v-bpa:currentPairIndex");
-    clustering_attempt.add_string(
-        "v-bpa:currentPairIndex",
-        &format!("{},{}", next_i, next_j),
-        Lang::none()
-    );
+    clustering_attempt.add_string("v-bpa:currentPairIndex", &format!("{},{}", next_i, next_j), Lang::none());
 
     update_individual(module, clustering_attempt)?;
 
@@ -199,11 +159,7 @@ fn compare_next_pair(
 }
 
 /// Сравнивает два процесса с помощью AI
-fn compare_processes(
-    module: &mut BusinessProcessAnalysisModule,
-    process1_id: &str,
-    process2_id: &str,
-) -> Result<bool, Box<dyn std::error::Error>> {
+fn compare_processes(module: &mut BusinessProcessAnalysisModule, process1_id: &str, process2_id: &str) -> Result<bool, Box<dyn std::error::Error>> {
     let mut process1 = Individual::default();
     let mut process2 = Individual::default();
 
@@ -222,26 +178,17 @@ fn compare_processes(
     let comparison_data = prepare_comparison_data(&mut process1, &mut process2)?;
     let system_prompt = get_system_prompt(module, "v-bpa:ClusterizeProcessesPrompt")?;
 
-    let parameters = prepare_comparison_parameters(
-        module.model.clone(),
-        system_prompt,
-        comparison_data,
-    )?;
+    let parameters = prepare_comparison_parameters(module.model.clone(), system_prompt, comparison_data)?;
 
     // Отправляем запрос к AI
     let rt = Runtime::new()?;
-    let is_similar = rt.block_on(async {
-        send_comparison_request(module, parameters).await
-    })?;
+    let is_similar = rt.block_on(async { send_comparison_request(module, parameters).await })?;
 
     Ok(is_similar)
 }
 
 /// Подготавливает данные о процессах для анализа AI
-fn prepare_comparison_data(
-    process1: &mut Individual,
-    process2: &mut Individual,
-) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+fn prepare_comparison_data(process1: &mut Individual, process2: &mut Individual) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
     Ok(serde_json::json!({
         "process1": {
             "id": process1.get_id(),
@@ -291,13 +238,7 @@ fn prepare_comparison_parameters(
                 name: None,
             },
         ])
-        .response_format(ChatCompletionResponseFormat::JsonSchema(
-            JsonSchemaBuilder::default()
-                .name("process_comparison")
-                .schema(json_schema)
-                .strict(true)
-                .build()?,
-        ))
+        .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("process_comparison").schema(json_schema).strict(true).build()?))
         .build()?;
 
     Ok(parameters)
@@ -328,38 +269,97 @@ async fn send_comparison_request(
 }
 
 /// Формирует кластеры на основе найденных похожих пар
-fn build_clusters(
-    module: &mut BusinessProcessAnalysisModule,
-    clustering_attempt: &mut Individual,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn build_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     // Получаем все похожие пары
-    let similar_pairs = clustering_attempt.get_literals("v-bpa:similarPairs")
-        .unwrap_or_default();
+    let similar_pairs = clustering_attempt.get_literals("v-bpa:similarPairs").unwrap_or_default();
 
     info!("Building clusters from {} similar pairs", similar_pairs.len());
 
-    // TODO: Реализовать алгоритм кластеризации на основе похожих пар
-    // Здесь будет логика построения кластеров на основе транзитивных связей
-    // Создание индивидов v-bpa:ProcessCluster
+    // Строим граф связей между процессами
+    let mut adjacency_list: HashMap<String, HashSet<String>> = HashMap::new();
+
+    // Заполняем граф связями
+    for pair in similar_pairs {
+        let parts: Vec<&str> = pair.split(',').collect();
+        if parts.len() == 2 {
+            // Добавляем связь в обе стороны
+            adjacency_list.entry(parts[0].to_string()).or_default().insert(parts[1].to_string());
+            adjacency_list.entry(parts[1].to_string()).or_default().insert(parts[0].to_string());
+        }
+    }
+
+    // Находим все процессы для кластеризации
+    let all_processes: HashSet<String> = clustering_attempt.get_literals("v-bpa:processesToAnalyze").unwrap_or_default().into_iter().collect();
+
+    // Добавляем изолированные процессы в граф
+    for process in &all_processes {
+        adjacency_list.entry(process.clone()).or_default();
+    }
+
+    // Находим связные компоненты (кластеры)
+    let clusters = find_connected_components(&adjacency_list);
+    info!("Found {} clusters", clusters.len());
+
+    // Создаем кластеры в системе
+    for (cluster_index, processes) in clusters.iter().enumerate() {
+        if processes.len() >= 1 {
+            info!("Creating cluster {} with {} processes", cluster_index + 1, processes.len());
+            match create_cluster(module, &processes.iter().cloned().collect::<Vec<_>>(), clustering_attempt) {
+                Ok(cluster_id) => {
+                    info!("Created cluster {}", cluster_id);
+                },
+                Err(e) => {
+                    error!("Failed to create cluster: {}", e);
+                },
+            }
+        }
+    }
 
     // Обновляем статус
     clustering_attempt.remove("v-bpa:clusterizationStatus");
-    clustering_attempt.add_uri(
-        "v-bpa:clusterizationStatus",
-        "v-bpa:Completed",
-    );
+    clustering_attempt.add_uri("v-bpa:clusterizationStatus", "v-bpa:Completed");
 
     update_individual(module, clustering_attempt)?;
 
     Ok(())
 }
 
+/// Находит связные компоненты в графе процессов
+fn find_connected_components(adjacency_list: &HashMap<String, HashSet<String>>) -> Vec<HashSet<String>> {
+    let mut clusters = Vec::new();
+    let mut visited = HashSet::new();
+
+    // Проходим по всем вершинам
+    for node in adjacency_list.keys() {
+        if !visited.contains(node) {
+            // Нашли новый кластер
+            let mut cluster = HashSet::new();
+            let mut queue = vec![node.clone()];
+            visited.insert(node.clone());
+            cluster.insert(node.clone());
+
+            // Обходим все связанные вершины
+            while let Some(current) = queue.pop() {
+                if let Some(neighbors) = adjacency_list.get(&current) {
+                    for neighbor in neighbors {
+                        if !visited.contains(neighbor) {
+                            visited.insert(neighbor.clone());
+                            cluster.insert(neighbor.clone());
+                            queue.push(neighbor.clone());
+                        }
+                    }
+                }
+            }
+
+            clusters.push(cluster);
+        }
+    }
+
+    clusters
+}
+
 /// Создает новый кластер процессов
-fn create_cluster(
-    module: &mut BusinessProcessAnalysisModule,
-    processes: &[String],
-    clustering_attempt: &mut Individual,
-) -> Result<String, Box<dyn std::error::Error>> {
+fn create_cluster(module: &mut BusinessProcessAnalysisModule, processes: &[String], clustering_attempt: &mut Individual) -> Result<String, Box<dyn std::error::Error>> {
     let mut cluster = Individual::default();
 
     // Генерируем уникальный ID для кластера
@@ -374,21 +374,9 @@ fn create_cluster(
         cluster.add_uri("v-bpa:hasProcess", process_id);
     }
 
-    // Вычисляем общие характеристики кластера
-    calculate_cluster_characteristics(module, &mut cluster, processes)?;
-
     // Сохраняем кластер
-    if let Err(e) = module.backend.mstorage_api.update_or_err(
-        &module.ticket,
-        "BPA",
-        "",
-        IndvOp::Put,
-        &mut cluster,
-    ) {
-        return Err(std::io::Error::new(
-            io::ErrorKind::Other,
-            format!("Failed to save cluster, err={:?}", e)
-        ).into());
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "BPA", "", IndvOp::Put, &mut cluster) {
+        return Err(std::io::Error::new(io::ErrorKind::Other, format!("Failed to save cluster, err={:?}", e)).into());
     }
 
     // Добавляем ссылку на кластер в попытку кластеризации
@@ -397,128 +385,10 @@ fn create_cluster(
     Ok(cluster_id)
 }
 
-/// Вычисляет общие характеристики кластера на основе входящих в него процессов
-fn calculate_cluster_characteristics(
-    module: &mut BusinessProcessAnalysisModule,
-    cluster: &mut Individual,
-    process_ids: &[String],
-) -> Result<(), Box<dyn std::error::Error>> {
-    let mut total_frequency = 0;
-    let mut departments = Vec::new();
-    let mut participants = Vec::new();
-
-    for process_id in process_ids {
-        let mut process = Individual::default();
-        if module.backend.storage.get_individual(process_id, &mut process) != ResultCode::Ok {
-            warn!("Failed to load process {} for cluster characteristics calculation", process_id);
-            continue;
-        }
-        process.parse_all();
-
-        // Собираем частоту выполнения
-        if let Some(frequencies) = process.get_literals("v-bpa:processFrequency") {
-            if let Some(freq) = frequencies.first() {
-                if let Ok(freq_value) = freq.parse::<i32>() {
-                    total_frequency += freq_value;
-                }
-            }
-        }
-
-        // Собираем департаменты
-        if let Some(deps) = process.get_literals("v-bpa:responsibleDepartment") {
-            departments.extend(deps);
-        }
-
-        // Собираем участников
-        if let Some(parts) = process.get_literals("v-bpa:processParticipant") {
-            participants.extend(parts);
-        }
-    }
-
-    // Удаляем дубликаты
-    departments.sort();
-    departments.dedup();
-    participants.sort();
-    participants.dedup();
-
-    // Сохраняем агрегированные характеристики
-    cluster.add_integer("v-bpa:aggregatedFrequency", total_frequency as i64);
-
-    // Формируем список департаментов
-    let departments_str = departments.join(", ");
-    cluster.add_string(
-        "v-bpa:clusterResponsibleDepartment",
-        &departments_str,
-        Lang::none()
-    );
-
-    // Формируем список участников
-    let participants_str = participants.join(", ");
-    cluster.add_string(
-        "v-bpa:proposedParticipants",
-        &participants_str,
-        Lang::none()
-    );
-
-    // Анализируем сходства и различия с помощью AI
-    analyze_cluster_characteristics(module, cluster, process_ids)?;
-
-    Ok(())
-}
-
-/// Анализирует характеристики кластера с помощью AI
-fn analyze_cluster_characteristics(
-    module: &mut BusinessProcessAnalysisModule,
-    cluster: &mut Individual,
-    process_ids: &[String],
-) -> Result<(), Box<dyn std::error::Error>> {
-    // TODO: Реализовать анализ характеристик кластера с помощью AI
-    // Нужно будет добавить еще один промпт в онтологию для этой задачи
-
-    // Временная заглушка для характеристик
-    cluster.add_string(
-        "v-bpa:clusterSimilarities",
-        "Схожие функции и цели процессов",
-        Lang::none()
-    );
-
-    cluster.add_string(
-        "v-bpa:clusterDifferences",
-        "Различия в деталях реализации",
-        Lang::none()
-    );
-
-    cluster.add_string(
-        "v-bpa:optimizationProposal",
-        "Рекомендуется объединить процессы и стандартизировать их выполнение",
-        Lang::none()
-    );
-
-    cluster.add_string(
-        "v-bpa:estimatedOptimizationEffect",
-        "Ожидаемое сокращение трудозатрат на 20%",
-        Lang::none()
-    );
-
-    Ok(())
-}
-
 /// Вспомогательная функция для сохранения изменений в индивиде
-fn update_individual(
-    module: &mut BusinessProcessAnalysisModule,
-    individual: &mut Individual,
-) -> Result<(), Box<dyn std::error::Error>> {
-    if let Err(e) = module.backend.mstorage_api.update_or_err(
-        &module.ticket,
-        "BPA",
-        "",
-        IndvOp::Put,
-        individual,
-    ) {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Failed to update individual, err={:?}", e),
-        ).into());
+fn update_individual(module: &mut BusinessProcessAnalysisModule, individual: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "BPA", "", IndvOp::Put, individual) {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e)).into());
     }
     Ok(())
 }
