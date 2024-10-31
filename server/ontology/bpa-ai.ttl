@@ -1,0 +1,39 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix v-ui: <http://semantic-machines.com/veda/veda-ui/> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+
+# Класс для системных промптов
+v-bpa:SystemPrompt
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Системный промпт"@ru ;
+  rdfs:label "System Prompt"@en ;
+.
+
+v-bpa:promptText
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Текст промпта"@ru ;
+  rdfs:label "Prompt Text"@en ;
+  rdfs:domain v-bp:SystemPrompt ;
+  rdfs:range xsd:string ;
+.
+
+# Экземпляр системного промпта для анализа бизнеса с вашим текстом
+v-bpa:AnalyzeBusinessPrompt
+  rdf:type v-bpa:SystemPrompt ;
+  rdfs:label "Промпт для анализа бизнеса"@ru ;
+  rdfs:label "Prompt for Business Analysis"@en ;
+  v-bpa:promptText """
+Проанализируй данный бизнес-процесс на предмет его обоснованности исходя из переданных документов. Определи, насколько представленные документы обосновывают необходимость бизнес-процесса, выбрав одну из следующих оценок:
+
+1. Полностью обоснован – документы полностью подтверждают необходимость и обоснованность процесса.
+2. Частично обоснован – в документах имеется некоторая информация, которая оправдывает процесс, но не полностью.
+3. Не обоснован – документы не содержат данных, которые оправдывают или подтверждают данный процесс.
+
+Пожалуйста, при анализе обрати внимание на возможные расхождения между информацией, представленной в документах, и самой сутью бизнес-процесса. Например, если бизнес-процесс предполагает проведение анализа рынка, но в документах отсутствует информация, связанная с этим анализом, то это может свидетельствовать о недостаточном обосновании.
+"""@ru ;
+.

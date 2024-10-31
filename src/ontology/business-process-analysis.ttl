@@ -54,13 +54,6 @@ v-bpa:processFrequency
   rdfs:range xsd:integer ;
 .
 
-v-bpa:processRelevance
-  rdf:type owl:DatatypeProperty ;
-  rdfs:label "Оценка релевантности"@ru ;
-  rdfs:label "Relevance assessment"@en ;
-  rdfs:domain v-bpa:BusinessProcess ;
-  rdfs:range xsd:decimal ;
-.
 
 v-bpa:laborCosts
   rdf:type owl:DatatypeProperty ;
@@ -99,6 +92,39 @@ v-bpa:documentContent
   rdfs:label "Document content"@en ;
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
+.
+
+# Process Relevance Options
+v-bpa:ProcessRelevance
+  rdf:type owl:Class ;
+  rdfs:label "Релевантность процесса"@ru ;
+  rdfs:label "Process Relevance"@en ;
+.
+
+v-bpa:CompletelyJustified
+  rdf:type v-bpa:ProcessRelevance ;
+  rdfs:label "Полностью обоснованный"@ru ;
+  rdfs:label "Completely Justified"@en ;
+.
+
+v-bpa:PartlyJustified
+  rdf:type v-bpa:ProcessRelevance ;
+  rdfs:label "Частично обоснованный"@ru ;
+  rdfs:label "Partly Justified"@en ;
+.
+
+v-bpa:NotJustified
+  rdf:type v-bpa:ProcessRelevance ;
+  rdfs:label "Не обоснованный"@ru ;
+  rdfs:label "Not Justified"@en ;
+.
+
+v-bpa:processRelevance
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Оценка релевантности"@ru ;
+  rdfs:label "Relevance assessment"@en ;
+  rdfs:domain v-bpa:BusinessProcess ;
+  rdfs:range v-bpa:ProcessRelevance ;
 .
 
 # Кластер процессов
