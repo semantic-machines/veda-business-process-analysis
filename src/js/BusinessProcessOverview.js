@@ -1,4 +1,4 @@
-import {Component, html, Backend, Model} from 'veda-client';
+import {Component, html, timeout} from 'veda-client';
 import BusinessProcessList from './BusinessProcessList.js';
 import ProcessClusterList from './ProcessClusterList.js';
 
@@ -14,10 +14,10 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
     if (this.transitioning) return;
     this.transitioning = true;
 
-    const container = this.querySelector('.view-container');
+    const container = this.lastElementChild;
     container.style.opacity = '0';
 
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await timeout(200);
     
     this.showClusters = !this.showClusters;
     this.update();
@@ -28,7 +28,7 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
 
     setTimeout(() => {
       this.transitioning = false;
-    }, 300);
+    }, 200);
   }
 
   render() {
@@ -41,7 +41,7 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
         </div>
       </div>
 
-      <div class="view-container" style="transition: opacity 0.3s">
+      <div style="transition: opacity 0.3s">
         ${this.showClusters ? 
           html`<${ProcessClusterList}></${ProcessClusterList}>` :
           html`<${BusinessProcessList}></${BusinessProcessList}>`
