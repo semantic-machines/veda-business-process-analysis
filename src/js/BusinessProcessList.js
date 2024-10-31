@@ -1,0 +1,29 @@
+import {Component, html, Backend, Model} from 'veda-client';
+import BusinessProcess from './BusinessProcess.js';
+
+export default class BusinessProcessList extends Component(HTMLElement) {
+  static tag = 'bpa-process-list';
+
+  async added() {
+    const params = new Model;
+    params['rdf:type'] = 'v-s:QueryParams';
+    params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
+    const {id: processIds} = await Backend.stored_query(params);
+    const processes = await Promise.all(processIds.map((id) => new Model(id)));
+    this.processes = processes;
+  }
+
+  async render() {
+    return html`
+      <div class="sheet">
+        <h3>Список бизнес-процессов</h3>
+        <hr>
+        ${this.processes.map(process => html`
+        <${BusinessProcess} about=${process.id}></${BusinessProcess}>
+        `).join('')}
+      </div>
+    `;
+  }
+}
+
+customElements.define(BusinessProcessList.tag, BusinessProcessList);
