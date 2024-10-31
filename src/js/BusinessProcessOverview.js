@@ -7,11 +7,28 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
 
   added() {
     this.showClusters = false;
+    this.transitioning = false;
   }
 
-  toggleView() {
+  async toggleView() {
+    if (this.transitioning) return;
+    this.transitioning = true;
+
+    const container = this.querySelector('.view-container');
+    container.style.opacity = '0';
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     this.showClusters = !this.showClusters;
     this.update();
+
+    requestAnimationFrame(() => {
+      container.style.opacity = '1';
+    });
+
+    setTimeout(() => {
+      this.transitioning = false;
+    }, 300);
   }
 
   render() {
@@ -24,10 +41,12 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
         </div>
       </div>
 
-      ${this.showClusters ? 
-        html`<${ProcessClusterList}></${ProcessClusterList}>` :
-        html`<${BusinessProcessList}></${BusinessProcessList}>`
-      }
+      <div class="view-container" style="transition: opacity 0.3s">
+        ${this.showClusters ? 
+          html`<${ProcessClusterList}></${ProcessClusterList}>` :
+          html`<${BusinessProcessList}></${BusinessProcessList}>`
+        }
+      </div>
     `;
   }
 }
