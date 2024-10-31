@@ -8,8 +8,7 @@ export default class BusinessProcessList extends Component(HTMLElement) {
     const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
-    const {id: processIds} = await Backend.stored_query(params);
-    const processes = await Promise.all(processIds.map((id) => new Model(id)));
+    const {rows: processes} = await Backend.stored_query(params);
     this.processes = processes;
   }
   
@@ -18,8 +17,8 @@ export default class BusinessProcessList extends Component(HTMLElement) {
       <div class="sheet">
         <h3>Бизнес-процессы</h3>
         <hr>
-        ${this.processes.map(process => html`
-          <${BusinessProcessCard} about=${process.id}></${BusinessProcessCard}>
+        ${this.processes.map(([processId]) => html`
+          <${BusinessProcessCard} about=${processId}></${BusinessProcessCard}>
         `).join('')}
       </div>
     `;

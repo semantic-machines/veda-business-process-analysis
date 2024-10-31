@@ -5,7 +5,10 @@ export default class ProcessCluster extends Component(HTMLElement) {
   static tag = 'bpa-process-cluster';
   async render() {
     return html`
-      <h4 property="rdfs:label"></h4>
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h4 property="rdfs:label" class="mb-0"></h4>
+        <strong>${this.dataset.totalTime} ч/год</strong>
+      </div>
       <div rel="v-bpa:hasProcess" style="margin-left:2em">
         <${BusinessProcessCard} about={{this.model.id}}></${BusinessProcessCard}>
       </div>
