@@ -1,16 +1,33 @@
-import {Component, html} from 'veda-client';
+import {Component, html, Backend, Model} from 'veda-client';
+import BusinessProcessList from './BusinessProcessList.js';
+import ProcessClusterList from './ProcessClusterList.js';
 
 export default class BusinessProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
 
-  async render() {
+  added() {
+    this.showClusters = false;
+  }
+
+  toggleView() {
+    this.showClusters = !this.showClusters;
+    this.update();
+  }
+
+  render() {
     return html`
-      <div class="card border-light mb-3" style="background-color: #f2f2f2;">
-        <div class="card-body">
-          <h5 property="rdfs:label"></h5>
-          <span property="v-bpa:processDescription"></span>
+      <div class="mb-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" 
+            id="viewSwitch" @change="toggleView" ${this.showClusters ? 'checked' : ''}>
+          <label class="form-check-label" for="viewSwitch">Показать кластеры</label>
         </div>
       </div>
+
+      ${this.showClusters ? 
+        html`<${ProcessClusterList}></${ProcessClusterList}>` :
+        html`<${BusinessProcessList}></${BusinessProcessList}>`
+      }
     `;
   }
 }
