@@ -88,22 +88,21 @@ fn initialize_clustering(module: &mut BusinessProcessAnalysisModule, clustering_
     }
 
     // Сохраняем список процессов
-    for id in &process_ids {
-        clustering_attempt.add_uri("v-bpa:processesToAnalyze", id);
-    }
+    let process_len = process_ids.len();
+    clustering_attempt.set_uris("v-bpa:processesToAnalyze", process_ids);
 
     // Инициализируем прогресс сравнения
-    clustering_attempt.add_string(
+    clustering_attempt.set_string(
         "v-bpa:currentPairIndex",
         "0,1", // Начинаем с первой пары
         Lang::none(),
     );
 
     // Устанавливаем статус
-    clustering_attempt.add_uri("v-bpa:clusterizationStatus", "v-bpa:ComparingPairs");
+    clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:ComparingPairs");
 
     update_individual(module, clustering_attempt)?;
-    info!("Initialized clustering attempt {} with {} processes", clustering_attempt.get_id(), process_ids.len());
+    info!("Initialized clustering attempt {} with {} processes", clustering_attempt.get_id(), process_len);
 
     Ok(())
 }
@@ -123,8 +122,7 @@ fn compare_next_pair(module: &mut BusinessProcessAnalysisModule, clustering_atte
 
     if indices[0] >= processes.len() || indices[1] >= processes.len() {
         // Все пары сравнены
-        clustering_attempt.remove("v-bpa:clusterizationStatus");
-        clustering_attempt.add_uri("v-bpa:clusterizationStatus", "v-bpa:PairsCompared");
+        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:PairsCompared");
         update_individual(module, clustering_attempt)?;
         info!("Completed comparing all pairs for attempt: {}", clustering_attempt.get_id());
         return Ok(());
@@ -138,7 +136,7 @@ fn compare_next_pair(module: &mut BusinessProcessAnalysisModule, clustering_atte
     if is_similar {
         // Сохраняем похожую пару
         let pair = format!("{},{}", processes[indices[0]], processes[indices[1]]);
-        clustering_attempt.add_string("v-bpa:similarPairs", &pair, Lang::none());
+        clustering_attempt.set_string("v-bpa:similarPairs", &pair, Lang::none());
         info!("Found similar processes: {}", pair);
     }
 
@@ -150,8 +148,7 @@ fn compare_next_pair(module: &mut BusinessProcessAnalysisModule, clustering_atte
     };
 
     // Обновляем индексы
-    clustering_attempt.remove("v-bpa:currentPairIndex");
-    clustering_attempt.add_string("v-bpa:currentPairIndex", &format!("{},{}", next_i, next_j), Lang::none());
+    clustering_attempt.set_string("v-bpa:currentPairIndex", &format!("{},{}", next_i, next_j), Lang::none());
 
     update_individual(module, clustering_attempt)?;
 
@@ -304,7 +301,7 @@ fn build_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt
     for (cluster_index, processes) in clusters.iter().enumerate() {
         if processes.len() >= 1 {
             info!("Creating cluster {} with {} processes", cluster_index + 1, processes.len());
-            match create_cluster(module, &processes.iter().cloned().collect::<Vec<_>>(), clustering_attempt) {
+            match create_cluster(module, processes.iter().cloned().collect::<Vec<_>>(), clustering_attempt) {
                 Ok(cluster_id) => {
                     info!("Created cluster {}", cluster_id);
                 },
@@ -316,8 +313,7 @@ fn build_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt
     }
 
     // Обновляем статус
-    clustering_attempt.remove("v-bpa:clusterizationStatus");
-    clustering_attempt.add_uri("v-bpa:clusterizationStatus", "v-bpa:Completed");
+    clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Completed");
 
     update_individual(module, clustering_attempt)?;
 
@@ -359,7 +355,7 @@ fn find_connected_components(adjacency_list: &HashMap<String, HashSet<String>>) 
 }
 
 /// Создает новый кластер процессов
-fn create_cluster(module: &mut BusinessProcessAnalysisModule, processes: &[String], clustering_attempt: &mut Individual) -> Result<String, Box<dyn std::error::Error>> {
+fn create_cluster(module: &mut BusinessProcessAnalysisModule, processes: Vec<String>, clustering_attempt: &mut Individual) -> Result<String, Box<dyn std::error::Error>> {
     let mut cluster = Individual::default();
 
     // Генерируем уникальный ID для кластера
@@ -367,12 +363,10 @@ fn create_cluster(module: &mut BusinessProcessAnalysisModule, processes: &[Strin
     cluster.set_id(&cluster_id);
 
     // Устанавливаем тип кластера
-    cluster.add_uri("rdf:type", "v-bpa:ProcessCluster");
+    cluster.set_uri("rdf:type", "v-bpa:ProcessCluster");
 
     // Добавляем все процессы в кластер
-    for process_id in processes {
-        cluster.add_uri("v-bpa:hasProcess", process_id);
-    }
+    cluster.set_uris("v-bpa:hasProcess", processes);
 
     // Сохраняем кластер
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "BPA", "", IndvOp::Put, &mut cluster) {
@@ -380,7 +374,7 @@ fn create_cluster(module: &mut BusinessProcessAnalysisModule, processes: &[Strin
     }
 
     // Добавляем ссылку на кластер в попытку кластеризации
-    clustering_attempt.add_uri("v-bpa:foundClusters", &cluster_id);
+    clustering_attempt.set_uri("v-bpa:foundClusters", &cluster_id);
 
     Ok(cluster_id)
 }

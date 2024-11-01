@@ -20,7 +20,8 @@ use crate::types::ProcessJustification;
 ///
 /// # Returns
 /// * `Result<(), Box<dyn std::error::Error>>` - Результат анализа и сохранения оценки
-pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule, bp_individual: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
+pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule, bp_obj: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
+    bp_obj.parse_all();
     // Получаем системный промпт из онтологии
     let mut system_prompt = get_system_prompt(module, "v-bpa:AnalyzeBusinessPrompt")?;
 
@@ -28,14 +29,18 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
     system_prompt.push_str("\nПожалуйста, верни ответ в формате JSON, соответствующий указанной схеме.");
 
     // Извлекаем поля из объекта BusinessProcess
-    let process_name = bp_individual.get_first_literal("v-bpa:processName").ok_or("Отсутствует название процесса")?;
-    let process_description = bp_individual.get_first_literal("v-bpa:processDescription").unwrap_or_default();
-    let process_participants = bp_individual.get_first_literal("v-bpa:processParticipant").unwrap_or_default();
-    let responsible_department = bp_individual.get_first_literal("v-bpa:responsibleDepartment").unwrap_or_default();
-    let process_frequency = bp_individual.get_first_literal("v-bpa:processFrequency").unwrap_or_default();
-    let labor_costs = bp_individual.get_first_literal("v-bpa:laborCosts").unwrap_or_default();
 
-    let documents = collect_related_documents(module, bp_individual)?;
+    let process_name = bp_obj
+        .get_first_literal("rdfs:label")
+        .or_else(|| bp_obj.get_first_literal("v-bpa:processName"))
+        .ok_or_else(|| format!("Отсутствует название процесса, src={}", bp_obj.get_obj().as_json()))?;
+    let process_description = bp_obj.get_first_literal("v-bpa:processDescription").unwrap_or_default();
+    let process_participants = bp_obj.get_first_literal("v-bpa:processParticipant").unwrap_or_default();
+    let responsible_department = bp_obj.get_first_literal("v-bpa:responsibleDepartment").unwrap_or_default();
+    let process_frequency = bp_obj.get_first_literal("v-bpa:processFrequency").unwrap_or_default();
+    let labor_costs = bp_obj.get_first_literal("v-bpa:laborCosts").unwrap_or_default();
+
+    let documents = collect_related_documents(module, bp_obj)?;
     let documents_value: serde_json::Value = serde_json::to_value(documents.clone()).expect("Failed to convert documents to JSON Value");
 
     let user_content = serde_json::json!({
@@ -60,7 +65,7 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
 
     let rt = Runtime::new()?;
     rt.block_on(async {
-        send_request_to_openai(module, chat_parameters, bp_individual).await?;
+        send_request_to_openai(module, chat_parameters, bp_obj).await?;
         Ok(())
     })
 }
@@ -172,7 +177,7 @@ async fn send_request_to_openai(
             info!("Parsed process justification from text: {:?}", process_justification);
 
             let justification_uri = process_justification.level.to_uri();
-            bp_individual.set_uri("v-bpa:justificationLevel", justification_uri);
+            bp_individual.set_uri("v-bpa:processRelevance", justification_uri);
 
             if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "BPA", "", IndvOp::Put, bp_individual) {
                 return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update BusinessProcess object, err={:?}", e)).into());
