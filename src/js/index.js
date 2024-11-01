@@ -4,10 +4,8 @@ import '../../node_modules/bootstrap/dist/js/bootstrap.min.js';
 import App from './App.js';
 import {Backend, Subscription} from 'veda-client';
 
-import ('./options.js').then(({default: options}) => {
-  Backend.init(options.base);
-  Subscription.init(options.ccus);
-  
-  const app = document.createElement(`${App}`);
-  document.body.appendChild(app);
-});
+Backend.init();
+Subscription.init();
+
+const app = document.createElement(`${App}`);
+document.body.appendChild(app);
