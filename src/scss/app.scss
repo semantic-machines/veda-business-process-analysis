@@ -15,12 +15,17 @@ $container-max-widths: (
 /******************************* Fonts ********************************/
 @font-face {
   font-family: 'calibri';
-  src: url('../fonts/calibri.woff2') format('woff2');
+  src: url('../fonts/calibri.woff2') format('woff2'),
+       url('../fonts/calibri.woff') format('woff'),
+       url('../fonts/calibri.otf') format('opentype'),
+       url('../fonts/calibri.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }
 
 /***************************** Html, body *****************************/
 html, body {
-  font-family: 'calibri', sans-serif;
+  font-family: 'calibri', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: #f2f2f2;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -31,7 +36,7 @@ html, body {
 /****************************** Headers *******************************/
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'calibri', sans-serif;
+  font-family: 'calibri', -apple-system, BlinkMacSystemFont, sans-serif; /* Добавляем системные шрифты macOS как fallback */
   font-weight: bold;
 }
 

@@ -29,6 +29,7 @@ const options = {
   external: ['./options.js'],
   loader: {
     '.otf': 'copy',
+    '.ttf': 'copy',
     '.woff': 'copy', 
     '.woff2': 'copy',
   },
