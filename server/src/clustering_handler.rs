@@ -6,12 +6,11 @@ use tokio::runtime::Runtime;
 use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
-
-use v_common::onto::datatype::Lang;
-use v_common::search::common::{FTQuery, QueryResult};
-
+use crate::common::extract_process_json;
 use crate::prompt_manager::get_system_prompt;
 use crate::queue_processor::BusinessProcessAnalysisModule;
+use v_common::onto::datatype::Lang;
+use v_common::search::common::{FTQuery, QueryResult};
 
 /// Анализирует бизнес-процессы и определяет кластеры схожих процессов
 pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
@@ -172,7 +171,7 @@ fn compare_processes(module: &mut BusinessProcessAnalysisModule, process1_id: &s
     process2.parse_all();
 
     // Подготавливаем данные для сравнения
-    let comparison_data = prepare_comparison_data(&mut process1, &mut process2)?;
+    let comparison_data = prepare_comparison_data(module, &mut process1, &mut process2)?;
     let system_prompt = get_system_prompt(module, "v-bpa:ClusterizeProcessesPrompt")?;
 
     let parameters = prepare_comparison_parameters(module.model.clone(), system_prompt, comparison_data)?;
@@ -185,24 +184,14 @@ fn compare_processes(module: &mut BusinessProcessAnalysisModule, process1_id: &s
 }
 
 /// Подготавливает данные о процессах для анализа AI
-fn prepare_comparison_data(process1: &mut Individual, process2: &mut Individual) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+fn prepare_comparison_data(
+    module: &mut BusinessProcessAnalysisModule,
+    process1: &mut Individual,
+    process2: &mut Individual,
+) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
     Ok(serde_json::json!({
-        "process1": {
-            "id": process1.get_id(),
-            "name": process1.get_literals("v-bpa:processName").unwrap_or_default().first().cloned().unwrap_or_default(),
-            "description": process1.get_literals("v-bpa:processDescription").unwrap_or_default().first().cloned().unwrap_or_default(),
-            "participants": process1.get_literals("v-bpa:processParticipant").unwrap_or_default().first().cloned().unwrap_or_default(),
-            "department": process1.get_literals("v-bpa:responsibleDepartment").unwrap_or_default().first().cloned().unwrap_or_default(),
-            "frequency": process1.get_literals("v-bpa:processFrequency").unwrap_or_default().first().cloned().unwrap_or_default(),
-        },
-        "process2": {
-            "id": process2.get_id(),
-            "name": process2.get_literals("v-bpa:processName").unwrap_or_default().first().cloned().unwrap_or_default(),
-            "description": process2.get_literals("v-bpa:processDescription").unwrap_or_default().first().cloned().unwrap_or_default(),
-            "participants": process2.get_literals("v-bpa:processParticipant").unwrap_or_default().first().cloned().unwrap_or_default(),
-            "department": process2.get_literals("v-bpa:responsibleDepartment").unwrap_or_default().first().cloned().unwrap_or_default(),
-            "frequency": process2.get_literals("v-bpa:processFrequency").unwrap_or_default().first().cloned().unwrap_or_default(),
-        }
+        "process1": extract_process_json(process1, module)?,
+        "process2": extract_process_json(process2, module)?
     }))
 }
 

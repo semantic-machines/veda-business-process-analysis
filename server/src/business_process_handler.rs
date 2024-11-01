@@ -1,15 +1,14 @@
 // business_process_handler.rs
 
-use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
-use serde_json;
-use tokio::runtime::Runtime;
-use v_common::onto::individual::Individual;
-use v_common::v_api::api_client::IndvOp;
-use v_common::v_api::obj::ResultCode;
-
+use crate::common::extract_process_json;
 use crate::prompt_manager::get_system_prompt;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::types::ProcessJustification;
+use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
+use serde_json::{self, Value};
+use tokio::runtime::Runtime;
+use v_common::onto::individual::Individual;
+use v_common::v_api::api_client::IndvOp;
 
 /// Анализирует обоснованность бизнес-процесса на основе связанных документов
 /// используя AI для оценки уровня обоснованности.
@@ -28,39 +27,16 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
     // Добавляем инструкцию вернуть ответ в формате JSON
     system_prompt.push_str("\nПожалуйста, верни ответ в формате JSON, соответствующий указанной схеме.");
 
-    // Извлекаем поля из объекта BusinessProcess
+    // Получаем полный JSON, включая документы
+    let process_json = extract_process_json(bp_obj, module)?;
 
-    let process_name = bp_obj
-        .get_first_literal("rdfs:label")
-        .or_else(|| bp_obj.get_first_literal("v-bpa:processName"))
-        .ok_or_else(|| format!("Отсутствует название процесса, src={}", bp_obj.get_obj().as_json()))?;
-    let process_description = bp_obj.get_first_literal("v-bpa:processDescription").unwrap_or_default();
-    let process_participants = bp_obj.get_first_literal("v-bpa:processParticipant").unwrap_or_default();
-    let responsible_department = bp_obj.get_first_literal("v-bpa:responsibleDepartment").unwrap_or_default();
-    let process_frequency = bp_obj.get_first_literal("v-bpa:processFrequency").unwrap_or_default();
-    let labor_costs = bp_obj.get_first_literal("v-bpa:laborCosts").unwrap_or_default();
-
-    let documents = collect_related_documents(module, bp_obj)?;
-    let documents_value: serde_json::Value = serde_json::to_value(documents.clone()).expect("Failed to convert documents to JSON Value");
-
-    let user_content = serde_json::json!({
-        "processName": process_name,
-        "processDescription": process_description,
-        "participants": process_participants,
-        "responsibleDepartment": responsible_department,
-        "frequency": process_frequency,
-        "laborCosts": labor_costs,
-        "justificationDocuments": documents_value
-    });
-
-    info!("Justification documents collected: {:?}", documents);
-    info!("Process Name: {}", process_name);
-    info!("Process Description: {}", process_description);
+    info!("Process Name: {}", process_json["processName"]);
+    info!("Process Description: {}", process_json["processDescription"]);
     info!("System Prompt: {}", system_prompt);
-    info!("User Content: {}", user_content);
+    info!("User Content: {}", process_json);
     info!("Using model: {}", module.model);
 
-    let chat_parameters = prepare_chat_parameters(module.model.clone(), system_prompt, user_content)?;
+    let chat_parameters = prepare_chat_parameters(module.model.clone(), system_prompt, process_json)?;
     debug!("Parameters prepared for OpenAI: {:?}", chat_parameters);
 
     let rt = Runtime::new()?;
@@ -68,34 +44,6 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
         send_request_to_openai(module, chat_parameters, bp_obj).await?;
         Ok(())
     })
-}
-
-/// Собирает связанные документы обоснования для бизнес-процесса
-///
-/// # Arguments
-/// * `module` - Модуль с доступом к хранилищу
-/// * `bp_individual` - Индивид бизнес-процесса
-///
-/// # Returns
-/// * `Result<Vec<serde_json::Value>, Box<dyn std::error::Error>>` - Список документов в JSON формате
-fn collect_related_documents(module: &mut BusinessProcessAnalysisModule, bp_individual: &Individual) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error>> {
-    let mut documents = Vec::new();
-
-    let justification_refs = bp_individual.get_literals_nm("v-bpa:processJustification").unwrap_or_default();
-    for ref_id in justification_refs {
-        let mut document = Individual::default();
-        if module.backend.storage.get_individual(&ref_id, &mut document) == ResultCode::Ok {
-            document.parse_all();
-            let document_json = serde_json::json!({
-                "name": document.get_first_literal("v-bpa:documentName").unwrap_or_default(),
-                "content": document.get_first_literal("v-bpa:documentContent").unwrap_or_default()
-            });
-            documents.push(document_json);
-        } else {
-            error!("Не удалось загрузить документ обоснования с ID: {}", ref_id);
-        }
-    }
-    Ok(documents)
 }
 
 /// Подготавливает параметры для запроса к чат-модели AI
@@ -110,7 +58,7 @@ fn collect_related_documents(module: &mut BusinessProcessAnalysisModule, bp_indi
 fn prepare_chat_parameters(
     model: String,
     system_prompt: String,
-    user_content: serde_json::Value,
+    user_content: Value,
 ) -> Result<openai_dive::v1::resources::chat::ChatCompletionParameters, Box<dyn std::error::Error>> {
     let json_schema = serde_json::json!({
         "type": "object",
