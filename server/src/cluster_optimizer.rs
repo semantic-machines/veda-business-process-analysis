@@ -209,7 +209,7 @@ fn save_optimization_result(module: &mut BusinessProcessAnalysisModule, cluster_
         error!("Failed to load cluster {}", cluster_id);
         return Err(format!("Failed to load cluster {}", cluster_id).into());
     }
-
+    cluster.parse_all();
     info!("Updating cluster {} with optimization results", cluster_id);
 
     // Обновляем данные кластера согласно онтологии
