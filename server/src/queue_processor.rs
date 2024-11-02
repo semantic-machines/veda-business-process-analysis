@@ -27,9 +27,6 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
 
     fn prepare(&mut self, queue_element: &mut Individual) -> Result<bool, PrepareError> {
         let source = queue_element.get_first_literal("src").unwrap_or_default();
-        if source == "BPA" {
-            return Ok(true);
-        }
 
         let cmd = IndvOp::from_i64(queue_element.get_first_integer("cmd").unwrap_or(IndvOp::None.to_i64()));
         if cmd == IndvOp::Remove || cmd == IndvOp::None {
@@ -49,8 +46,14 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
             return Ok(false);
         }
 
+        let counter = new_state.get_first_integer("v-s:updateCounter").unwrap_or(-1);
+
         // Обработка в зависимости от типа индивида
         if new_state.any_exists("rdf:type", &[&"v-bpa:BusinessProcess".to_string()]) {
+            if source == "BPA" {
+                return Ok(true);
+            }
+
             info!("Found a saved object of type 'v-bpa:BusinessProcess' with ID: {}", new_state.get_id());
 
             // Анализируем обоснованность бизнес-процесса
@@ -58,7 +61,10 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
                 error!("Error analyzing business process justification: {:?}", e);
             }
         } else if new_state.any_exists("rdf:type", &[&"v-bpa:ClusterizationAttempt".to_string()]) {
-            let counter = new_state.get_first_integer("v-s:updateCounter").unwrap_or(-1);
+            if source == "BPA" {
+                return Ok(true);
+            }
+
             info!("Found a saved object of type 'v-bpa:ClusterizationAttempt' with ID: {}:{}", new_state.get_id(), counter);
 
             // Выполняем шаг кластеризации
@@ -66,6 +72,10 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
                 error!("Error analyzing process clusters: {:?}", e);
             }
         } else if new_state.any_exists("rdf:type", &[&"v-bpa:ProcessCluster".to_string()]) {
+            if counter > 1 {
+                return Ok(true);
+            }
+
             info!("Found new process cluster: {}", new_state.get_id());
             if let Err(e) = analyze_and_optimize_cluster(self, new_state.get_id()) {
                 error!("Error analyze and_optimize cluster: {:?}", e);

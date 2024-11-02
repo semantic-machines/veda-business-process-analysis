@@ -100,6 +100,7 @@ fn prepare_optimization_parameters(
         "properties": {
             "optimized_process": {
                 "type": "object",
+                "additionalProperties": false,  // Добавлено это поле
                 "properties": {
                     "name": {
                         "type": "string",
@@ -136,8 +137,7 @@ fn prepare_optimization_parameters(
                     },
                     "aggregated_frequency": {
                         "type": "integer",
-                        "description": "Recommended execution frequency per year",
-                        "minimum": 0
+                        "description": "Recommended execution frequency per year"
                     }
                 },
                 "required": [
@@ -201,7 +201,6 @@ async fn send_optimization_request(
     }
 }
 
-/// Сохраняет результат оптимизации с учетом онтологии
 /// Сохраняет результат оптимизации с учетом онтологии
 fn save_optimization_result(module: &mut BusinessProcessAnalysisModule, cluster_id: &str, optimization: &OptimizedProcess) -> Result<(), Box<dyn std::error::Error>> {
     // Загружаем кластер для обновления

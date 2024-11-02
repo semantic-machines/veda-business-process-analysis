@@ -6,9 +6,10 @@
 @prefix v-ui: <http://semantic-machines.com/veda/veda-ui/> .
 @prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
 
-v-bpa:ClusterizationAttempt1
-    rdf:type v-bpa:ClusterizationAttempt ;
-.
+#v-bpa:ClusterizationAttempt1
+#   rdf:type v-bpa:ClusterizationAttempt ;
+#    rdfs:label "тест9"@ru ;
+#.
 
 # Класс для системных промптов
 v-bpa:SystemPrompt
@@ -43,7 +44,7 @@ v-bpa:AnalyzeBusinessPrompt
 .
 
 # Промпт для кластеризации бизнес-процессов
-v-bpa:ClusterizeProcessesPrompt
+v-bpa:ClusterizeProcessesPrompt0
   rdf:type v-bpa:SystemPrompt ;
   rdfs:label "Промпт для кластеризации бизнес-процессов"@ru ;
   rdfs:label "Prompt for Business Process Clustering"@en ;
@@ -53,5 +54,50 @@ v-bpa:ClusterizeProcessesPrompt
  • Функциональное пересечение: выполняют ли оба процесса схожие задачи или покрывают аналогичные этапы в рамках рабочего процесса?
  • Контекст подразделений: управляются или выполняются ли эти процессы в разных подразделениях с потенциальным дублированием функций?
 Если процессы достигают схожих целей и имеют пересечение в операциях, классифицируйте их как похожие. В противном случае классифицируйте их как не похожие. Верните результат как 'похожие' или 'не похожие', чтобы упростить дальнейшее принятие решений о необходимости объединения, разделения или передачи их на аутсорсинг.
+"""@ru ;
+.
+
+# Промпт для кластеризации бизнес-процессов
+v-bpa:ClusterizeProcessesPrompt
+  rdf:type v-bpa:SystemPrompt ;
+  rdfs:label "Промпт для кластеризации бизнес-процессов"@ru ;
+  rdfs:label "Prompt for Business Process Clustering"@en ;
+  v-bpa:promptText """
+Сравните два указанных бизнес-процесса, чтобы определить, являются ли они похожими или нет на основе их целей, функций и операционного пересечения. Оцените все предоставленные поля и атрибуты, сосредоточив внимание на следующих аспектах:
+
+- Совпадение целей: совпадают ли конечные результаты или цели каждого процесса?
+- Функциональное пересечение: выполняют ли оба процесса схожие задачи или покрывают аналогичные этапы в рамках рабочего процесса?
+- Контекст подразделений: управляются или выполняются ли эти процессы в разных подразделениях с потенциальным дублированием функций?
+
+Верните результат в формате JSON с единственным полем "are_similar":
+- true: если процессы достигают схожих целей и имеют пересечение в операциях
+- false: если процессы существенно различаются по целям или операциям
+
+Пример ответа:
+{
+  "are_similar": true
+}
+"""@ru ;
+.
+
+# Промпт для оптимизации кластера процессов
+v-bpa:OptimizeProcessesPrompt
+  rdf:type v-bpa:SystemPrompt ;
+  rdfs:label "Промпт для оптимизации кластера процессов"@ru ;
+  rdfs:label "Prompt for Process Cluster Optimization"@en ;
+  v-bpa:promptText """
+Analyze the following list of business processes to identify similarities and differences among them. Based on your analysis, recommend an optimized version of these processes.
+For each optimized process recommendation, include:
+ 1. Name: A title for the optimized process.
+ 2. Description: A summary describing how this optimized process combines or streamlines the related processes.
+ 3. Similarities: Common characteristics found in the processes.
+ 4. Differences: Key differences between the processes.
+ 5. Optimization Proposal: Detailed suggestion for process optimization.
+ 6. Proposed Participants: Ideal roles or individuals who should execute this optimized process.
+ 7. Estimated Effect: The expected outcome of the optimization.
+ 8. Responsible Department: The department that should be accountable for overseeing this process.
+ 9. Aggregated Frequency: Recommended number of executions per year.
+
+Return the result in the specified JSON format.
 """@ru ;
 .
