@@ -127,7 +127,7 @@ async fn send_request_to_openai(
             let justification_uri = process_justification.level.to_uri();
             bp_individual.set_uri("v-bpa:processRelevance", justification_uri);
 
-            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "BPA", "", IndvOp::Put, bp_individual) {
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, bp_individual) {
                 return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update BusinessProcess object, err={:?}", e)).into());
             }
         } else {
