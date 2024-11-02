@@ -86,17 +86,18 @@ v-bpa:OptimizeProcessesPrompt
   rdfs:label "Промпт для оптимизации кластера процессов"@ru ;
   rdfs:label "Prompt for Process Cluster Optimization"@en ;
   v-bpa:promptText """
-Analyze the following list of business processes to identify similarities and differences among them. Based on your analysis, recommend an optimized version of these processes.
-For each optimized process recommendation, include:
- 1. Name: A title for the optimized process.
- 2. Description: A summary describing how this optimized process combines or streamlines the related processes.
- 3. Similarities: Common characteristics found in the processes.
- 4. Differences: Key differences between the processes.
- 5. Optimization Proposal: Detailed suggestion for process optimization.
- 6. Proposed Participants: Ideal roles or individuals who should execute this optimized process.
- 7. Estimated Effect: The expected outcome of the optimization.
- 8. Responsible Department: The department that should be accountable for overseeing this process.
- 9. Aggregated Frequency: Recommended number of executions per year.
+Проанализируйте приведенный список бизнес-процессов, чтобы определить их сходства и различия. На основе вашего анализа предложите оптимизированную версию этих процессов.
+
+Для каждой оптимизированной версии процесса укажите:
+
+ 1. Название: Название оптимизированного процесса.
+ 2. optimizationProposal: Краткое описание того, как этот оптимизированный процесс объединяет или упрощает исходные процессы.
+ 3. Рекомендуемая частота: Предложенная частота выполнения данного процесса (в год) для максимизации эффективности.
+ 4. Предлагаемые участники: Идеальные роли или лица, которые должны выполнять оптимизированный процесс.
+ 5. Эффект: Основная цель или результат оптимизированного процесса.
+ 6. Ответственный отдел: Отдел, который должен отвечать за выполнение данного процесса.
+
+Предоставьте четкие объяснения сходств и различий между исходными процессами и подробно опишите, как была выведена каждая рекомендация.
 
 Return the result in the specified JSON format.
 """@ru ;

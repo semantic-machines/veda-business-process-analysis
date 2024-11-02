@@ -15,7 +15,7 @@ use v_common::v_api::obj::ResultCode;
 struct OptimizedProcess {
     name: String,
     description: String,
-    estimated_effect: String,
+    estimated_effect: i32, // Изменено с String на i32
     proposed_participants: Vec<String>,
     similarities: String,
     differences: String,
@@ -100,7 +100,7 @@ fn prepare_optimization_parameters(
         "properties": {
             "optimized_process": {
                 "type": "object",
-                "additionalProperties": false,  // Добавлено это поле
+                "additionalProperties": false,
                 "properties": {
                     "name": {
                         "type": "string",
@@ -111,8 +111,8 @@ fn prepare_optimization_parameters(
                         "description": "Detailed description of the optimized process"
                     },
                     "estimated_effect": {
-                        "type": "string",
-                        "description": "Expected effect from the optimization"
+                        "type": "integer",  // Изменено с string на integer
+                        "description": "Expected effect from the optimization in percentage"
                     },
                     "proposed_participants": {
                         "type": "array",
@@ -218,7 +218,7 @@ fn save_optimization_result(module: &mut BusinessProcessAnalysisModule, cluster_
     cluster.set_string("v-bpa:optimizationProposal", &optimization.optimization_proposal, Lang::none());
     cluster.set_string("v-bpa:clusterResponsibleDepartment", &optimization.responsible_department, Lang::none());
     cluster.set_integer("v-bpa:aggregatedFrequency", optimization.aggregated_frequency as i64);
-    cluster.set_string("v-bpa:estimatedOptimizationEffect", &optimization.estimated_effect, Lang::none());
+    cluster.set_integer("v-bpa:estimatedOptimizationEffect", optimization.estimated_effect as i64);
 
     // Очищаем и добавляем новых предлагаемых участников
     cluster.remove("v-bpa:proposedParticipants");

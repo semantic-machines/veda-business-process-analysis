@@ -196,7 +196,7 @@ v-bpa:estimatedOptimizationEffect
   rdfs:label "Ожидаемый эффект оптимизации"@ru ;
   rdfs:label "Estimated optimization effect"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
-  rdfs:range xsd:string ;
+  rdfs:range xsd:integer ;
 .
 
 # Clusterization Analysis

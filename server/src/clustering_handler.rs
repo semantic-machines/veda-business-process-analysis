@@ -184,7 +184,7 @@ fn compare_next_pair(
         // Сохраняем похожую пару
         let pair = format!("{},{}", processes[state.x], processes[state.y]);
         clustering_attempt.add_string("v-bpa:similarPairs", &pair, Lang::none());
-        info!("Recorded similar pair: {}", pair);
+        //info!("Recorded similar pair: {}", pair);
     }
 
     // Вычисляем и сохраняем следующую пару
