@@ -14,6 +14,7 @@ use v_common::storage::common::StorageMode;
 
 mod business_process_handler;
 mod clustering_handler;
+mod common;
 mod prompt_manager;
 mod queue_processor;
 mod types;

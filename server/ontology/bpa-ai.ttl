@@ -6,6 +6,10 @@
 @prefix v-ui: <http://semantic-machines.com/veda/veda-ui/> .
 @prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
 
+v-bpa:ClusterizationAttempt1
+    rdf:type v-bpa:ClusterizationAttempt ;
+.
+
 # Класс для системных промптов
 v-bpa:SystemPrompt
   rdf:type owl:Class ;
@@ -18,7 +22,7 @@ v-bpa:promptText
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Текст промпта"@ru ;
   rdfs:label "Prompt Text"@en ;
-  rdfs:domain v-bp:SystemPrompt ;
+  rdfs:domain v-bpa:SystemPrompt ;
   rdfs:range xsd:string ;
 .
 
