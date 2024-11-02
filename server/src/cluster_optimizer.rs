@@ -10,18 +10,17 @@ use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
-/// Структура для оптимизированного процесса с учетом онтологии
+/// Структура для оптимизированного процесса в соответствии с промптом
 #[derive(Debug, Serialize, Deserialize)]
 struct OptimizedProcess {
     name: String,
-    description: String,
-    estimated_effect: i32, // Изменено с String на i32
+    optimization_proposal: String,
+    recommended_frequency: i32,
     proposed_participants: Vec<String>,
+    estimated_optimization_effect: i32,
+    responsible_department: String,
     similarities: String,
     differences: String,
-    optimization_proposal: String,
-    responsible_department: String,
-    aggregated_frequency: i32,
 }
 
 /// Анализирует кластер процессов и предлагает оптимизацию
@@ -89,7 +88,7 @@ fn prepare_optimization_data(processes: &[serde_json::Value]) -> Result<serde_js
     }))
 }
 
-/// Подготавливает параметры запроса для оптимизации с учетом схемы онтологии
+/// Подготавливает параметры запроса для оптимизации
 fn prepare_optimization_parameters(
     model: String,
     system_prompt: String,
@@ -104,52 +103,47 @@ fn prepare_optimization_parameters(
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "Name of the optimized process"
+                        "description": "Название оптимизированного процесса"
                     },
-                    "description": {
+                    "optimization_proposal": {
                         "type": "string",
-                        "description": "Detailed description of the optimized process"
+                        "description": "Краткое описание того, как этот оптимизированный процесс объединяет или упрощает исходные процессы"
                     },
-                    "estimated_effect": {
-                        "type": "integer",  // Изменено с string на integer
-                        "description": "Expected effect from the optimization in percentage"
+                    "recommended_frequency": {
+                        "type": "integer",
+                        "description": "Предложенная частота выполнения процесса (в год)"
                     },
                     "proposed_participants": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "List of roles that should participate in the process"
+                        "description": "Идеальные роли или лица, которые должны выполнять процесс"
                     },
-                    "similarities": {
-                        "type": "string",
-                        "description": "Common characteristics found in the processes"
-                    },
-                    "differences": {
-                        "type": "string",
-                        "description": "Key differences between the processes"
-                    },
-                    "optimization_proposal": {
-                        "type": "string",
-                        "description": "Detailed proposal for process optimization"
+                    "estimated_optimization_effect": {
+                        "type": "integer",
+                        "description": "Предполагаемые затраты времени на процесс (в часах)"
                     },
                     "responsible_department": {
                         "type": "string",
-                        "description": "Department responsible for the optimized process"
+                        "description": "Отдел, который должен отвечать за выполнение процесса"
                     },
-                    "aggregated_frequency": {
-                        "type": "integer",
-                        "description": "Recommended execution frequency per year"
+                    "similarities": {
+                        "type": "string",
+                        "description": "Сходства между исходными процессами"
+                    },
+                    "differences": {
+                        "type": "string",
+                        "description": "Различия между исходными процессами"
                     }
                 },
                 "required": [
                     "name",
-                    "description",
-                    "estimated_effect",
-                    "proposed_participants",
-                    "similarities",
-                    "differences",
                     "optimization_proposal",
+                    "recommended_frequency",
+                    "proposed_participants",
+                    "estimated_optimization_effect",
                     "responsible_department",
-                    "aggregated_frequency"
+                    "similarities",
+                    "differences"
                 ]
             }
         },
@@ -201,9 +195,8 @@ async fn send_optimization_request(
     }
 }
 
-/// Сохраняет результат оптимизации с учетом онтологии
+/// Сохраняет результат оптимизации
 fn save_optimization_result(module: &mut BusinessProcessAnalysisModule, cluster_id: &str, optimization: &OptimizedProcess) -> Result<(), Box<dyn std::error::Error>> {
-    // Загружаем кластер для обновления
     let mut cluster = Individual::default();
     if module.backend.storage.get_individual(cluster_id, &mut cluster) != ResultCode::Ok {
         error!("Failed to load cluster {}", cluster_id);
@@ -212,15 +205,16 @@ fn save_optimization_result(module: &mut BusinessProcessAnalysisModule, cluster_
     cluster.parse_all();
     info!("Updating cluster {} with optimization results", cluster_id);
 
-    // Обновляем данные кластера согласно онтологии
+    // Обновляем данные кластера согласно онтологии и промпту
+    cluster.set_string("v-bpa:proposedClusterName", &optimization.name, Lang::none());
+    cluster.set_string("v-bpa:optimizationProposal", &optimization.optimization_proposal, Lang::none());
     cluster.set_string("v-bpa:clusterSimilarities", &optimization.similarities, Lang::none());
     cluster.set_string("v-bpa:clusterDifferences", &optimization.differences, Lang::none());
-    cluster.set_string("v-bpa:optimizationProposal", &optimization.optimization_proposal, Lang::none());
-    cluster.set_string("v-bpa:clusterResponsibleDepartment", &optimization.responsible_department, Lang::none());
-    cluster.set_integer("v-bpa:aggregatedFrequency", optimization.aggregated_frequency as i64);
-    cluster.set_integer("v-bpa:estimatedOptimizationEffect", optimization.estimated_effect as i64);
+    cluster.set_string("v-bpa:proposedDepartment", &optimization.responsible_department, Lang::none());
+    cluster.set_integer("v-bpa:proposedFrequency", optimization.recommended_frequency as i64);
+    cluster.set_integer("v-bpa:estimatedLaborCost", optimization.estimated_optimization_effect as i64);
 
-    // Очищаем и добавляем новых предлагаемых участников
+    // Очищаем и добавляем предлагаемых участников
     cluster.remove("v-bpa:proposedParticipants");
     for participant in &optimization.proposed_participants {
         cluster.add_string("v-bpa:proposedParticipants", participant, Lang::none());
