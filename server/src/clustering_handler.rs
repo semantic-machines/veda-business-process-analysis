@@ -35,27 +35,25 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
 
     loop {
         // Получаем актуальный статус на каждой итерации
-        let status = clustering_attempt.get_literals("v-bpa:clusterizationStatus")
-            .and_then(|s| s.first().cloned())
-            .unwrap_or_default();
+        let status = clustering_attempt.get_literals("v-bpa:clusterizationStatus").and_then(|s| s.first().cloned()).unwrap_or_default();
 
         match status.as_str() {
             "" => {
                 info!("Starting new clustering attempt: {}", clustering_attempt.get_id());
                 initialize_clustering(module, clustering_attempt)?;
                 // Инициализируем начальное состояние
-                comparison_state = Some(ComparisonState { x: 0, y: 1 });
+                comparison_state = Some(ComparisonState {
+                    x: 0,
+                    y: 1,
+                });
             },
             "v-bpa:ComparingPairs" => {
                 // Если состояние еще не инициализировано, берем его из базы
                 if comparison_state.is_none() {
-                    let current_pair = clustering_attempt.get_literals("v-bpa:currentPairIndex")
-                        .and_then(|pairs| pairs.first().cloned())
-                        .ok_or("No current pair index found")?;
+                    let current_pair =
+                        clustering_attempt.get_literals("v-bpa:currentPairIndex").and_then(|pairs| pairs.first().cloned()).ok_or("No current pair index found")?;
 
-                    let indices: Vec<usize> = current_pair.split(',')
-                        .map(|s| s.parse::<usize>())
-                        .collect::<Result<Vec<_>, _>>()?;
+                    let indices: Vec<usize> = current_pair.split(',').map(|s| s.parse::<usize>()).collect::<Result<Vec<_>, _>>()?;
 
                     comparison_state = Some(ComparisonState {
                         x: indices[0],
@@ -162,8 +160,7 @@ fn compare_next_pair(
     clustering_attempt: &mut Individual,
     state: &mut ComparisonState,
 ) -> Result<ComparisonResult, Box<dyn std::error::Error>> {
-    let processes = clustering_attempt.get_literals("v-bpa:processesToAnalyze")
-        .ok_or("No processes to analyze found")?;
+    let processes = clustering_attempt.get_literals("v-bpa:processesToAnalyze").ok_or("No processes to analyze found")?;
 
     if state.x >= processes.len() || state.y >= processes.len() {
         info!("All process pairs have been compared");
@@ -176,7 +173,11 @@ fn compare_next_pair(
         "Comparison result for processes {} and {}: {}",
         processes[state.x],
         processes[state.y],
-        if is_similar { "similar" } else { "different" }
+        if is_similar {
+            "similar"
+        } else {
+            "different"
+        }
     );
 
     if is_similar {
@@ -197,11 +198,7 @@ fn compare_next_pair(
 
     // Сохраняем состояние в базу только если нашли похожие процессы или изменился x
     if is_similar || state.x != old_x {
-        clustering_attempt.set_string(
-            "v-bpa:currentPairIndex",
-            &format!("{},{}", state.x, state.y),
-            Lang::none(),
-        );
+        clustering_attempt.set_string("v-bpa:currentPairIndex", &format!("{},{}", state.x, state.y), Lang::none());
         update_individual(module, clustering_attempt)?;
     }
 

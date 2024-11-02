@@ -1,6 +1,7 @@
 // queue_processor.rs
 
 use crate::business_process_handler::analyze_process_justification;
+use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
 use openai_dive::v1::api::Client;
 use v_common::ft_xapian::xapian_reader::XapianReader;
@@ -63,6 +64,11 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
             // Выполняем шаг кластеризации
             if let Err(e) = analyze_process_clusters(self, &mut new_state) {
                 error!("Error analyzing process clusters: {:?}", e);
+            }
+        } else if new_state.any_exists("rdf:type", &[&"v-bpa:ProcessCluster".to_string()]) {
+            info!("Found new process cluster: {}", new_state.get_id());
+            if let Err(e) = analyze_and_optimize_cluster(self, new_state.get_id()) {
+                error!("Error analyze and_optimize cluster: {:?}", e);
             }
         }
 

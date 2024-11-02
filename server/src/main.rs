@@ -13,6 +13,7 @@ use v_common::module::veda_backend::Backend;
 use v_common::storage::common::StorageMode;
 
 mod business_process_handler;
+mod cluster_optimizer;
 mod clustering_handler;
 mod common;
 mod prompt_manager;
