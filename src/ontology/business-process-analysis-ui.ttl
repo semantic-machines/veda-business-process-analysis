@@ -27,10 +27,28 @@ v-bpa:BusinessProcesses
   rdfs:label "Business processes"@en ;
 .
 
+v-bpa:ProcessClusters 
+  rdf:type rdfs:Resource ;
+  rdfs:label "Кластеры процессов"@ru ;
+  rdfs:label "Process clusters"@en ;
+.
+
+v-bpa:Clustered
+  rdf:type rdfs:Resource ;
+  rdfs:label "Кластеризовано"@ru ;
+  rdfs:label "Clustered"@en ;
+.
+
 v-bpa:ShowClusters
   rdf:type rdfs:Resource ;
-  rdfs:label "Показать кластеры"@ru ;
-  rdfs:label "Show clusters"@en ;
+  rdfs:label "Кластеры"@ru ;
+  rdfs:label "Clusters"@en ;
+.
+
+v-bpa:ShowProcesses
+  rdf:type rdfs:Resource ;
+  rdfs:label "Процессы"@ru ;
+  rdfs:label "Processes"@en ;
 .
 
 v-bpa:TimesPerYear
@@ -49,4 +67,10 @@ v-bpa:TotalTimeEffort
   rdf:type rdfs:Resource ;
   rdfs:label "Общие затраты времени"@ru ;
   rdfs:label "Total time effort"@en ;
+.
+
+v-bpa:PoorlyJustified
+  rdf:type rdfs:Resource ;
+  rdfs:label "Плохо обоснованных"@ru ;
+  rdfs:label "Poorly justified"@en ;
 .

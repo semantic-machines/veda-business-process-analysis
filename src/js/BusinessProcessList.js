@@ -16,25 +16,31 @@ export default class BusinessProcessList extends Component(HTMLElement) {
     }
     this.processes = queryResult;
   }
-    
+
   async render() {
     return html`
       <div class="sheet">
         <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h3 about="v-bpa:BusinessProcesses" property="rdfs:label"></h3>
+          <div class="pe-2">
+            <h3 about="v-bpa:BusinessProcesses" property="rdfs:label" class="mb-1"></h3>
+            <h5 class="mb-0">
+              <span about="v-bpa:PoorlyJustified" property="rdfs:label"></span>&nbsp;
+              <span class="badge bg-danger">${this.processes.reduce((acc, [,,relevance]) => acc + (relevance === 'v-bpa:NotJustified' ? 1 : 0), 0)}</span>
+            </h5>
           </div>
-          <div class="text-end"> 
+          <div class="text-end ps-2"> 
             <strong about="v-bpa:TotalTimeEffort" property="rdfs:label"></strong>
-            <p class="text-muted mb-0">
+            <p class="text-muted mb-0 mt-1">
               ${this.processes.reduce((acc, [,processTime]) => acc + processTime, 0)}&nbsp;<span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
             </p>
           </div>
         </div>
         <hr>
-        ${this.processes.map(([processId]) => html`
-          <${BusinessProcessCard} about=${processId}></${BusinessProcessCard}>
-        `).join('')}
+        <div class="d-flex flex-column gap-3">
+          ${this.processes.map(([processId]) => html`
+            <${BusinessProcessCard} about=${processId}></${BusinessProcessCard}>
+          `).join('')}
+        </div>
       </div>
     `;
   }
