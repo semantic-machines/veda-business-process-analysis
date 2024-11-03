@@ -1,6 +1,6 @@
 import {Component, html} from 'veda-client';
 
-export default class BusinessProcessCard extends Component(HTMLElement) {
+export default class ProcessCard extends Component(HTMLElement) {
   static tag = 'bpa-process-card';
 
   async render() {
@@ -14,7 +14,7 @@ export default class BusinessProcessCard extends Component(HTMLElement) {
           border: 1px solid #e9e9e9;
         }
       </style>
-      <a href="#/BusinessProcessView/${this.model.id}" style="text-decoration: none;">
+      <a href="#/ProcessView/${this.model.id}" style="text-decoration: none;">
         <div class="business-process-card card">
           <div class="card-body position-relative">
             <span class="position-absolute top-0 end-0 m-2">
@@ -49,4 +49,4 @@ export default class BusinessProcessCard extends Component(HTMLElement) {
   }
 }
 
-customElements.define(BusinessProcessCard.tag, BusinessProcessCard);
+customElements.define(ProcessCard.tag, ProcessCard);

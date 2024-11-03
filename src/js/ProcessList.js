@@ -1,9 +1,9 @@
 import {Component, html, Backend, Model} from 'veda-client';
-import BusinessProcessCard from './BusinessProcessCard.js';
+import ProcessCard from './ProcessCard.js';
 
 let queryResult;
 
-export default class BusinessProcessList extends Component(HTMLElement) {
+export default class ProcessList extends Component(HTMLElement) {
   static tag = 'bpa-process-list';
 
   async added() {
@@ -38,7 +38,7 @@ export default class BusinessProcessList extends Component(HTMLElement) {
         <hr>
         <div class="d-flex flex-column gap-3">
           ${this.processes.map(([processId]) => html`
-            <${BusinessProcessCard} about=${processId}></${BusinessProcessCard}>
+            <${ProcessCard} about=${processId}></${ProcessCard}>
           `).join('')}
         </div>
       </div>
@@ -46,4 +46,4 @@ export default class BusinessProcessList extends Component(HTMLElement) {
   }
 }
 
-customElements.define(BusinessProcessList.tag, BusinessProcessList);
+customElements.define(ProcessList.tag, ProcessList);

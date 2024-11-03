@@ -1,15 +1,15 @@
 import {Component, html, timeout} from 'veda-client';
-import BusinessProcessList from './BusinessProcessList.js';
+import ProcessList from './ProcessList.js';
 import ClusterList from './ClusterList.js';
 
-export default class BusinessProcessOverview extends Component(HTMLElement) {
+export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
 
-  showClusters = sessionStorage.getItem('showClusters') === 'true';
+  showClusters = sessionStorage.getItem('ProcessOverview_showClusters') === 'true';
 
   toggleView() {
     this.showClusters = !this.showClusters;
-    sessionStorage.setItem('showClusters', this.showClusters);
+    sessionStorage.setItem('ProcessOverview_showClusters', this.showClusters);
     this.update();
   }
 
@@ -35,10 +35,10 @@ export default class BusinessProcessOverview extends Component(HTMLElement) {
       </div>
       ${this.showClusters ? 
         html`<${ClusterList}></${ClusterList}>` :
-        html`<${BusinessProcessList}></${BusinessProcessList}>`
+        html`<${ProcessList}></${ProcessList}>`
       }
     `;
   }
 }
 
-customElements.define(BusinessProcessOverview.tag, BusinessProcessOverview);
+customElements.define(ProcessOverview.tag, ProcessOverview);

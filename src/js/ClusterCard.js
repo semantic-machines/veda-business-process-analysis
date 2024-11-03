@@ -1,5 +1,5 @@
 import {Component, html} from 'veda-client';
-import BusinessProcessCard from './BusinessProcessCard.js';
+import ProcessCard from './ProcessCard.js';
 
 export default class ClusterCard extends Component(HTMLElement) {
   static tag = 'bpa-cluster-card';
@@ -74,7 +74,7 @@ export default class ClusterCard extends Component(HTMLElement) {
             ${this.expanded 
               ? html`
                 <div rel="v-bpa:hasProcess" class="ms-4 mt-3 d-flex flex-column gap-3">
-                  <${BusinessProcessCard} about={{this.model.id}}></${BusinessProcessCard}>
+                  <${ProcessCard} about={{this.model.id}}></${ProcessCard}>
                 </div>`
               : ''}
           </div>
