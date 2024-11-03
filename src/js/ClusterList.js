@@ -1,10 +1,10 @@
 import {Component, html, Backend, Model} from 'veda-client';
-import ProcessCluster from './ProcessCluster.js';
+import ClusterCard from './ClusterCard.js';
 
 let queryResult;
 
-export default class ProcessClusterList extends Component(HTMLElement) {
-  static tag = 'bpa-process-cluster-list';
+export default class ClusterList extends Component(HTMLElement) {
+  static tag = 'bpa-cluster-list';
 
   async added() {
     if (!queryResult) {
@@ -22,22 +22,26 @@ export default class ProcessClusterList extends Component(HTMLElement) {
       <div class="sheet">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <h3 about="v-bpa:BusinessProcesses" property="rdfs:label"></h3>
+            <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
+            <h5 class="mb-0">
+              <span about="v-bpa:Clustered" property="rdfs:label"></span>&nbsp;
+              <span class="badge bg-danger">${this.clusters.reduce((acc, [,,clustered]) => acc + clustered, 0)}</span>
+            </h5>
           </div>
           <div class="text-end"> 
             <strong about="v-bpa:TotalTimeEffort" property="rdfs:label"></strong>
-            <p class="text-muted mb-0">
+            <p class="text-muted mb-0 mt-1">
               ${this.clusters.reduce((acc, [,totalTime]) => acc + totalTime, 0)}&nbsp;<span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
             </p>
           </div>
         </div>
         <hr>
         ${this.clusters.map(([clusterId, totalTime]) => html`
-          <${ProcessCluster} about=${clusterId} data-total-time=${totalTime}></${ProcessCluster}>
+          <${ClusterCard} about=${clusterId} data-total-time=${totalTime}></${ClusterCard}>
         `).join('')}
       </div>
     `;
   }
 }
 
-customElements.define(ProcessClusterList.tag, ProcessClusterList);
+customElements.define(ClusterList.tag, ClusterList);

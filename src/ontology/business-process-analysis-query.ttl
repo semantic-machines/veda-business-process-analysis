@@ -24,7 +24,8 @@ v-bpa:AllBusinessProcesses
   v-s:queryString """
     SELECT 
       id,
-      v_bpa_processFrequency_int[1] * v_bpa_laborCosts_dec[1] as total_time
+      v_bpa_processFrequency_int[1] * v_bpa_laborCosts_dec[1] as total_time,
+      v_bpa_processRelevance_str[1] as relevance
     FROM veda_tt."v-bpa:BusinessProcess" FINAL
 """ ;
 .
@@ -39,7 +40,8 @@ v-bpa:AllProcessClusters
   v-s:queryString """
     SELECT 
       c.id,
-      sum(p.v_bpa_processFrequency_int[1] * p.v_bpa_laborCosts_dec[1]) as total_time
+      sum(p.v_bpa_processFrequency_int[1] * p.v_bpa_laborCosts_dec[1]) as total_time,
+      count(p.id) as clustered
     FROM veda_tt."v-bpa:ProcessCluster" c FINAL
     ARRAY JOIN v_bpa_hasProcess_str as process_id
     LEFT JOIN veda_tt."v-bpa:BusinessProcess" p FINAL
