@@ -143,13 +143,6 @@ v-bpa:hasProcess
   rdfs:range v-bpa:BusinessProcess ;
 .
 
-v-bpa:clusterResponsibleDepartment
-  rdf:type owl:DatatypeProperty ;
-  rdfs:label "Ответственный департамент за кластер"@ru ;
-  rdfs:label "Cluster responsible department"@en ;
-  rdfs:domain v-bpa:ProcessCluster ;
-  rdfs:range xsd:string ;
-.
 
 v-bpa:clusterSimilarities
   rdf:type owl:DatatypeProperty ;
@@ -167,18 +160,34 @@ v-bpa:clusterDifferences
   rdfs:range xsd:string ;
 .
 
-v-bpa:optimizationProposal
+v-bpa:proposedClusterName
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Предложения по оптимизации процесса"@ru ;
-  rdfs:label "Process optimization proposal"@en ;
+  rdfs:label "Предлагаемое название кластера"@ru ;
+  rdfs:label "Proposed cluster name"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
 
-v-bpa:aggregatedFrequency
+v-bpa:proposedClusterDescription
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Суммарная частота выполнения"@ru ;
-  rdfs:label "Aggregated execution frequency"@en ;
+  rdfs:label "Предлагаемое описание кластера"@ru ;
+  rdfs:label "Proposed cluster description"@en ;
+  rdfs:domain v-bpa:ProcessCluster ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:proposedDepartment
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Предлагаемый департамент"@ru ;
+  rdfs:label "Proposed department"@en ;
+  rdfs:domain v-bpa:ProcessCluster ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:proposedFrequency
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Предлагаемая частота выполнения"@ru ;
+  rdfs:label "Proposed execution frequency"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:integer ;
 .
@@ -191,12 +200,12 @@ v-bpa:proposedParticipants
   rdfs:range xsd:string ;
 .
 
-v-bpa:estimatedOptimizationEffect
+v-bpa:estimatedLaborCost
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Ожидаемый эффект оптимизации"@ru ;
-  rdfs:label "Estimated optimization effect"@en ;
+  rdfs:label "Ожидаемые трудозатраты"@ru ;
+  rdfs:label "Estimated labor cost"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
-  rdfs:range xsd:string ;
+  rdfs:range xsd:integer ;
 .
 
 # Clusterization Analysis

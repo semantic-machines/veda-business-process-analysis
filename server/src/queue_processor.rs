@@ -1,6 +1,7 @@
 // queue_processor.rs
 
 use crate::business_process_handler::analyze_process_justification;
+use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
 use openai_dive::v1::api::Client;
 use v_common::ft_xapian::xapian_reader::XapianReader;
@@ -25,19 +26,10 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
     }
 
     fn prepare(&mut self, queue_element: &mut Individual) -> Result<bool, PrepareError> {
-        // Парсим элемент очереди
-        if let Err(e) = parse_raw(queue_element) {
-            error!("Failed to parse queue element: {:?}", e);
-            return Ok(false);
-        }
+        let source = queue_element.get_first_literal("src").unwrap_or_default();
 
         let cmd = IndvOp::from_i64(queue_element.get_first_integer("cmd").unwrap_or(IndvOp::None.to_i64()));
         if cmd == IndvOp::Remove || cmd == IndvOp::None {
-            return Ok(true);
-        }
-
-        let event_id = queue_element.get_first_literal("event_id").unwrap_or_default();
-        if event_id == "BPA" {
             return Ok(true);
         }
 
@@ -54,8 +46,14 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
             return Ok(false);
         }
 
+        let counter = new_state.get_first_integer("v-s:updateCounter").unwrap_or(-1);
+
         // Обработка в зависимости от типа индивида
         if new_state.any_exists("rdf:type", &[&"v-bpa:BusinessProcess".to_string()]) {
+            if source == "BPA" {
+                return Ok(true);
+            }
+
             info!("Found a saved object of type 'v-bpa:BusinessProcess' with ID: {}", new_state.get_id());
 
             // Анализируем обоснованность бизнес-процесса
@@ -63,11 +61,24 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
                 error!("Error analyzing business process justification: {:?}", e);
             }
         } else if new_state.any_exists("rdf:type", &[&"v-bpa:ClusterizationAttempt".to_string()]) {
-            info!("Found a saved object of type 'v-bpa:ClusterizationAttempt' with ID: {}", new_state.get_id());
+            if source == "BPA" {
+                return Ok(true);
+            }
+
+            info!("Found a saved object of type 'v-bpa:ClusterizationAttempt' with ID: {}:{}", new_state.get_id(), counter);
 
             // Выполняем шаг кластеризации
             if let Err(e) = analyze_process_clusters(self, &mut new_state) {
                 error!("Error analyzing process clusters: {:?}", e);
+            }
+        } else if new_state.any_exists("rdf:type", &[&"v-bpa:ProcessCluster".to_string()]) {
+            if counter > 1 {
+                return Ok(true);
+            }
+
+            info!("Found new process cluster: {}", new_state.get_id());
+            if let Err(e) = analyze_and_optimize_cluster(self, new_state.get_id()) {
+                error!("Error analyze and_optimize cluster: {:?}", e);
             }
         }
 
