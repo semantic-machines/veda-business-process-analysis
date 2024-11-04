@@ -48,8 +48,8 @@ v-bpa:responsibleDepartment
 
 v-bpa:processFrequency
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Частота выполнения (в год)"@ru ;
-  rdfs:label "Execution frequency (per year)"@en ;
+  rdfs:label "Частота выполнения"@ru ;
+  rdfs:label "Execution frequency"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:integer ;
 .
@@ -57,8 +57,8 @@ v-bpa:processFrequency
 
 v-bpa:laborCosts
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Трудозатраты (человеко-часов)"@ru ;
-  rdfs:label "Labor costs (person-hours)"@en ;
+  rdfs:label "Трудозатраты"@ru ;
+  rdfs:label "Labor costs"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:decimal ;
 .

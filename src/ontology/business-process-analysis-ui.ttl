@@ -63,6 +63,12 @@ v-bpa:HoursPerYear
   rdfs:label "hours per year"@en ;
 .
 
+v-bpa:Hours
+  rdf:type rdfs:Resource ;
+  rdfs:label "часов"@ru ;
+  rdfs:label "hours"@en ;
+.
+
 v-bpa:TotalTimeEffort
   rdf:type rdfs:Resource ;
   rdfs:label "Общие затраты времени"@ru ;

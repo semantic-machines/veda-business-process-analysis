@@ -56,7 +56,7 @@ export default class ProcessEdit extends Component(HTMLElement) {
               <label class="form-label fw-bold" about="v-bpa:laborCosts" property="rdfs:label"></label>
               <div class="input-group">
                 <input type="number" is="${InputDecimal}" class="form-control" about="${this.model.id}" data-property="v-bpa:laborCosts">
-                <span class="input-group-text" about="v-bpa:HoursPerYear" property="rdfs:label"></span>
+                <span class="input-group-text" about="v-bpa:Hours" property="rdfs:label"></span>
               </div>
             </div>
           </div>
