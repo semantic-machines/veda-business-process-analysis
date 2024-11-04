@@ -74,8 +74,8 @@ v-bpa:processJustification
 v-bpa:ProcessDocument
   rdf:type owl:Class ;
   rdfs:subClassOf v-s:UserThing ;
-  rdfs:label "Документ описания процесса"@ru ;
-  rdfs:label "Process description document"@en ;
+  rdfs:label "Документ процесса"@ru ;
+  rdfs:label "Process document"@en ;
 .
 
 v-bpa:documentName

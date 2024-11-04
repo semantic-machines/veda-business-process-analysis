@@ -33,9 +33,9 @@ export default class ProcessOverview extends Component(HTMLElement) {
           : html`<button class="btn text-dark"><i class="bi bi-plus"></i>&nbsp;<span about="v-bpa:AddProcess" property="rdfs:label"></span></button>`
         }
       </div>
-      ${this.showClusters ? 
-        html`<${ClusterList}></${ClusterList}>` :
-        html`<${ProcessList}></${ProcessList}>`
+      ${this.showClusters 
+        ? html`<${ClusterList}></${ClusterList}>` 
+        : html`<${ProcessList}></${ProcessList}>`
       }
     `;
   }

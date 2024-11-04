@@ -1,7 +1,20 @@
-import {Component, html} from 'veda-client';
+import {Model, Backend, Component, html} from 'veda-client';
 
 export default class ProcessView extends Component(HTMLElement) {
   static tag = 'bpa-process-view';
+
+  edit() {
+    location.hash = `#/ProcessEdit/${this.model.id}`;
+  }
+  
+  async added() {
+    const params = new Model; 
+    params['rdf:type'] = 'v-s:QueryParams';
+    params['v-s:storedQuery'] = 'v-bpa:ProcessInClusters';
+    params['v-bpa:hasProcess'] = this.model.id;
+    const {id: clusters} = await Backend.stored_query(params);
+    this.clusters = clusters;
+  }
   
   render() {
     return html`
@@ -22,11 +35,17 @@ export default class ProcessView extends Component(HTMLElement) {
               </span>
             </h3>
           </div>
-          <div class="card text-bg-light border-0 bg-secondary-subtle">
-            <div class="card-body p-2">
-              <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
-              <h4 class="mb-0">Исследование рынка</h4>
-            </div>
+          <div class="d-flex gap-2">
+            ${this.clusters.map((id) => html`
+              <a href="#/ClusterView/${id}" style="text-decoration: none;">
+                <div class="card text-bg-light border-0 bg-secondary-subtle">
+                  <div class="card-body p-2">
+                    <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
+                    <h4 class="mb-0" about="${id}" property="rdfs:label"></h4>
+                  </div>
+                </div>
+              </a>
+            `)}
           </div>
         </div>
         <hr>
@@ -47,7 +66,7 @@ export default class ProcessView extends Component(HTMLElement) {
 
             <p class="mb-0 text-muted" about="v-bpa:laborCosts" property="rdfs:label"></p>
             <p class="fw-bold mb-0">
-              <span>${this.model['v-bpa:laborCosts'][0] * this.model['v-bpa:processFrequency'][0]}</span>&nbsp;
+              <span>${(this.model['v-bpa:laborCosts'][0] * this.model['v-bpa:processFrequency'][0]).toFixed(2)}</span>&nbsp;
               <span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
             </p>
           </div>
@@ -57,6 +76,12 @@ export default class ProcessView extends Component(HTMLElement) {
           </div>
         </div>
       </div>
+      <div class="sheet">
+        <h4 about="v-bpa:ProcessDocument" property="rdfs:label"></h4>
+      </div>
+      <button @click="edit" class="btn btn-primary mb-3">
+        <span about="v-bpa:Edit" property="rdfs:label"></span>
+      </button>
     `;
   }
 }

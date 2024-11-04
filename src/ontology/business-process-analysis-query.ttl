@@ -49,3 +49,21 @@ v-bpa:AllProcessClusters
     GROUP BY c.id
 """ ;
 .
+
+v-bpa:ProcessInClusters
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Бизнес-процессы в кластерах"@ru ;
+  rdfs:label "Query: Business processes in clusters"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "cols" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT 
+      c.id as id
+    FROM veda_tt."v-bpa:ProcessCluster" c FINAL
+    ARRAY JOIN v_bpa_hasProcess_str as process_id
+    LEFT JOIN veda_tt."v-bpa:BusinessProcess" p FINAL
+    ON process_id = p.id
+    WHERE process_id = '{v-bpa:hasProcess}'
+""" ;
+.

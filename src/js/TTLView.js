@@ -2,9 +2,30 @@ import {Component, html} from 'veda-client';
 
 export default class TTLView extends Component(HTMLElement) {
   static tag = 'bpa-ttl-view';
-  
+
+  format = sessionStorage.getItem('TTLView_format') === 'ttl' ? 'ttl' : 'json';
+
+  toggleFormat() {
+    this.format = this.format === 'ttl' ? 'json' : 'ttl';
+    sessionStorage.setItem('TTLView_format', this.format);
+    this.update();
+  }
+
+
   render() {
     return html`
+      <div class="nav nav-underline mb-2 ms-3" role="group">
+        <button type="button" 
+          class="nav-link ${this.format === 'ttl' ? 'active disabled' : 'text-secondary'}" 
+          @click="toggleFormat">
+          TTL
+        </button>
+        <button type="button"
+          class="nav-link ${this.format === 'json' ? 'active disabled' : 'text-secondary'}"
+          @click="toggleFormat">
+          JSON
+        </button>
+      </div>
       <div class="sheet">
         <pre class="m-0"><code></code></pre>
       </div>
@@ -12,7 +33,9 @@ export default class TTLView extends Component(HTMLElement) {
   }
   
   post() {
-    this.querySelector('code').innerHTML = `${toTurtle(this.model)}`;
+    this.querySelector('code').innerHTML = this.format === 'ttl' ? 
+      `${toTurtle(this.model)}` :
+      `${toJSON(this.model)}`;
   }
 }
 
@@ -64,6 +87,13 @@ document.addEventListener('keyup', (event) => {
     });
   }
 });
+
+function toJSON(model) {
+  return JSON.stringify(model, null, 2)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
 function toTurtle(model) {
   return Object.entries(model).map(([predicate, objects]) => {

@@ -86,3 +86,21 @@ v-bpa:UpdateClusters
   rdfs:label "Обновить кластеры"@ru ;
   rdfs:label "Update clusters"@en ;
 .
+
+v-bpa:Edit
+  rdf:type rdfs:Resource ;
+  rdfs:label "Редактировать"@ru ;
+  rdfs:label "Edit"@en ;
+.
+
+v-bpa:Save
+  rdf:type rdfs:Resource ;
+  rdfs:label "Сохранить"@ru ;
+  rdfs:label "Save"@en ;
+.
+
+v-bpa:Cancel
+  rdf:type rdfs:Resource ;
+  rdfs:label "Отменить"@ru ;
+  rdfs:label "Cancel"@en ;
+.

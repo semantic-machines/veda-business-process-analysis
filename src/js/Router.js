@@ -3,6 +3,7 @@ import ProcessOverview from './ProcessOverview.js';
 import ProcessList from './ProcessList.js';
 import ClusterList from './ClusterList.js';
 import ProcessView from './ProcessView.js';
+import ProcessEdit from './ProcessEdit.js';
 import ClusterView from './ClusterView.js';
 import TTLView from './TTLView.js';
 
@@ -18,6 +19,11 @@ export default class Router extends Component(HTMLElement) {
     this.router.add('#/ProcessOverview', () => this.replaceChildren(document.createElement(`${ProcessOverview}`)));
     this.router.add('#/ProcessView/:id', (id) => {
       const component = document.createElement(`${ProcessView}`);
+      component.model = new Model(id);
+      this.replaceChildren(component);
+    });
+    this.router.add('#/ProcessEdit/:id', (id) => {
+      const component = document.createElement(`${ProcessEdit}`);
       component.model = new Model(id);
       this.replaceChildren(component);
     });
