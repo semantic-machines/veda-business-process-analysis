@@ -1,11 +1,4 @@
 import {Model, Component, Router as VedaRouter} from 'veda-client';
-import ProcessOverview from './ProcessOverview.js';
-import ProcessList from './ProcessList.js';
-import ClusterList from './ClusterList.js';
-import ProcessView from './ProcessView.js';
-import ProcessEdit from './ProcessEdit.js';
-import ClusterView from './ClusterView.js';
-import TTLView from './TTLView.js';
 
 export default class Router extends Component(HTMLElement) {
   static tag = 'bpa-router';
@@ -14,26 +7,15 @@ export default class Router extends Component(HTMLElement) {
 
   pre() {
     this.router.add('/', () => this.router.go('#/ProcessOverview'));
-    this.router.add('#/ProcessList', () => this.replaceChildren(document.createElement(`${ProcessList}`)));
-    this.router.add('#/ClusterList', () => this.replaceChildren(document.createElement(`${ClusterList}`)));
-    this.router.add('#/ProcessOverview', () => this.replaceChildren(document.createElement(`${ProcessOverview}`)));
-    this.router.add('#/ProcessView/:id', (id) => {
-      const component = document.createElement(`${ProcessView}`);
-      component.model = new Model(id);
-      this.replaceChildren(component);
+
+    this.router.add('#/:component', async (component) => {
+      component = await import(`./${component}.js`);
+      this.replaceChildren(document.createElement(`${component.default}`));
     });
-    this.router.add('#/ProcessEdit/:id', (id) => {
-      const component = document.createElement(`${ProcessEdit}`);
-      component.model = new Model(id);
-      this.replaceChildren(component);
-    });
-    this.router.add('#/ClusterView/:id', (id) => {
-      const component = document.createElement(`${ClusterView}`);
-      component.model = new Model(id);
-      this.replaceChildren(component);
-    });
-    this.router.add('#/TTLView/:id', (id) => {
-      const component = document.createElement(`${TTLView}`);
+
+    this.router.add('#/:component/:id', async (component, id) => {
+      component = await import(`./${component}.js`);
+      component = document.createElement(`${component.default}`);
       component.model = new Model(id);
       this.replaceChildren(component);
     });
