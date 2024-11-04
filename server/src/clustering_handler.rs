@@ -92,6 +92,29 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
     Ok(())
 }
 
+/// Вычисляет прогресс кластеризации и оставшееся время
+fn calculate_clustering_metrics(state: &ComparisonState, total_processes: usize) -> (i64, i64) {
+    // Вычисляем общее количество пар для сравнения
+    let total_pairs = (total_processes * (total_processes - 1)) / 2;
+
+    // Вычисляем количество уже сравненных пар
+    let mut completed_pairs = 0;
+    for x in 0..state.x {
+        completed_pairs += total_processes - (x + 1);
+    }
+    completed_pairs += state.y - state.x - 1;
+
+    // Вычисляем прогресс в процентах
+    let progress = ((completed_pairs as f64 / total_pairs as f64) * 100.0) as i64;
+
+    // Оцениваем оставшееся время (считаем, что одно сравнение занимает примерно 5 секунд)
+    let seconds_per_comparison = 5;
+    let remaining_pairs = total_pairs - completed_pairs;
+    let estimated_time = (remaining_pairs * seconds_per_comparison) as i64;
+
+    (progress, estimated_time)
+}
+
 /// Находит все бизнес-процессы в системе
 fn find_all_business_processes(module: &mut BusinessProcessAnalysisModule) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     info!("Starting business process search");
@@ -148,6 +171,10 @@ fn initialize_clustering(module: &mut BusinessProcessAnalysisModule, clustering_
     clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:ComparingPairs");
     clustering_attempt.remove("v-bpa:similarPairs");
 
+    // Инициализируем начальные значения прогресса и времени
+    clustering_attempt.set_integer("v-bpa:clusterizationProgress", 0);
+    clustering_attempt.set_integer("v-bpa:estimatedTime", ((process_len * (process_len - 1)) / 2 * 5) as i64);
+
     update_individual(module, clustering_attempt)?;
     info!("Successfully initialized clustering attempt {} with {} processes", clustering_attempt.get_id(), process_len);
 
@@ -198,7 +225,16 @@ fn compare_next_pair(
 
     // Сохраняем состояние в базу только если нашли похожие процессы или изменился x
     if is_similar || state.x != old_x {
+        // Вычисляем метрики кластеризации
+        let (progress, estimated_time) = calculate_clustering_metrics(state, processes.len());
+
+        // Обновляем все поля
         clustering_attempt.set_string("v-bpa:currentPairIndex", &format!("{},{}", state.x, state.y), Lang::none());
+        clustering_attempt.set_integer("v-bpa:clusterizationProgress", progress);
+        clustering_attempt.set_integer("v-bpa:estimatedTime", estimated_time);
+
+        info!("Updating clustering metrics - Progress: {:.1}%, Estimated time remaining: {} seconds", progress, estimated_time);
+
         update_individual(module, clustering_attempt)?;
     }
 
