@@ -12,8 +12,8 @@ export default class ProcessView extends Component(HTMLElement) {
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:ProcessInClusters';
     params['v-bpa:hasProcess'] = this.model.id;
-    const {id: clusters} = await Backend.stored_query(params);
-    this.clusters = clusters;
+    const {id: [cluster]} = await Backend.stored_query(params);
+    this.cluster = cluster;
   }
   
   render() {
@@ -36,16 +36,17 @@ export default class ProcessView extends Component(HTMLElement) {
             </h3>
           </div>
           <div class="d-flex gap-2">
-            ${this.clusters.map((id) => html`
-              <a href="#/ClusterView/${id}" style="text-decoration: none;">
-                <div class="card text-bg-light border-0 bg-secondary-subtle">
-                  <div class="card-body p-2">
-                    <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
-                    <h4 class="mb-0" about="${id}" property="rdfs:label"></h4>
+            ${this.cluster 
+              ? html`
+                <a href="#/ClusterView/${this.cluster}" style="text-decoration: none;">
+                  <div class="card text-bg-light border-0 bg-secondary-subtle">
+                    <div class="card-body p-2">
+                      <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
+                      <h4 class="mb-0" about="${this.cluster}" property="rdfs:label"></h4>
+                    </div>
                   </div>
-                </div>
-              </a>
-            `)}
+                </a>`
+              : ''}
           </div>
         </div>
         <hr>
