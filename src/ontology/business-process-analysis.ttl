@@ -231,3 +231,88 @@ v-bpa:endDate
   rdfs:domain v-bpa:ClusterizationAttempt ;
   rdfs:range xsd:dateTime ;
 .
+
+# Прогресс кластеризации и оставшееся время
+v-bpa:clusterizationProgress
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Прогресс кластеризации"@ru ;
+  rdfs:label "Clusterization progress"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:decimal ;
+.
+
+v-bpa:estimatedTime
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Оставшееся время (в секундах)"@ru ;
+  rdfs:label "Estimated time remaining (seconds)"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:integer ;
+.
+
+# Дополнительные предикаты используемые в коде
+v-bpa:clusterizationStatus
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Статус кластеризации"@ru ;
+  rdfs:label "Clusterization status"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:currentPairIndex
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Индекс текущей пары"@ru ;
+  rdfs:label "Current pair index"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:processesToAnalyze
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Процессы для анализа"@ru ;
+  rdfs:label "Processes to analyze"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range v-bpa:BusinessProcess ;
+.
+
+v-bpa:similarPairs
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Похожие пары процессов"@ru ;
+  rdfs:label "Similar process pairs"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:foundClusters
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Найденные кластеры"@ru ;
+  rdfs:label "Found clusters"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range v-bpa:ProcessCluster ;
+.
+
+v-bpa:lastError
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Последняя ошибка"@ru ;
+  rdfs:label "Last error"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:string ;
+.
+
+# Статусы кластеризации (используются как URI)
+v-bpa:ComparingPairs
+  rdf:type owl:Class ;
+  rdfs:label "Сравнение пар"@ru ;
+  rdfs:label "Comparing pairs"@en ;
+.
+
+v-bpa:PairsCompared
+  rdf:type owl:Class ;
+  rdfs:label "Пары сравнены"@ru ;
+  rdfs:label "Pairs compared"@en ;
+.
+
+v-bpa:Completed
+  rdf:type owl:Class ;
+  rdfs:label "Завершено"@ru ;
+  rdfs:label "Completed"@en ;
+.
