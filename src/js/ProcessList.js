@@ -20,7 +20,7 @@ export default class ProcessList extends Component(HTMLElement) {
   async render() {
     return html`
       <div class="sheet">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center mb-4">
           <div class="d-flex justify-content-start align-items-center">
             <div class="me-3 fs-1">
               <i class="bi bi-diagram-3"></i>
@@ -42,7 +42,6 @@ export default class ProcessList extends Component(HTMLElement) {
             </p>
           </div>
         </div>
-        <hr>
         <div class="d-flex flex-column gap-3">
           ${this.processes.map(([processId]) => html`
             <${ProcessCard} about=${processId}></${ProcessCard}>

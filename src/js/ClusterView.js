@@ -26,7 +26,7 @@ export default class ClusterView extends Component(HTMLElement) {
             <p class="fw-bold" property="v-bpa:proposedClusterDescription"></p>
 
             <p class="mb-0 text-muted" about="v-bpa:proposedDepartment" property="rdfs:label"></p>
-            <p class="fs-6 badge bg-secondary" property="v-bpa:proposedClusterDescription"></p>
+            <p class="fs-6 badge bg-secondary" property="v-bpa:proposedDepartment"></p>
 
             <p class="mb-0 text-muted" about="v-bpa:proposedFrequency" property="rdfs:label"></p>
             <p class="fs-6 badge text-bg-light border border-secondary text-muted">
@@ -36,9 +36,12 @@ export default class ClusterView extends Component(HTMLElement) {
             </p>
 
             <p class="mb-0 text-muted" about="v-bpa:estimatedLaborCost" property="rdfs:label"></p>
-            <p class="fw-bold" property="v-bpa:estimatedLaborCost"></p>
+            <p class="fw-bold">
+              <span property="v-bpa:estimatedLaborCost"></span>&nbsp;
+              <span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
+            </p>
           </div>
-          <div class="col-12 col-md-3 border-start border-secondary-subtle">
+          <div class="col-12 col-md-3 border-start border-secondary border-opacity-25">
             <p class="mb-0 text-muted" about="v-bpa:proposedParticipants" property="rdfs:label"></p>
             <p class="fw-bold" property="v-bpa:proposedParticipants"></p>
           </div>

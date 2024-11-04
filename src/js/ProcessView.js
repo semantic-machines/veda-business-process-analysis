@@ -75,7 +75,7 @@ export default class ProcessView extends Component(HTMLElement) {
               <span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
             </p>
           </div>
-          <div class="col-12 col-md-3 border-start border-secondary-subtle">
+          <div class="col-12 col-md-3 border-start border-secondary border-opacity-25">
             <p class="mb-0 text-muted" about="v-bpa:processParticipant" property="rdfs:label"></p>
             <p class="fw-bold" property="v-bpa:processParticipant"></p>
           </div>
