@@ -7,10 +7,13 @@ export default class ClusterView extends Component(HTMLElement) {
   render() {
     return html`
       <div class="sheet">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center">
           <div>
             <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
-            <h3 property="rdfs:label"></h3>
+            <h3 class="mb-0">
+              <i class="bi bi-collection me-2"></i>
+              <span property="rdfs:label"></span> 
+            </h3>
           </div>
         </div>
         <hr>

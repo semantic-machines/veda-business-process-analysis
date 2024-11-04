@@ -21,12 +21,19 @@ export default class ProcessList extends Component(HTMLElement) {
     return html`
       <div class="sheet">
         <div class="d-flex justify-content-between align-items-center">
-          <div class="pe-2">
-            <h3 about="v-bpa:BusinessProcesses" property="rdfs:label" class="mb-1"></h3>
-            <h5 class="mb-0">
-              <span about="v-bpa:PoorlyJustified" property="rdfs:label"></span>&nbsp;
-              <span class="badge bg-danger">${this.processes.reduce((acc, [,,relevance]) => acc + (relevance === 'v-bpa:NotJustified' ? 1 : 0), 0)}</span>
-            </h5>
+          <div class="d-flex justify-content-start align-items-center">
+            <div class="me-3 fs-1">
+              <i class="bi bi-diagram-3"></i>
+            </div>
+            <div>
+              <h3 class="mb-1">
+                <span about="v-bpa:BusinessProcesses" property="rdfs:label"></span>
+              </h3>
+              <h5 class="mb-0">
+                <span about="v-bpa:PoorlyJustified" property="rdfs:label"></span>&nbsp;
+                <span class="badge bg-danger">${this.processes.reduce((acc, [,,relevance]) => acc + (relevance === 'v-bpa:NotJustified' ? 1 : 0), 0)}</span>
+              </h5>
+            </div>
           </div>
           <div class="text-end ps-2"> 
             <strong about="v-bpa:TotalTimeEffort" property="rdfs:label"></strong>

@@ -21,12 +21,17 @@ export default class ClusterList extends Component(HTMLElement) {
     return html`
       <div class="sheet">
         <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
-            <h5 class="mb-0">
-              <span about="v-bpa:Clustered" property="rdfs:label"></span>&nbsp;
-              <span class="badge bg-success">${this.clusters.reduce((acc, [,,clustered]) => acc + clustered, 0)}</span>
-            </h5>
+          <div class="d-flex justify-content-start align-items-center">
+            <div class="me-3 fs-1">
+              <i class="bi bi-collection"></i>
+            </div>
+            <div>
+              <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
+              <h5 class="mb-0">
+                <span about="v-bpa:Clustered" property="rdfs:label"></span>&nbsp;
+                <span class="badge bg-success">${this.clusters.reduce((acc, [,,clustered]) => acc + clustered, 0)}</span>
+              </h5>
+            </div>
           </div>
           <div class="text-end"> 
             <strong about="v-bpa:TotalTimeEffort" property="rdfs:label"></strong>

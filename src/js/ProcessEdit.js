@@ -23,7 +23,10 @@ export default class ProcessEdit extends Component(HTMLElement) {
   render() {
     return html`
       <div class="sheet">
-        <h3 about="v-bpa:BusinessProcess" property="rdfs:label"></h3>
+        <h3 class="mb-1">
+          <i class="bi bi-diagram-3 me-2"></i>
+          <span about="v-bpa:BusinessProcess" property="rdfs:label"></span>
+        </h3>
         <div class="row">
           <div class="col-12 col-md-9">
             <div class="mb-3">

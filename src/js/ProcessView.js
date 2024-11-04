@@ -23,6 +23,7 @@ export default class ProcessView extends Component(HTMLElement) {
           <div>
             <p class="mb-0 text-muted" about="v-bpa:BusinessProcess" property="rdfs:label"></p>
             <h3>
+              <i class="bi bi-diagram-3 me-2"></i>  
               <span property="rdfs:label"></span>&nbsp;
               <span rel="v-bpa:processRelevance">
               ${this.model['v-bpa:processRelevance'][0].id === 'v-bpa:CompletelyJustified' ? html`
@@ -39,10 +40,13 @@ export default class ProcessView extends Component(HTMLElement) {
             ${this.cluster 
               ? html`
                 <a href="#/ClusterView/${this.cluster}" style="text-decoration: none;">
-                  <div class="card text-bg-light border-0 bg-secondary-subtle">
+                  <div class="card border-0 bg-success p-1 text-dark bg-opacity-10">
                     <div class="card-body p-2">
                       <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
-                      <h4 class="mb-0" about="${this.cluster}" property="rdfs:label"></h4>
+                      <h5 class="mb-0" >
+                        <i class="bi bi-collection me-2"></i>
+                        <span about="${this.cluster}" property="rdfs:label"></span>
+                      </h5>
                     </div>
                   </div>
                 </a>`
