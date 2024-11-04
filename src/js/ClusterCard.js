@@ -60,10 +60,10 @@ export default class ClusterCard extends Component(HTMLElement) {
             </div>
             <div class="mt-2 d-flex justify-content-between align-items-center">
               <div>
-                <span class="badge text-bg-secondary border border-secondary me-2" property="v-bpa:clusterResponsibleDepartment"></span>
+                <span class="badge text-bg-secondary border border-secondary me-2" property="v-bpa:proposedDepartment"></span>
                 <span class="badge text-bg-light border border-secondary text-muted">
                   <i class="bi bi-arrow-repeat me-1"></i>
-                  <span property="v-bpa:aggregatedFrequency"></span>
+                  <span property="v-bpa:proposedFrequency"></span>
                   &nbsp;<span about="v-bpa:TimesPerYear" property="rdfs:label"></span>
                 </span>
               </div>
