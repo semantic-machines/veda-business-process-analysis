@@ -35,8 +35,8 @@ v-bpa:ProcessClusters
 
 v-bpa:Clustered
   rdf:type rdfs:Resource ;
-  rdfs:label "Кластеризовано"@ru ;
-  rdfs:label "Clustered"@en ;
+  rdfs:label "Кластеризовано процессов"@ru ;
+  rdfs:label "Clustered processes"@en ;
 .
 
 v-bpa:ShowClusters

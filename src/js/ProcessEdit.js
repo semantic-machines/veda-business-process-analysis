@@ -12,8 +12,12 @@ export default class ProcessEdit extends Component(HTMLElement) {
   }
 
   cancel() {
-    this.model.reset();
-    location.hash = `#/ProcessView/${this.model.id}`;
+    if (this.model.isNew()) {
+      history.back();
+    } else {
+      this.model.reset();
+      location.hash = `#/ProcessView/${this.model.id}`;
+    }
   }
   
   render() {

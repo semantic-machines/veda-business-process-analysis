@@ -25,7 +25,7 @@ export default class ClusterList extends Component(HTMLElement) {
             <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
             <h5 class="mb-0">
               <span about="v-bpa:Clustered" property="rdfs:label"></span>&nbsp;
-              <span class="badge bg-danger">${this.clusters.reduce((acc, [,,clustered]) => acc + clustered, 0)}</span>
+              <span class="badge bg-success">${this.clusters.reduce((acc, [,,clustered]) => acc + clustered, 0)}</span>
             </h5>
           </div>
           <div class="text-end"> 

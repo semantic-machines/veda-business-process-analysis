@@ -8,9 +8,9 @@ export default class InputText extends Component(HTMLInputElement) {
   pre() {
     const getFilteredValue = (model, property) => {
       return model[property]
-        .filter(str => !str.includes('^^') || str.toLowerCase().endsWith('^^' + document.documentElement.lang.toLowerCase()))
+        ?.filter(str => !str.includes('^^') || str.toLowerCase().endsWith('^^' + document.documentElement.lang.toLowerCase()))
         .map(str => str.split('^^')[0])
-        .join(' ');
+        .join(' ') ?? '';
     };
     this.value = getFilteredValue(this.model, this.property);
     this.onkeyup = () => {

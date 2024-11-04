@@ -1,4 +1,4 @@
-import {Component, html, timeout} from 'veda-client';
+import {Component, html, Model} from 'veda-client';
 import ProcessList from './ProcessList.js';
 import ClusterList from './ClusterList.js';
 
@@ -11,6 +11,17 @@ export default class ProcessOverview extends Component(HTMLElement) {
     this.showClusters = !this.showClusters;
     sessionStorage.setItem('ProcessOverview_showClusters', this.showClusters);
     this.update();
+  }
+
+
+  async updateClusters() {
+    alert('updateClusters');
+  }
+
+  async addProcess() {
+    const newProcess = new Model();
+    newProcess['rdf:type'] = 'v-bpa:BusinessProcess';
+    location.hash = `#/ProcessEdit/${newProcess.id}`;
   }
 
   render() {
@@ -29,8 +40,8 @@ export default class ProcessOverview extends Component(HTMLElement) {
           </li>
         </ul>
         ${this.showClusters 
-          ? html`<button class="btn text-dark"><i class="bi bi-arrow-repeat"></i>&nbsp;<span about="v-bpa:UpdateClusters" property="rdfs:label"></span></button>`
-          : html`<button class="btn text-dark"><i class="bi bi-plus"></i>&nbsp;<span about="v-bpa:AddProcess" property="rdfs:label"></span></button>`
+          ? html`<button class="btn text-dark" @click="updateClusters"><i class="bi bi-arrow-repeat"></i>&nbsp;<span about="v-bpa:UpdateClusters" property="rdfs:label"></span></button>`
+          : html`<button class="btn text-dark" @click="addProcess"><i class="bi bi-plus"></i>&nbsp;<span about="v-bpa:AddProcess" property="rdfs:label"></span></button>`
         }
       </div>
       ${this.showClusters 

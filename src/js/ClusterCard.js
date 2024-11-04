@@ -39,7 +39,7 @@ export default class ClusterCard extends Component(HTMLElement) {
       </style>
       <div class="d-flex align-items-stretch">
         <div class="toggle-expand d-flex flex-column justify-content-center align-items-center px-2" style="cursor: pointer;" @click="toggleExpanded">
-          <span class="badge text-bg-info mb-1">
+          <span class="badge bg-success-subtle text-dark mb-1">
             ${this.model['v-bpa:hasProcess']?.length ?? 0}
           </span>
           <i class="bi bi-chevron-${this.expanded ? 'up' : 'down'}"></i>

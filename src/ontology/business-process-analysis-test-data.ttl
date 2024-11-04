@@ -119,37 +119,43 @@ td:HRProcessCluster
   rdfs:label "HR processes cluster"@en ;
   v-bpa:hasProcess td:VacationRequestProcess ;
   v-bpa:hasProcess td:NewEmployeeOnboardingProcess ;
-  v-bpa:clusterResponsibleDepartment "Отдел кадров"@ru ;
-  v-bpa:clusterResponsibleDepartment "HR Department"@en ;
   v-bpa:clusterSimilarities "Работа с персоналом, документооборот"@ru ;
   v-bpa:clusterSimilarities "HR work, document flow"@en ;
-  v-bpa:optimizationProposal "Автоматизация согласования, электронный документооборот"@ru ;
-  v-bpa:optimizationProposal "Approval automation, electronic document flow"@en ;
-  v-bpa:aggregatedFrequency 600 ;
+  v-bpa:clusterDifferences "Разные типы документов и процессов согласования"@ru ;
+  v-bpa:clusterDifferences "Different types of documents and approval processes"@en ;
+  v-bpa:proposedClusterName "Управление персоналом"@ru ;
+  v-bpa:proposedClusterName "HR Management"@en ;
+  v-bpa:proposedClusterDescription "Процессы по работе с сотрудниками и кадровому документообороту"@ru ;
+  v-bpa:proposedClusterDescription "Processes for employee management and HR documentation"@en ;
+  v-bpa:proposedDepartment "Отдел кадров"@ru ;
+  v-bpa:proposedDepartment "HR Department"@en ;
+  v-bpa:proposedFrequency 600 ;
   v-bpa:proposedParticipants "HR специалист, Система электронного документооборота"@ru ;
   v-bpa:proposedParticipants "HR specialist, Electronic document management system"@en ;
-  v-bpa:estimatedOptimizationEffect "Сокращение времени обработки на 40%"@ru ;
-  v-bpa:estimatedOptimizationEffect "Processing time reduction by 40%"@en ;
+  v-bpa:estimatedLaborCost 240 ;
 .
 
-# Кластер финансовых процессов
+# Кластер финансовых процессов  
 td:FinanceProcessCluster
   rdf:type v-bpa:ProcessCluster ;
   rdfs:label "Кластер финансовых процессов"@ru ;
   rdfs:label "Finance processes cluster"@en ;
   v-bpa:hasProcess td:FinancialReportingProcess ;
   v-bpa:hasProcess td:PaymentProcessingProcess ;
-  v-bpa:clusterResponsibleDepartment "Финансовый отдел"@ru ;
-  v-bpa:clusterResponsibleDepartment "Finance Department"@en ;
   v-bpa:clusterSimilarities "Финансовые операции, отчетность"@ru ;
   v-bpa:clusterSimilarities "Financial operations, reporting"@en ;
-  v-bpa:optimizationProposal "Внедрение автоматизированной системы учета"@ru ;
-  v-bpa:optimizationProposal "Implementation of automated accounting system"@en ;
-  v-bpa:aggregatedFrequency 262 ;
+  v-bpa:clusterDifferences "Разные типы финансовых операций и отчетов"@ru ;
+  v-bpa:clusterDifferences "Different types of financial operations and reports"@en ;
+  v-bpa:proposedClusterName "Финансовые процессы"@ru ;
+  v-bpa:proposedClusterName "Financial Processes"@en ;
+  v-bpa:proposedClusterDescription "Процессы по финансовому учету и отчетности"@ru ;
+  v-bpa:proposedClusterDescription "Financial accounting and reporting processes"@en ;
+  v-bpa:proposedDepartment "Финансовый отдел"@ru ;
+  v-bpa:proposedDepartment "Finance Department"@en ;
+  v-bpa:proposedFrequency 262 ;
   v-bpa:proposedParticipants "Финансовый аналитик, Автоматизированная система учета"@ru ;
   v-bpa:proposedParticipants "Financial analyst, Automated accounting system"@en ;
-  v-bpa:estimatedOptimizationEffect "Повышение точности на 30%, сокращение времени на 25%"@ru ;
-  v-bpa:estimatedOptimizationEffect "Accuracy increase by 30%, time reduction by 25%"@en ;
+  v-bpa:estimatedLaborCost 180 ;
 .
 
 # Кластер административных процессов
@@ -159,15 +165,18 @@ td:AdminProcessCluster
   rdfs:label "Administrative processes cluster"@en ;
   v-bpa:hasProcess td:OfficeSuppliesPurchaseProcess ;
   v-bpa:hasProcess td:ITSupportProcess ;
-  v-bpa:clusterResponsibleDepartment "Административный отдел"@ru ;
-  v-bpa:clusterResponsibleDepartment "Administrative Department"@en ;
   v-bpa:clusterSimilarities "Обеспечение работы офиса, поддержка инфраструктуры"@ru ;
   v-bpa:clusterSimilarities "Office operations, infrastructure support"@en ;
-  v-bpa:optimizationProposal "Внедрение системы автоматизированных заявок"@ru ;
-  v-bpa:optimizationProposal "Implementation of automated request system"@en ;
-  v-bpa:aggregatedFrequency 1012 ;
+  v-bpa:clusterDifferences "Разные типы обеспечивающих процессов"@ru ;
+  v-bpa:clusterDifferences "Different types of support processes"@en ;
+  v-bpa:proposedClusterName "Административная поддержка"@ru ;
+  v-bpa:proposedClusterName "Administrative Support"@en ;
+  v-bpa:proposedClusterDescription "Процессы по обеспечению работы офиса и поддержке пользователей"@ru ;
+  v-bpa:proposedClusterDescription "Office operations and user support processes"@en ;
+  v-bpa:proposedDepartment "Административный отдел"@ru ;
+  v-bpa:proposedDepartment "Administrative Department"@en ;
+  v-bpa:proposedFrequency 1012 ;
   v-bpa:proposedParticipants "Офис-менеджер, IT специалист, Система заявок"@ru ;
   v-bpa:proposedParticipants "Office manager, IT specialist, Request system"@en ;
-  v-bpa:estimatedOptimizationEffect "Сокращение времени обработки заявок на 50%"@ru ;
-  v-bpa:estimatedOptimizationEffect "Request processing time reduction by 50%"@en ;
+  v-bpa:estimatedLaborCost 120 ;
 .
