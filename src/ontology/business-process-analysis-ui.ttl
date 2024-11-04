@@ -74,3 +74,15 @@ v-bpa:PoorlyJustified
   rdfs:label "Плохо обоснованных"@ru ;
   rdfs:label "Poorly justified"@en ;
 .
+
+v-bpa:AddProcess
+  rdf:type rdfs:Resource ;
+  rdfs:label "Добавить"@ru ;
+  rdfs:label "Add"@en ;
+.
+
+v-bpa:UpdateClusters
+  rdf:type rdfs:Resource ;
+  rdfs:label "Обновить кластеры"@ru ;
+  rdfs:label "Update clusters"@en ;
+.

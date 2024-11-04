@@ -29,8 +29,8 @@ export default class ProcessOverview extends Component(HTMLElement) {
           </li>
         </ul>
         ${this.showClusters 
-          ? html`<button class="btn text-dark"><i class="bi bi-arrow-repeat"></i> Обновить кластеры</button>`
-          : html`<button class="btn text-dark"><i class="bi bi-plus"></i> Добавить</button>`
+          ? html`<button class="btn text-dark"><i class="bi bi-arrow-repeat"></i>&nbsp;<span about="v-bpa:UpdateClusters" property="rdfs:label"></span></button>`
+          : html`<button class="btn text-dark"><i class="bi bi-plus"></i>&nbsp;<span about="v-bpa:AddProcess" property="rdfs:label"></span></button>`
         }
       </div>
       ${this.showClusters ? 

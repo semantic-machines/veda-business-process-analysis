@@ -4,6 +4,7 @@ import ProcessList from './ProcessList.js';
 import ClusterList from './ClusterList.js';
 import ProcessView from './ProcessView.js';
 import ClusterView from './ClusterView.js';
+import TTLView from './TTLView.js';
 
 export default class Router extends Component(HTMLElement) {
   static tag = 'bpa-router';
@@ -22,6 +23,11 @@ export default class Router extends Component(HTMLElement) {
     });
     this.router.add('#/ClusterView/:id', (id) => {
       const component = document.createElement(`${ClusterView}`);
+      component.model = new Model(id);
+      this.replaceChildren(component);
+    });
+    this.router.add('#/TTLView/:id', (id) => {
+      const component = document.createElement(`${TTLView}`);
       component.model = new Model(id);
       this.replaceChildren(component);
     });
