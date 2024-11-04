@@ -35,8 +35,8 @@ export default class ClusterList extends Component(HTMLElement) {
             </p>
           </div>
         </div>
-        <hr>
         ${this.clusters.map(([clusterId, totalTime]) => html`
+          <hr>
           <${ClusterCard} about=${clusterId} data-total-time=${totalTime}></${ClusterCard}>
         `).join('')}
       </div>
