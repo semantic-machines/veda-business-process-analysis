@@ -52,7 +52,7 @@ export default class ClusterView extends Component(HTMLElement) {
           </span>
         </h4>
         <hr>
-        <div class="row">
+        <div class="row px-3">
           <div class="col-12 col-md-6">
             <p class="mb-0 text-muted" about="v-bpa:clusterSimilarities" property="rdfs:label"></p>
             <p class="fw-bold mb-0" property="v-bpa:clusterSimilarities"></p>
@@ -62,7 +62,6 @@ export default class ClusterView extends Component(HTMLElement) {
             <p class="fw-bold mb-0" property="v-bpa:clusterDifferences"></p>
           </div>
         </div>
-        <hr>
         <div rel="v-bpa:hasProcess" class="mt-3 d-flex flex-column gap-3">
           <${ProcessCard} about={{this.model.id}}></${ProcessCard}>
         </div>
