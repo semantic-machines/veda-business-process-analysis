@@ -5,8 +5,6 @@ export default class Router extends Component(HTMLElement) {
 
   router = new VedaRouter;
 
-  key = `Router_lastHash`;
-
   pre() {
     this.router.add('#/:component', async (component) => {
       localStorage.setItem(this.key, location.hash);
@@ -24,8 +22,7 @@ export default class Router extends Component(HTMLElement) {
   }
 
   post() {
-    const lastHash = localStorage.getItem(this.key) || '#/ProcessOverview';
-    this.router.go(location.hash || lastHash);
+    this.router.go(location.hash || '#/ProcessOverview');
   }
 }
 
