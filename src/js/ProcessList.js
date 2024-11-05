@@ -30,7 +30,7 @@ export default class ProcessList extends Component(HTMLElement) {
                 <span about="v-bpa:BusinessProcesses" property="rdfs:label"></span>
               </h3>
               <h5 class="mb-0">
-                <span about="v-bpa:PoorlyJustified" property="rdfs:label"></span>&nbsp;
+                <span class="align-bottom" about="v-bpa:PoorlyJustified" property="rdfs:label"></span>&nbsp;
                 <span class="badge bg-danger">${this.processes.reduce((acc, [,,relevance]) => acc + (relevance === 'v-bpa:NotJustified' ? 1 : 0), 0)}</span>
               </h5>
             </div>

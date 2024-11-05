@@ -25,7 +25,7 @@ export default class ProcessView extends Component(HTMLElement) {
             <h3>
               <i class="bi bi-diagram-3 me-2"></i>  
               <span property="rdfs:label"></span>&nbsp;
-              <span rel="v-bpa:processRelevance">
+              <span class="fs-5 align-middle" rel="v-bpa:processRelevance">
               ${this.model['v-bpa:processRelevance'][0].id === 'v-bpa:CompletelyJustified' ? html`
                 <span class="badge text-bg-success border border-success me-2" property="rdfs:label"></span>
               ` : this.model['v-bpa:processRelevance'][0].id === 'v-bpa:PartlyJustified' ? html`

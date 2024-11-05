@@ -22,7 +22,7 @@ export default class ProcessCard extends Component(HTMLElement) {
             </span>
             <h5 class="mb-0" property="rdfs:label"></h5>
             <span class="text-muted" property="v-bpa:processDescription"></span>
-            <div class="mt-3 d-flex justify-content-between align-items-center">
+            <div class="mt-2 d-flex justify-content-between align-items-center">
               <div>
                 <span rel="v-bpa:processRelevance">
                 ${this.model['v-bpa:processRelevance'][0].id === 'v-bpa:CompletelyJustified' ? html`
