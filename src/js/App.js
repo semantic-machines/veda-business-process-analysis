@@ -20,7 +20,7 @@ export default class App extends Component(HTMLElement) {
       return html`<${Auth}></${Auth}>`;
     }
     return html`
-      <div class="container p-0">
+      <div class="container p-0 mb-5">
         <${Header}></${Header}>
         <${Router}></${Router}>
         <${Footer}></${Footer}>

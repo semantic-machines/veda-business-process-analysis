@@ -29,12 +29,12 @@ export default class ProcessOverview extends Component(HTMLElement) {
       <div class="mb-2 ms-3 d-flex justify-content-between">
         <ul class="nav nav-underline">
           <li class="nav-item">
-            <button @click="toggleView" class="nav-link ${!this.showClusters ? 'active disabled' : 'text-secondary'}">
+            <button @click="toggleView" class="nav-link ${!this.showClusters ? 'active disabled' : 'text-secondary-emphasis'}">
               <span about="v-bpa:ShowProcesses" property="rdfs:label"></span>
             </button>
           </li>
           <li class="nav-item">
-            <button @click="toggleView" class="nav-link ${this.showClusters ? 'active disabled' : 'text-secondary'}">
+            <button @click="toggleView" class="nav-link ${this.showClusters ? 'active disabled' : 'text-secondary-emphasis'}">
               <span about="v-bpa:ShowClusters" property="rdfs:label"></span>
             </button>
           </li>

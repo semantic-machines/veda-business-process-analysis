@@ -24,14 +24,14 @@ export default class ProcessView extends Component(HTMLElement) {
             <p class="mb-0 text-muted" about="v-bpa:BusinessProcess" property="rdfs:label"></p>
             <h3>
               <i class="bi bi-diagram-3 me-2"></i>  
-              <span property="rdfs:label"></span>&nbsp;
-              <span class="fs-5 align-middle" rel="v-bpa:processRelevance">
+              <span class="me-3" property="rdfs:label"></span>
+              <span class="me-2 fs-5 align-middle" rel="v-bpa:processRelevance">
               ${this.model['v-bpa:processRelevance'][0].id === 'v-bpa:CompletelyJustified' ? html`
-                <span class="badge text-bg-success border border-success me-2" property="rdfs:label"></span>
+                <span class="badge text-bg-success border border-success" property="rdfs:label"></span>
               ` : this.model['v-bpa:processRelevance'][0].id === 'v-bpa:PartlyJustified' ? html`
-                <span class="badge text-bg-warning border border-warning me-2" property="rdfs:label"></span>
+                <span class="badge text-bg-warning border border-warning" property="rdfs:label"></span>
               ` : html`
-                <span class="badge text-bg-danger border border-danger me-2" property="rdfs:label"></span>
+                <span class="badge text-bg-danger border border-danger" property="rdfs:label"></span>
                 `}
               </span>
             </h3>

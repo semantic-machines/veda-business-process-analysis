@@ -49,7 +49,7 @@ export default class ClusterView extends Component(HTMLElement) {
       </div>
       <div class="sheet">
         <h4>
-          <span about="v-bpa:Clustered" property="rdfs:label"></span>&nbsp;
+          <span class="me-2 align-bottom" about="v-bpa:Clustered" property="rdfs:label"></span>
           <span class="badge text-bg-success">
             ${this.model['v-bpa:hasProcess']?.length ?? 0}
           </span>
