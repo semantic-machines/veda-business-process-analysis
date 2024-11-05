@@ -5,15 +5,17 @@ export default class Router extends Component(HTMLElement) {
 
   router = new VedaRouter;
 
-  pre() {
-    this.router.add('/', () => this.router.go('#/ProcessOverview'));
+  key = `Router_lastHash`;
 
+  pre() {
     this.router.add('#/:component', async (component) => {
+      localStorage.setItem(this.key, location.hash);
       component = await import(`./${component}.js`);
       this.replaceChildren(document.createElement(`${component.default}`));
     });
 
     this.router.add('#/:component/:id', async (component, id) => {
+      localStorage.setItem(this.key, location.hash);
       component = await import(`./${component}.js`);
       component = document.createElement(`${component.default}`);
       component.model = new Model(id);
@@ -22,7 +24,8 @@ export default class Router extends Component(HTMLElement) {
   }
 
   post() {
-    this.router.go(location.hash || '#/ProcessOverview');
+    const lastHash = localStorage.getItem(this.key) || '#/ProcessOverview';
+    this.router.go(location.hash || lastHash);
   }
 }
 

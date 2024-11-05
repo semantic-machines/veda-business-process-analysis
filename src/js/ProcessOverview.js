@@ -5,11 +5,11 @@ import ClusterList from './ClusterList.js';
 export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
 
-  showClusters = sessionStorage.getItem('ProcessOverview_showClusters') === 'true';
+  showClusters = localStorage.getItem('ProcessOverview_showClusters') === 'true';
 
   toggleView() {
     this.showClusters = !this.showClusters;
-    sessionStorage.setItem('ProcessOverview_showClusters', this.showClusters);
+    localStorage.setItem('ProcessOverview_showClusters', this.showClusters);
     this.update();
   }
 
