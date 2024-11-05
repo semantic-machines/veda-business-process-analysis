@@ -20,7 +20,7 @@ export default class ClusterList extends Component(HTMLElement) {
   async render() {
     return html`
       <div class="sheet">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center mb-3">
           <div class="d-flex justify-content-start align-items-center">
             <div class="me-3 fs-1">
               <i class="bi bi-collection"></i>
@@ -41,7 +41,7 @@ export default class ClusterList extends Component(HTMLElement) {
           </div>
         </div>
         ${this.clusters.map(([clusterId, totalTime]) => html`
-          <hr>
+          <hr class="my-0">
           <${ClusterCard} about=${clusterId} data-total-time=${totalTime}></${ClusterCard}>
         `).join('')}
       </div>
