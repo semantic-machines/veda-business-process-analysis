@@ -1,7 +1,8 @@
-use crate::common::extract_process_json;
+use crate::common::{extract_process_json, prepare_optimization_parameters};
 use crate::prompt_manager::get_system_prompt;
 use crate::queue_processor::BusinessProcessAnalysisModule;
-use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
+use crate::types::PropertyMapping;
+use openai_dive::v1::resources::chat::{ChatMessage, ChatMessageContent};
 use serde_json;
 use std::collections::HashMap;
 use tokio::runtime::Runtime;
@@ -11,8 +12,6 @@ use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
 type OptimizedProcess = HashMap<String, serde_json::Value>;
-type PropertyMapping = HashMap<String, String>; // short_name -> full_name
-
 /// Анализирует кластер процессов и предлагает оптимизацию
 pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, cluster_id: &str) -> Result<(), Box<dyn std::error::Error>> {
     info!("Starting cluster optimization analysis for cluster: {}", cluster_id);
@@ -76,113 +75,6 @@ fn prepare_optimization_data(processes: &[serde_json::Value]) -> Result<serde_js
         "processes": processes,
         "count": processes.len()
     }))
-}
-
-/// Подготавливает параметры запроса для оптимизации на основе промпта из онтологии
-fn prepare_optimization_parameters(
-    module: &mut BusinessProcessAnalysisModule,
-    system_prompt: String,
-    analysis_data: serde_json::Value,
-) -> Result<(openai_dive::v1::resources::chat::ChatCompletionParameters, PropertyMapping), Box<dyn std::error::Error>> {
-    let mut prompt_individual = Individual::default();
-    if module.backend.storage.get_individual("v-bpa:OptimizeProcessesPrompt", &mut prompt_individual) != ResultCode::Ok {
-        return Err("Failed to load optimization prompt".into());
-    }
-    prompt_individual.parse_all();
-
-    let properties = prompt_individual.get_literals("v-bpa:properties").unwrap_or_default();
-    info!("@A1 properties={:?}", properties);
-
-    // Словарь для хранения соответствия короткое имя -> полное имя
-    let mut property_mapping = PropertyMapping::new();
-
-    // Вектор для сбора определений свойств
-    let mut property_definitions = Vec::new();
-    let mut required = Vec::new();
-
-    // Собираем определения свойств
-    for full_prop in properties {
-        let mut prop_individual = Individual::default();
-        if module.backend.storage.get_individual(&full_prop, &mut prop_individual) != ResultCode::Ok {
-            continue;
-        }
-        prop_individual.parse_all();
-
-        let range = prop_individual.get_first_literal("rdfs:range").unwrap_or_default();
-        let description = prop_individual.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]).unwrap_or_else(|| full_prop.clone());
-
-        let json_type = match range.as_str() {
-            "xsd:string" => "string",
-            "xsd:integer" => "integer",
-            "xsd:decimal" => "number",
-            _ => "string",
-        };
-
-        let short_name = full_prop.split(':').last().unwrap_or(&full_prop).to_string();
-        property_mapping.insert(short_name.clone(), full_prop);
-        required.push(short_name.clone());
-
-        property_definitions.push((short_name, json_type, description));
-    }
-
-    info!("@A2 property_definitions={:?}", property_definitions);
-
-    // Строим JSON строку для properties вручную, сохраняя порядок
-    let mut properties_json = String::from("{\n");
-    for (i, (name, type_name, description)) in property_definitions.iter().enumerate() {
-        if i > 0 {
-            properties_json.push_str(",\n");
-        }
-        properties_json.push_str(&format!(r#"    "{}": {{"type": "{}","description": "{}"}}"#, name, type_name, description));
-    }
-    properties_json.push_str("\n}");
-
-    // Собираем полную схему с нашими упорядоченными properties
-    let schema_str = format!(
-        r#"{{
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {{
-            "optimized_process": {{
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {},
-                "required": {},
-                "type": "object"
-            }}
-        }},
-        "required": ["optimized_process"]
-    }}"#,
-        properties_json,
-        serde_json::json!(required).to_string()
-    );
-
-    info!("@A3 schema_str={}", schema_str);
-
-    let schema_value: serde_json::Value = serde_json::from_str(schema_str.as_str())?;
-
-    let parameters = ChatCompletionParametersBuilder::default()
-        .model(module.model.clone())
-        .messages(vec![
-            ChatMessage::System {
-                content: ChatMessageContent::Text(system_prompt),
-                name: None,
-            },
-            ChatMessage::User {
-                content: ChatMessageContent::Text(analysis_data.to_string()),
-                name: None,
-            },
-        ])
-        .response_format(ChatCompletionResponseFormat::JsonSchema(
-            JsonSchemaBuilder::default()
-                .name("process_optimization")
-                .schema(schema_value) // вызываем новый публичный метод schema()
-                .strict(true)
-                .build()?,
-        ))
-        .build()?;
-
-    Ok((parameters, property_mapping))
 }
 
 /// Отправляет запрос на оптимизацию и получает результат

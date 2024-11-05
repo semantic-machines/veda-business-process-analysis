@@ -1,14 +1,13 @@
-use crate::common::extract_process_json;
+use crate::common::{extract_process_json, get_individuals_uris_by_type};
 use crate::prompt_manager::get_system_prompt;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
 use serde_json;
 use std::collections::{HashMap, HashSet};
-use std::{io, thread, time};
+use std::io;
 use tokio::runtime::Runtime;
 use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
-use v_common::search::common::{FTQuery, QueryResult};
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
@@ -118,35 +117,39 @@ fn calculate_clustering_metrics(state: &ComparisonState, total_processes: usize)
 /// Находит все бизнес-процессы в системе
 fn find_all_business_processes(module: &mut BusinessProcessAnalysisModule) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     info!("Starting business process search");
-    let mut res = QueryResult::default();
-    res.result_code = ResultCode::NotReady;
+    get_individuals_uris_by_type(module, "v-bpa:BusinessProcess")
+    /*
+       let mut res = QueryResult::default();
+       res.result_code = ResultCode::NotReady;
 
-    let mut retry_count = 0;
-    while res.result_code == ResultCode::NotReady || res.result_code == ResultCode::DatabaseModifiedError {
-        info!("Attempting to query business processes (attempt {})", retry_count + 1);
-        res = module.xr.query(FTQuery::new_with_user("cfg:VedaSystem", "'rdf:type' === 'v-bpa:BusinessProcess'"), &mut module.backend.storage);
+       let mut retry_count = 0;
+       while res.result_code == ResultCode::NotReady || res.result_code == ResultCode::DatabaseModifiedError {
+           info!("Attempting to query business processes (attempt {})", retry_count + 1);
+           res = module.xr.query(FTQuery::new_with_user("cfg:VedaSystem", "'rdf:type' === 'v-bpa:BusinessProcess'"), &mut module.backend.storage);
 
-        if res.result_code == ResultCode::InternalServerError {
-            error!("Search failed with internal server error");
-            return Err(io::Error::new(io::ErrorKind::Other, format!("Search failed with error: {:?}", res.result_code)).into());
-        }
+           if res.result_code == ResultCode::InternalServerError {
+               error!("Search failed with internal server error");
+               return Err(io::Error::new(io::ErrorKind::Other, format!("Search failed with error: {:?}", res.result_code)).into());
+           }
 
-        if res.result_code != ResultCode::Ok {
-            warn!("Failed to search business processes, retry in 3 seconds... (attempt {})", retry_count + 1);
-            thread::sleep(time::Duration::from_secs(3));
-        }
-        retry_count += 1;
-    }
+           if res.result_code != ResultCode::Ok {
+               warn!("Failed to search business processes, retry in 3 seconds... (attempt {})", retry_count + 1);
+               thread::sleep(time::Duration::from_secs(3));
+           }
+           retry_count += 1;
+       }
 
-    let mut process_ids = Vec::new();
-    if res.result_code == ResultCode::Ok && res.count > 0 {
-        process_ids.extend(res.result);
-        info!("Successfully found {} business processes", process_ids.len());
-    } else {
-        info!("No business processes found in the system");
-    }
+       let mut process_ids = Vec::new();
+       if res.result_code == ResultCode::Ok && res.count > 0 {
+           process_ids.extend(res.result);
+           info!("Successfully found {} business processes", process_ids.len());
+       } else {
+           info!("No business processes found in the system");
+       }
 
-    Ok(process_ids)
+       Ok(process_ids)
+
+    */
 }
 
 /// Инициализирует процесс кластеризации

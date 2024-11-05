@@ -1,6 +1,7 @@
 // types.rs
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -27,3 +28,5 @@ impl JustificationLevel {
 pub struct ProcessJustification {
     pub level: JustificationLevel,
 }
+
+pub type PropertyMapping = HashMap<String, String>; // short_name -> full_name
