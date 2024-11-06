@@ -3,7 +3,7 @@ import {Component, html} from 'veda-client';
 export default class ProcessCard extends Component(HTMLElement) {
   static tag = 'bpa-process-card';
 
-  async render() {
+  render() {
     return html`
       <style>
         a:hover > .business-process-card {

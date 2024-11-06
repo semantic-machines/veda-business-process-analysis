@@ -111,7 +111,7 @@ export default class Auth extends Component(HTMLElement) {
     `;
   }
 
-  async init () {
+  init () {
     const submitLoginPassword = async (e) => {
       e.preventDefault();
       const passwordInput = loginForm.querySelector('#password');
