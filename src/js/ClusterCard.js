@@ -17,7 +17,7 @@ export default class ClusterCard extends Component(HTMLElement) {
     this.update();
   }
 
-  async render() {
+  render() {
     return html`
       <style>
         a:hover > .cluster-card {

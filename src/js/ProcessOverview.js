@@ -19,7 +19,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
     await clusterizationAttempt.save();
   }
 
-  async addProcess() {
+  addProcess() {
     const newProcess = new Model();
     newProcess['rdf:type'] = 'v-bpa:BusinessProcess';
     location.hash = `#/ProcessEdit/${newProcess.id}`;

@@ -15,7 +15,7 @@ export default class App extends Component(HTMLElement) {
     this.update();
   }
 
-  async render() {
+  render() {
     if (!this.hasAttribute('authenticated')) {
       return html`<${Auth}></${Auth}>`;
     }
@@ -28,4 +28,5 @@ export default class App extends Component(HTMLElement) {
     `;
   }
 }
+
 customElements.define(App.tag, App);

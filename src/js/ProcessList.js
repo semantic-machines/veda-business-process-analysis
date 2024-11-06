@@ -17,7 +17,7 @@ export default class ProcessList extends Component(HTMLElement) {
     this.processes = queryResult;
   }
 
-  async render() {
+  render() {
     return html`
       <div class="sheet">
         <div class="d-flex justify-content-between align-items-center mb-4">
