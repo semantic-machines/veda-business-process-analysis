@@ -30,3 +30,4 @@ pub struct ProcessJustification {
 }
 
 pub type PropertyMapping = HashMap<String, String>; // short_name -> full_name
+pub type AIResponseValues = HashMap<String, serde_json::Value>;
