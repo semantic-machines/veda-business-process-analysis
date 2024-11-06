@@ -5,15 +5,15 @@ export default class ClusterCard extends Component(HTMLElement) {
   static tag = 'bpa-cluster-card';
 
   getStorageKey() {
-    return `cluster-expanded-${this.getAttribute('about')}`;
+    return `ClusterCard_expanded_${this.getAttribute('about')}`;
   }
 
-  expanded = sessionStorage.getItem(this.getStorageKey()) === 'true';
+  expanded = localStorage.getItem(this.getStorageKey()) === 'true';
 
   toggleExpanded(e) {
     e.preventDefault();
     this.expanded = !this.expanded;
-    sessionStorage.setItem(this.getStorageKey(), this.expanded);
+    localStorage.setItem(this.getStorageKey(), this.expanded);
     this.update();
   }
 

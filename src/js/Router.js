@@ -6,8 +6,6 @@ export default class Router extends Component(HTMLElement) {
   router = new VedaRouter;
 
   pre() {
-    this.router.add('/', () => this.router.go('#/ProcessOverview'));
-
     this.router.add('#/:component', async (component) => {
       component = await import(`./${component}.js`);
       this.replaceChildren(document.createElement(`${component.default}`));
@@ -19,9 +17,7 @@ export default class Router extends Component(HTMLElement) {
       component.model = new Model(id);
       this.replaceChildren(component);
     });
-  }
 
-  post() {
     this.router.go(location.hash || '#/ProcessOverview');
   }
 }

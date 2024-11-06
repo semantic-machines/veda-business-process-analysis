@@ -3,14 +3,13 @@ import {Component, html} from 'veda-client';
 export default class TTLView extends Component(HTMLElement) {
   static tag = 'bpa-ttl-view';
 
-  format = sessionStorage.getItem('TTLView_format') === 'ttl' ? 'ttl' : 'json';
+  format = localStorage.getItem('TTLView_format') === 'ttl' ? 'ttl' : 'json';
 
   toggleFormat() {
     this.format = this.format === 'ttl' ? 'json' : 'ttl';
-    sessionStorage.setItem('TTLView_format', this.format);
+    localStorage.setItem('TTLView_format', this.format);
     this.update();
   }
-
 
   render() {
     return html`
