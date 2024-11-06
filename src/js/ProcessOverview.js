@@ -15,7 +15,9 @@ export default class ProcessOverview extends Component(HTMLElement) {
 
 
   async updateClusters() {
-    alert('updateClusters');
+    const clusterizationAttempt = new Model();
+    clusterizationAttempt['rdf:type'] = 'v-bpa:ClusterizationAttempt';
+    await clusterizationAttempt.save();
   }
 
   async addProcess() {
