@@ -250,13 +250,6 @@ v-bpa:estimatedTime
 .
 
 # Дополнительные предикаты используемые в коде
-v-bpa:clusterizationStatus
-  rdf:type owl:DatatypeProperty ;
-  rdfs:label "Статус кластеризации"@ru ;
-  rdfs:label "Clusterization status"@en ;
-  rdfs:domain v-bpa:ClusterizationAttempt ;
-  rdfs:range xsd:string ;
-.
 
 v-bpa:currentPairIndex
   rdf:type owl:DatatypeProperty ;
@@ -298,21 +291,35 @@ v-bpa:lastError
   rdfs:range xsd:string ;
 .
 
+v-bpa:hasClusterizationStatus
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Статус кластеризации"@ru ;
+  rdfs:label "Clusterization status"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range v-bpa:ClusterizationStatus ;
+.
+
 # Статусы кластеризации (используются как URI)
-v-bpa:ComparingPairs
+v-bpa:ClusterizationStatus
   rdf:type owl:Class ;
+  rdfs:label "Статус кластеризации"@ru ;
+  rdfs:label "Clusterization status"@en ;
+.
+
+v-bpa:ComparingPairs
+  rdf:type v-bpa:ClusterizationStatus ;
   rdfs:label "Сравнение пар"@ru ;
   rdfs:label "Comparing pairs"@en ;
 .
 
 v-bpa:PairsCompared
-  rdf:type owl:Class ;
+  rdf:type v-bpa:ClusterizationStatus ;
   rdfs:label "Пары сравнены"@ru ;
   rdfs:label "Pairs compared"@en ;
 .
 
 v-bpa:Completed
-  rdf:type owl:Class ;
+  rdf:type v-bpa:ClusterizationStatus ;
   rdfs:label "Завершено"@ru ;
   rdfs:label "Completed"@en ;
 .
