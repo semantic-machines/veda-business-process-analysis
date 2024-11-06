@@ -13,7 +13,6 @@ export default class ProcessOverview extends Component(HTMLElement) {
     this.update();
   }
 
-
   async updateClusters() {
     const clusterizationAttempt = new Model();
     clusterizationAttempt['rdf:type'] = 'v-bpa:ClusterizationAttempt';

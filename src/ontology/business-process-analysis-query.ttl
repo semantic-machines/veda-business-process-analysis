@@ -67,3 +67,17 @@ v-bpa:ProcessInClusters
     WHERE process_id = '{v-bpa:hasProcess}'
 """ ;
 .
+
+v-bpa:CurrentClusterizationAttempts
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Текущие попытки кластеризации"@ru ;
+  rdfs:label "Query: Current clusterization attempts"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "cols" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT 
+      c.id as id
+    FROM veda_tt."v-bpa:ClusterizationAttempt" c FINAL
+""" ;
+.
