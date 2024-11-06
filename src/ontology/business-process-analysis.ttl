@@ -232,7 +232,6 @@ v-bpa:endDate
   rdfs:range xsd:dateTime ;
 .
 
-# Прогресс кластеризации и оставшееся время
 v-bpa:clusterizationProgress
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Прогресс кластеризации"@ru ;
@@ -248,8 +247,6 @@ v-bpa:estimatedTime
   rdfs:domain v-bpa:ClusterizationAttempt ;
   rdfs:range xsd:integer ;
 .
-
-# Дополнительные предикаты используемые в коде
 
 v-bpa:currentPairIndex
   rdf:type owl:DatatypeProperty ;
@@ -322,4 +319,20 @@ v-bpa:Completed
   rdf:type v-bpa:ClusterizationStatus ;
   rdfs:label "Завершено"@ru ;
   rdfs:label "Completed"@en ;
+.
+
+# Timestamp последней активности
+v-bpa:lastActivityAt
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Время последней активности"@ru ;
+  rdfs:label "Last activity time"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range xsd:integer ;
+.
+
+# Статус Failed для кластеризации
+v-bpa:Failed
+  rdf:type v-bpa:ClusterizationStatus ;
+  rdfs:label "Завершено с ошибкой"@ru ;
+  rdfs:label "Failed"@en ;
 .

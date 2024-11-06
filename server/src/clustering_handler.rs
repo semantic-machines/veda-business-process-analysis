@@ -25,6 +25,30 @@ struct ComparisonState {
     y: usize,
 }
 
+/// Обновляет временные метки для отслеживания активности процесса кластеризации
+fn update_activity_timestamps(clustering_attempt: &mut Individual, status: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let current_time = chrono::Utc::now().timestamp();
+
+    // Всегда обновляем время последней активности
+    clustering_attempt.set_datetime("v-bpa:lastActivityAt", current_time);
+
+    // Специфичные действия для разных статусов
+    match status {
+        "" => {
+            // Начало работы
+            clustering_attempt.set_datetime("v-bpa:startDate", current_time);
+            clustering_attempt.remove("v-bpa:endDate");
+        },
+        "v-bpa:Completed" | "v-bpa:Failed" => {
+            // Момент завершения работы (успешного или с ошибкой)
+            clustering_attempt.set_datetime("v-bpa:endDate", current_time);
+        },
+        _ => (), // Для других статусов дополнительных действий не требуется
+    }
+
+    Ok(())
+}
+
 /// Анализирует бизнес-процессы и определяет кластеры схожих процессов
 pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     info!("Starting process cluster analysis for attempt: {}", clustering_attempt.get_id());
@@ -39,15 +63,25 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
         match status.as_str() {
             "" => {
                 info!("Starting new clustering attempt: {}", clustering_attempt.get_id());
-                initialize_clustering(module, clustering_attempt)?;
-                // Инициализируем начальное состояние
-                comparison_state = Some(ComparisonState {
-                    x: 0,
-                    y: 1,
-                });
+                match initialize_clustering(module, clustering_attempt) {
+                    Ok(_) => {
+                        update_activity_timestamps(clustering_attempt, "")?;
+                        comparison_state = Some(ComparisonState {
+                            x: 0,
+                            y: 1,
+                        });
+                    },
+                    Err(e) => {
+                        error!("Failed to initialize clustering: {}", e);
+                        clustering_attempt.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
+                        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+                        update_activity_timestamps(clustering_attempt, "v-bpa:Failed")?;
+                        update_individual(module, clustering_attempt)?;
+                        return Err(e);
+                    },
+                }
             },
             "v-bpa:ComparingPairs" => {
-                // Если состояние еще не инициализировано, берем его из базы
                 if comparison_state.is_none() {
                     let current_pair =
                         clustering_attempt.get_literals("v-bpa:currentPairIndex").and_then(|pairs| pairs.first().cloned()).ok_or("No current pair index found")?;
@@ -60,28 +94,58 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
                     });
                 }
 
-                match compare_next_pair(module, clustering_attempt, comparison_state.as_mut().unwrap())? {
-                    ComparisonResult::Completed => {
+                match compare_next_pair(module, clustering_attempt, comparison_state.as_mut().unwrap()) {
+                    Ok(ComparisonResult::Completed) => {
                         clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:PairsCompared");
+                        update_activity_timestamps(clustering_attempt, "v-bpa:PairsCompared")?;
                         update_individual(module, clustering_attempt)?;
                     },
-                    ComparisonResult::Continue => {
-                        // Продолжаем сравнение
+                    Ok(ComparisonResult::Continue) => {
+                        update_activity_timestamps(clustering_attempt, "v-bpa:ComparingPairs")?;
+                    },
+                    Err(e) => {
+                        error!("Error during pair comparison: {}", e);
+                        clustering_attempt.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
+                        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+                        update_activity_timestamps(clustering_attempt, "v-bpa:Failed")?;
+                        update_individual(module, clustering_attempt)?;
+                        return Err(e);
                     },
                 }
             },
             "v-bpa:PairsCompared" => {
                 info!("Building clusters for attempt: {}", clustering_attempt.get_id());
-                build_clusters(module, clustering_attempt)?;
-                clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Completed");
-                update_individual(module, clustering_attempt)?;
+                match build_clusters(module, clustering_attempt) {
+                    Ok(_) => {
+                        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Completed");
+                        update_activity_timestamps(clustering_attempt, "v-bpa:Completed")?;
+                        update_individual(module, clustering_attempt)?;
+                    },
+                    Err(e) => {
+                        error!("Error during cluster building: {}", e);
+                        clustering_attempt.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
+                        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+                        update_activity_timestamps(clustering_attempt, "v-bpa:Failed")?;
+                        update_individual(module, clustering_attempt)?;
+                        return Err(e);
+                    },
+                }
             },
             "v-bpa:Completed" => {
                 info!("Clustering already completed for attempt: {}", clustering_attempt.get_id());
                 break;
             },
+            "v-bpa:Failed" => {
+                info!("Clustering attempt {} failed", clustering_attempt.get_id());
+                let error_msg = clustering_attempt.get_first_literal("v-bpa:lastError").unwrap_or("Unknown error".to_string());
+                return Err(error_msg.into());
+            },
             _ => {
                 error!("Unknown clustering status: {}", status);
+                clustering_attempt.set_string("v-bpa:lastError", "Invalid clustering status", Lang::none());
+                clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+                update_activity_timestamps(clustering_attempt, "v-bpa:Failed")?;
+                update_individual(module, clustering_attempt)?;
                 return Err("Invalid clustering status".into());
             },
         }
@@ -182,7 +246,6 @@ fn compare_next_pair(
         // Сохраняем похожую пару
         let pair = format!("{},{}", processes[state.x], processes[state.y]);
         clustering_attempt.add_string("v-bpa:similarPairs", &pair, Lang::none());
-        //info!("Recorded similar pair: {}", pair);
     }
 
     // Вычисляем и сохраняем следующую пару
@@ -386,7 +449,10 @@ fn build_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt
                 },
                 Err(e) => {
                     error!("Failed to create cluster {}: {}", cluster_index + 1, e);
-                    save_clustering_state(module, clustering_attempt, Some(format!("Failed to create cluster {}: {}", cluster_index + 1, e)))?;
+                    clustering_attempt.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
+                    clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+                    update_activity_timestamps(clustering_attempt, "v-bpa:Failed")?;
+                    update_individual(module, clustering_attempt)?;
                     return Err(e);
                 },
             }
@@ -476,23 +542,7 @@ fn update_individual(module: &mut BusinessProcessAnalysisModule, individual: &mu
     //info!("Updating individual {}", individual.get_id());
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, individual) {
         error!("Failed to update individual {}: {:?}", individual.get_id(), e);
-        return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e)).into());
+        return Err(std::io::Error::new(io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e)).into());
     }
-    //info!("Successfully updated individual {}", individual.get_id());
-    Ok(())
-}
-
-/// Вспомогательная функция для сохранения состояния кластеризации
-fn save_clustering_state(
-    module: &mut BusinessProcessAnalysisModule,
-    clustering_attempt: &mut Individual,
-    error_msg: Option<String>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(error) = error_msg {
-        clustering_attempt.set_string("v-bpa:lastError", &error, Lang::none());
-        error!("Saving error state for clustering attempt: {}", error);
-    }
-
-    update_individual(module, clustering_attempt)?;
     Ok(())
 }

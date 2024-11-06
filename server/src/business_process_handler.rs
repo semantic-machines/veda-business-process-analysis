@@ -31,17 +31,17 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
     let process_json = extract_process_json(bp_obj, module)?;
 
     info!("Process Name: {}", process_json["processName"]);
-    info!("Process Description: {}", process_json["processDescription"]);
-    info!("System Prompt: {}", system_prompt);
-    info!("User Content: {}", process_json);
-    info!("Using model: {}", module.model);
+    //info!("Process Description: {}", process_json["processDescription"]);
+    //info!("System Prompt: {}", system_prompt);
+    //info!("User Content: {}", process_json);
+    //info!("Using model: {}", module.model);
 
     let chat_parameters = prepare_chat_parameters(module.model.clone(), system_prompt, process_json)?;
     debug!("Parameters prepared for OpenAI: {:?}", chat_parameters);
 
     let rt = Runtime::new()?;
     rt.block_on(async {
-        send_request_to_openai(module, chat_parameters, bp_obj).await?;
+        send_request_to_openai_and_store(module, chat_parameters, bp_obj).await?;
         Ok(())
     })
 }
@@ -95,7 +95,7 @@ fn prepare_chat_parameters(
     Ok(parameters)
 }
 
-/// Отправляет запрос к API AI и обрабатывает ответ
+/// Отправляет запрос к API AI, обрабатывает ответ и сохраняет
 ///
 /// # Arguments
 /// * `module` - Модуль с клиентом AI и настройками
@@ -104,7 +104,7 @@ fn prepare_chat_parameters(
 ///
 /// # Returns
 /// * `Result<(), Box<dyn std::error::Error>>` - Результат обработки ответа
-async fn send_request_to_openai(
+async fn send_request_to_openai_and_store(
     module: &mut BusinessProcessAnalysisModule,
     parameters: openai_dive::v1::resources::chat::ChatCompletionParameters,
     bp_individual: &mut Individual,

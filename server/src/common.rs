@@ -142,14 +142,18 @@ pub fn prepare_optimization_parameters(
     // Словарь для хранения соответствия короткое имя -> полное имя
     let mut property_mapping = PropertyMapping::new();
 
-    // Вектор для сбора определений свойств
-    let mut property_definitions = Vec::new();
+    // Вектор для сбора определений свойств JSON схемы
+    let mut properties_json = String::from("{\n");
     let mut required = Vec::new();
 
     // Собираем определения свойств
-    for full_prop in properties {
+    for (i, full_prop) in properties.iter().enumerate() {
+        if i > 0 {
+            properties_json.push_str(",\n");
+        }
+
         let mut prop_individual = Individual::default();
-        if module.backend.storage.get_individual(&full_prop, &mut prop_individual) != ResultCode::Ok {
+        if module.backend.storage.get_individual(full_prop, &mut prop_individual) != ResultCode::Ok {
             continue;
         }
         prop_individual.parse_all();
@@ -157,33 +161,62 @@ pub fn prepare_optimization_parameters(
         let range = prop_individual.get_first_literal("rdfs:range").unwrap_or_default();
         let description = prop_individual.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]).unwrap_or_else(|| full_prop.clone());
 
-        let json_type = match range.as_str() {
-            "xsd:string" => "string",
-            "xsd:integer" => "integer",
-            "xsd:decimal" => "number",
-            _ => "string",
-        };
-
-        let short_name = full_prop.split(':').last().unwrap_or(&full_prop).to_string();
-        property_mapping.insert(short_name.clone(), full_prop);
+        let short_name = full_prop.split(':').last().unwrap_or(full_prop).to_string();
+        property_mapping.insert(short_name.clone(), full_prop.clone());
         required.push(short_name.clone());
 
-        property_definitions.push((short_name, json_type, description));
-    }
+        // Проверяем, является ли range ссылкой на класс (не xsd:*)
+        if !range.starts_with("xsd:") {
+            info!("@A2 Processing class range: {} for property {}", range, full_prop);
 
-    info!("@A2 property_definitions={:?}", property_definitions);
+            // Получаем все экземпляры этого класса
+            let mut enum_values = Vec::new();
 
-    // Строим JSON строку для properties вручную, сохраняя порядок
-    let mut properties_json = String::from("{\n");
-    for (i, (name, type_name, description)) in property_definitions.iter().enumerate() {
-        if i > 0 {
-            properties_json.push_str(",\n");
+            match get_individuals_by_type(module, &range) {
+                Ok(instances) => {
+                    for mut instance in instances {
+                        // Получаем метку на русском языке
+                        if let Some(label) = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]) {
+                            enum_values.push(label.clone());
+                            // Сохраняем маппинг метка -> URI для этого значения
+                            property_mapping.insert(format!("{}_{}", short_name, label), instance.get_id().to_string());
+                        }
+                    }
+
+                    info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
+
+                    properties_json.push_str(&format!(
+                        r#"    "{}": {{"type": "string", "description": "{}", "enum": {}}}"#,
+                        short_name,
+                        description,
+                        serde_json::to_string(&enum_values)?
+                    ));
+                },
+                Err(e) => {
+                    error!("Failed to get instances of type {}: {:?}", range, e);
+                    // Если не удалось получить экземпляры, обрабатываем как обычное строковое поле
+                    properties_json.push_str(&format!(r#"    "{}": {{"type": "string", "description": "{}"}}"#, short_name, description));
+                },
+            }
+        } else {
+            // Обрабатываем обычные xsd:* типы
+            let json_type = match range.as_str() {
+                "xsd:string" => "string",
+                "xsd:integer" => "integer",
+                "xsd:decimal" => "number",
+                _ => "string",
+            };
+
+            properties_json.push_str(&format!(r#"    "{}": {{"type": "{}", "description": "{}"}}"#, short_name, json_type, description));
         }
-        properties_json.push_str(&format!(r#"    "{}": {{"type": "{}","description": "{}"}}"#, name, type_name, description));
     }
+
     properties_json.push_str("\n}");
 
-    // Собираем полную схему с нашими упорядоченными properties
+    info!("@A4 property_mapping={:?}", property_mapping);
+    info!("@A5 properties_json={}", properties_json);
+
+    // Собираем полную схему
     let schema_str = format!(
         r#"{{
         "type": "object",
@@ -219,13 +252,7 @@ pub fn prepare_optimization_parameters(
                 name: None,
             },
         ])
-        .response_format(ChatCompletionResponseFormat::JsonSchema(
-            JsonSchemaBuilder::default()
-                .name("process_optimization")
-                .schema(schema_value) // вызываем новый публичный метод schema()
-                .strict(true)
-                .build()?,
-        ))
+        .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("process_optimization").schema(schema_value).strict(true).build()?))
         .build()?;
 
     Ok((parameters, property_mapping))
