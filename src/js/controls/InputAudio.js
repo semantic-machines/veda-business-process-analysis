@@ -7,15 +7,15 @@ export default class InputAudio extends Component(HTMLElement) {
     return html`
       <div class="d-flex align-items-center">
         <button class="cancel-button btn btn-link">
-          <i class="bi bi-x-lg"></i>
+          <i class="bi bi-x-circle-fill text-danger fs-5"></i>
         </button>
         <canvas class="audio-visualization" width="16" height="24"></canvas>
         <span class="recording-timer ms-3">0.0</span>
         <button class="approve-button btn btn-link">
-          <i class="bi bi-check-lg fs-4"></i>
+          <i class="bi bi-check-circle-fill text-success fs-5"></i>
         </button>
         <button class="btn btn-link mic-button" title="[Ии] Записать аудио и распознать текст">
-          <i class="bi bi-mic"></i>
+          <i class="bi bi-mic-fill fs-5"></i>
         </button>
       </div>
     `;
@@ -42,7 +42,7 @@ export default class InputAudio extends Component(HTMLElement) {
         const stream = await navigator.mediaDevices.getUserMedia({audio: true});
         return stream;
       } catch (error) {
-        notify('danger', 'Доступ к микрофону запрещен: ' + error.message);
+        alert('Доступ к микрофону запрещен: ' + error.message);
         throw error;
       }
     }
@@ -146,7 +146,7 @@ export default class InputAudio extends Component(HTMLElement) {
     }    
 
     micButton.onclick = async function () {
-      if (micButton.firstElementChild.classList.contains('bi-mic')) {
+      if (micButton.firstElementChild.classList.contains('bi-mic-fill')) {
         try {
           micButton.disabled = true;
           audioChunks = [];
@@ -193,7 +193,7 @@ export default class InputAudio extends Component(HTMLElement) {
       canvas.classList.add('d-none');
   
       // Отображаем спиннер
-      micButton.firstElementChild.classList.remove('bi-mic');
+      micButton.firstElementChild.classList.remove('bi-mic-fill');
       micButton.firstElementChild.classList.add('bi-arrow-clockwise', 'rotating');
       micButton.classList.remove('d-none');
   
@@ -207,7 +207,7 @@ export default class InputAudio extends Component(HTMLElement) {
       } finally {
         audioChunks = [];
         micButton.firstElementChild.classList.remove('bi-arrow-clockwise', 'rotating');
-        micButton.firstElementChild.classList.add('bi-mic');
+        micButton.firstElementChild.classList.add('bi-mic-fill');
         micButton.disabled = false;
       }
     }
@@ -226,7 +226,7 @@ export default class InputAudio extends Component(HTMLElement) {
   
       // Сброс состояния кнопок
       micButton.firstElementChild.classList.remove('bi-stop');
-      micButton.firstElementChild.classList.add('bi-mic');
+      micButton.firstElementChild.classList.add('bi-mic-fill');
       micButton.disabled = false;
   
       micButton.classList.remove('d-none');
@@ -275,69 +275,10 @@ async function recognizeAudioFile (file, fn) {
   }
 }
 
-// Асинхронная функция для улучшения текста
-async function augmentText (text, type, property, fn) {
-  try {
-    const response = await fetch('/augment_text', {
-      method: 'POST',
-      headers: {
-        'Accept': 'text/event-stream',
-        'Accept-Encoding': 'identity',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({text, type, property}),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || response.status);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let resultText = '';
-
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
-
-      if (value && value.byteLength > 0) {
-        const chunk = decoder.decode(value, {stream: true});
-
-        chunk.split('\n').forEach((line) => {
-          const matches = line.match(/^data: (.*)$/);
-          if (matches) {
-            const jsonString = matches[1];
-            try {
-              const parsedChunk = JSON.parse(jsonString);
-              console.log('Часть полученного текста:', parsedChunk.content);
-              fn(parsedChunk.content);
-              resultText += parsedChunk.content;
-              if (parsedChunk.stop) {
-                console.log('Конечный ответ получен.');
-              }
-            } catch (e) {
-              console.error('Ошибка парсинга JSON:', e, 'в строке:', jsonString);
-            }
-          }
-        });
-      }
-    }
-
-    return resultText;
-  } catch (error) {
-    console.error('Ошибка улучшения текста:', error);
-    throw error;
-  }
-}
-
 // Показ спиннера на кнопке
 function showSpinner (button) {
   const icon = button.firstElementChild;
-  icon.classList.remove('bi-mic', 'bi-magic', 'bi-stop');
+  icon.classList.remove('bi-mic-fill', 'bi-stop');
   icon.classList.add('bi-arrow-clockwise', 'rotating');
   button.disabled = true;
 }
@@ -353,19 +294,13 @@ function hideSpinner (button, iconClass) {
 // Обработка ошибок
 async function handleError (error, button, errorIconClass) {
   hideSpinner(button, errorIconClass);
-  notify('danger', 'Произошла ошибка: ' + error);
+  alert('Произошла ошибка: ' + error);
 }
 
 // Декораторы для функций
 const decoratedRecognizeAudioFile = decorator(
   recognizeAudioFile,
-  function pre () {
-    showSpinner(this);
-  },
-  function post () {
-    hideSpinner(this, 'bi-mic');
-  },
-  function err (error) {
-    handleError(error, this, 'bi-mic');
-  },
+  function pre() { showSpinner(this); },
+  function post() { hideSpinner(this, 'bi-mic-fill'); }, 
+  function err(error) { handleError(error, this, 'bi-mic-fill'); }, 
 );
