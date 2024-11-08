@@ -6,15 +6,15 @@ export default class InputAudio extends Component(HTMLElement) {
   render () {
     return html`
       <div class="d-flex align-items-center">
-        <button class="cancel-button btn btn-link">
+        <button class="cancel-button btn btn-link p-0 d-none">
           <i class="bi bi-x-circle-fill text-danger fs-5"></i>
         </button>
-        <canvas class="audio-visualization" width="16" height="24"></canvas>
-        <span class="recording-timer ms-3">0.0</span>
-        <button class="approve-button btn btn-link">
+        <canvas class="audio-visualization mx-3 d-none" width="24" height="20"></canvas>
+        <span class="recording-timer me-3 d-none">0.0</span>
+        <button class="approve-button btn btn-link p-0 d-none">
           <i class="bi bi-check-circle-fill text-success fs-5"></i>
         </button>
-        <button class="btn btn-link mic-button" title="[Ии] Записать аудио и распознать текст">
+        <button class="btn btn-link mic-button p-0" title="[Ии] Записать аудио и распознать текст">
           <i class="bi bi-mic-fill fs-5"></i>
         </button>
       </div>
@@ -64,7 +64,7 @@ export default class InputAudio extends Component(HTMLElement) {
       const maxFrequency = 3000; // Максимальная частота голоса в Гц
       const minBin = Math.floor(minFrequency / (sampleRate / analyser.fftSize));
       const maxBin = Math.ceil(maxFrequency / (sampleRate / analyser.fftSize));
-      const numBars = 4;
+      const numBars = 5;
 
       // Вычисляем ширину столбиков и расстояния между ними
       const barWidth = canvas.width / (numBars + (numBars - 1) * 0.62);
@@ -198,7 +198,7 @@ export default class InputAudio extends Component(HTMLElement) {
       micButton.classList.remove('d-none');
   
       try {
-        await decoratedRecognizeAudioFile.call(micButton, new Blob(audioChunks, {type: 'audio/wav'}), (textChunk) => {
+        await decoratedRecognizeAudioFile.call(micButton, new Blob(audioChunks, {type: 'audio/ogg'}), (textChunk) => {
           const trimmed = textChunk.trim();
           console.log('Часть полученного текста:', trimmed);
         });
