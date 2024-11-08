@@ -3,6 +3,8 @@ import InputText from './controls/InputText.js';
 import InputInteger from './controls/InputInteger.js';
 import InputDecimal from './controls/InputDecimal.js';
 import Textarea from './controls/Textarea.js';
+import InputAudio from './controls/InputAudio.js';
+
 export default class ProcessEdit extends Component(HTMLElement) {
   static tag = 'bpa-process-edit';
 
@@ -38,6 +40,8 @@ export default class ProcessEdit extends Component(HTMLElement) {
               <label class="form-label fw-bold" about="v-bpa:processDescription" property="rdfs:label"></label>
               <textarea class="form-control" is="${Textarea}" about="${this.model.id}" data-property="v-bpa:processDescription" rows="3"></textarea>
             </div>
+
+            <${InputAudio}></${InputAudio}>
 
             <div class="mb-3">
               <label class="form-label fw-bold" about="v-bpa:responsibleDepartment" property="rdfs:label"></label>
