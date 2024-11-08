@@ -35,14 +35,13 @@ export default class ProcessEdit extends Component(HTMLElement) {
               <label class="form-label fw-bold" about="rdfs:label" property="rdfs:label"></label>
               <input type="text" class="form-control" is="${InputText}" about="${this.model.id}" data-property="rdfs:label">
             </div>
-
-            <div class="mb-3">
+            <div class="mb-3 position-relative">
               <label class="form-label fw-bold" about="v-bpa:processDescription" property="rdfs:label"></label>
               <textarea class="form-control" is="${Textarea}" about="${this.model.id}" data-property="v-bpa:processDescription" rows="3"></textarea>
+              <div class="position-absolute bottom-0" style="right:0.75rem;">
+                <${InputAudio} about="${this.model.id}" data-property="v-bpa:processDescription"></${InputAudio}>
+              </div>
             </div>
-
-            <${InputAudio}></${InputAudio}>
-
             <div class="mb-3">
               <label class="form-label fw-bold" about="v-bpa:responsibleDepartment" property="rdfs:label"></label>
               <input type="text" class="form-control" is="${InputText}" about="${this.model.id}" data-property="v-bpa:responsibleDepartment">

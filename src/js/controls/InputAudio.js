@@ -3,18 +3,20 @@ import {Component, html, decorator} from 'veda-client';
 export default class InputAudio extends Component(HTMLElement) {
   static tag = 'bpa-input-audio';
 
+  property = this.dataset.property;
+
   render () {
     return html`
       <div class="d-flex align-items-center">
-        <button class="cancel-button btn btn-link p-0 d-none">
-          <i class="bi bi-x-circle-fill text-danger fs-5"></i>
+        <button class="cancel-button btn btn-link text-danger p-0 d-none">
+          <i class="bi bi-x-circle-fill fs-5"></i>
         </button>
         <canvas class="audio-visualization mx-3 d-none" width="24" height="20"></canvas>
         <span class="recording-timer me-3 d-none">0.0</span>
         <button class="approve-button btn btn-link p-0 d-none">
           <i class="bi bi-check-circle-fill text-success fs-5"></i>
         </button>
-        <button class="btn btn-link mic-button p-0" title="[Ии] Записать аудио и распознать текст">
+        <button class="btn btn-link mic-button p-0 text-dark" title="[Ии] Записать аудио и распознать текст">
           <i class="bi bi-mic-fill fs-5"></i>
         </button>
       </div>
@@ -196,11 +198,21 @@ export default class InputAudio extends Component(HTMLElement) {
       micButton.firstElementChild.classList.remove('bi-mic-fill');
       micButton.firstElementChild.classList.add('bi-arrow-clockwise', 'rotating');
       micButton.classList.remove('d-none');
-  
+      
       try {
         await decoratedRecognizeAudioFile.call(micButton, new Blob(audioChunks, {type: 'audio/ogg'}), (textChunk) => {
           const trimmed = textChunk.trim();
           console.log('Часть полученного текста:', trimmed);
+          const currentValue = this.model.get(this.property)[0];
+          let value;
+          if (!currentValue) {
+            value = trimmed;
+          } else if (currentValue.endsWith('\n')) {
+            value = currentValue + trimmed;
+          } else {
+            value = currentValue + ' ' + trimmed;
+          }
+          this.model.set(this.property, value);
         });
       } catch (error) {
         console.error('Ошибка распознавания аудио:', error);
