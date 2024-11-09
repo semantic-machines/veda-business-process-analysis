@@ -73,7 +73,7 @@ export default class InputAudio extends Component(HTMLElement) {
       const barSpacing = barWidth * 0.62;
       const halfHeight = canvas.height / 2;
 
-      async function draw () {
+      function draw () {
         if (!analyser) return;
 
         analyser.getByteFrequencyData(audioDataArray);
