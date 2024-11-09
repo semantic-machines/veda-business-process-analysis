@@ -39,7 +39,7 @@ export default class InputAudio extends Component(HTMLElement) {
     let timerInterval;    
 
     // Запрос доступа к микрофону
-    async function requestMicrophoneAccess () {
+    const requestMicrophoneAccess = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({audio: true});
         return stream;
@@ -50,7 +50,7 @@ export default class InputAudio extends Component(HTMLElement) {
     }
 
     // Визуализация интенсивности звука
-    function startIntensityVisualization (stream) {
+    const startIntensityVisualization = (stream) => {
       // Создание аудиоконтекста
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioContext.createMediaStreamSource(stream);
@@ -73,7 +73,7 @@ export default class InputAudio extends Component(HTMLElement) {
       const barSpacing = barWidth * 0.62;
       const halfHeight = canvas.height / 2;
 
-      function draw () {
+      const draw = () => {
         if (!analyser) return;
 
         analyser.getByteFrequencyData(audioDataArray);
@@ -113,7 +113,7 @@ export default class InputAudio extends Component(HTMLElement) {
     }
 
     // Остановка визуализации звука
-    function stopIntensityVisualization () {
+    const stopIntensityVisualization = () => {
       if (audioContext) {
         audioContext.close();
         audioContext = null;
@@ -125,7 +125,7 @@ export default class InputAudio extends Component(HTMLElement) {
     }
 
     // Обработчик событий для обновления таймера записи
-    function startRecordingTimer () {
+    const startRecordingTimer = () => {
       startTime = Date.now();
       timerInterval = setInterval(() => {
         const elapsedTime = (Date.now() - startTime) / 1000;
@@ -133,13 +133,13 @@ export default class InputAudio extends Component(HTMLElement) {
       }, 100);
     }
 
-    function stopRecordingTimer () {
+    const stopRecordingTimer = () => {
       clearInterval(timerInterval);
       recordingTimer.textContent = '0.0';
     }
 
     // Функция окончания записи
-    function stopRecording () {
+    const stopRecording = () => {
       return new Promise((resolve) => {
         mediaRecorder.onstop = resolve;
         mediaRecorder.stop();
@@ -196,7 +196,7 @@ export default class InputAudio extends Component(HTMLElement) {
   
       // Отображаем спиннер
       micButton.firstElementChild.classList.remove('bi-mic-fill');
-      micButton.firstElementChild.classList.add('bi-arrow-clockwise', 'rotating');
+      micButton.firstElementChild.classList.add('spinner-border', 'spinner-border-sm');
       micButton.classList.remove('d-none');
       
       try {
@@ -217,7 +217,7 @@ export default class InputAudio extends Component(HTMLElement) {
         console.error('Ошибка распознавания аудио:', error);
       } finally {
         audioChunks = [];
-        micButton.firstElementChild.classList.remove('bi-arrow-clockwise', 'rotating');
+        micButton.firstElementChild.classList.remove('spinner-border', 'spinner-border-sm');
         micButton.firstElementChild.classList.add('bi-mic-fill');
         micButton.disabled = false;
       }
@@ -304,14 +304,14 @@ async function recognizeAudioFile (file, fn) {
 function showSpinner (button) {
   const icon = button.firstElementChild;
   icon.classList.remove('bi-mic-fill', 'bi-stop');
-  icon.classList.add('bi-arrow-clockwise', 'rotating');
+  icon.classList.add('spinner-border', 'spinner-border-sm');
   button.disabled = true;
 }
 
 // Скрытие спиннера на кнопке
 function hideSpinner (button, iconClass) {
   const icon = button.firstElementChild;
-  icon.classList.remove('bi-arrow-clockwise', 'rotating');
+  icon.classList.remove('spinner-border', 'spinner-border-sm');
   icon.classList.add(iconClass);
   button.disabled = false;
 }
