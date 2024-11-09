@@ -164,13 +164,8 @@ export default class InputAudio extends Component(HTMLElement) {
   
           mediaRecorder.start();
   
-          micButton.classList.add('d-none');
-          approveButton.classList.remove('d-none');
-          cancelButton.classList.remove('d-none');
-          recordingTimer.classList.remove('d-none');
-          canvas.classList.remove('d-none');
-  
-          micButton.disabled = false;
+          hide(micButton);
+          show(approveButton, cancelButton, recordingTimer, canvas);
         } catch (error) {
           // обратная смена свойств кнопки и отображение элементов управления
           micButton.disabled = false;
@@ -189,18 +184,15 @@ export default class InputAudio extends Component(HTMLElement) {
       stopRecordingTimer();
   
       // Очищаем элементы звуковой записи
-      approveButton.classList.add('d-none');
-      cancelButton.classList.add('d-none');
-      recordingTimer.classList.add('d-none');
-      canvas.classList.add('d-none');
+      hide(approveButton, cancelButton, recordingTimer, canvas);
+      show(micButton);
   
       // Отображаем спиннер
       micButton.firstElementChild.classList.remove('bi-mic-fill');
       micButton.firstElementChild.classList.add('spinner-border', 'spinner-border-sm');
-      micButton.classList.remove('d-none');
       
       try {
-        await decoratedRecognizeAudioFile.call(micButton, new Blob(audioChunks, {type: 'audio/ogg'}), (textChunk) => {
+        await recognizeAudioFile(new Blob(audioChunks, {type: 'audio/ogg'}), (textChunk) => {
           const trimmed = textChunk.trim();
           const currentValue = getFilteredValue(this.model, this.property);
           let value;
@@ -236,15 +228,11 @@ export default class InputAudio extends Component(HTMLElement) {
       audioChunks = [];
   
       // Сброс состояния кнопок
-      micButton.firstElementChild.classList.remove('bi-stop');
       micButton.firstElementChild.classList.add('bi-mic-fill');
       micButton.disabled = false;
   
-      micButton.classList.remove('d-none');
-      approveButton.classList.add('d-none');
-      cancelButton.classList.add('d-none');
-      recordingTimer.classList.add('d-none');
-      canvas.classList.add('d-none');
+      hide(approveButton, cancelButton, recordingTimer, canvas);
+      show(micButton);
     }
   }
 }
@@ -300,32 +288,10 @@ async function recognizeAudioFile (file, fn) {
   }
 }
 
-// Показ спиннера на кнопке
-function showSpinner (button) {
-  const icon = button.firstElementChild;
-  icon.classList.remove('bi-mic-fill', 'bi-stop');
-  icon.classList.add('spinner-border', 'spinner-border-sm');
-  button.disabled = true;
+function show (...els) {
+  els.forEach(el => el.classList.remove('d-none'));
 }
 
-// Скрытие спиннера на кнопке
-function hideSpinner (button, iconClass) {
-  const icon = button.firstElementChild;
-  icon.classList.remove('spinner-border', 'spinner-border-sm');
-  icon.classList.add(iconClass);
-  button.disabled = false;
+function hide (...els) {
+  els.forEach(el => el.classList.add('d-none'));
 }
-
-// Обработка ошибок
-async function handleError (error, button, errorIconClass) {
-  hideSpinner(button, errorIconClass);
-  alert('Произошла ошибка: ' + error);
-}
-
-// Декораторы для функций
-const decoratedRecognizeAudioFile = decorator(
-  recognizeAudioFile,
-  function pre() { showSpinner(this); },
-  function post() { hideSpinner(this, 'bi-mic-fill'); }, 
-  function err(error) { handleError(error, this, 'bi-mic-fill'); }, 
-);
