@@ -1,9 +1,13 @@
 use crate::queue_processor::BusinessProcessAnalysisModule;
+use crate::types::{AIResponseValues, PropertyMapping};
 use openai_dive::v1::resources::chat::{
     ChatCompletionParameters, ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder,
 };
 use serde_json::Value;
+use std::{io, thread, time};
+use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
+use v_common::search::common::{FTQuery, QueryResult};
 use v_common::v_api::obj::ResultCode;
 
 /// Формирует JSON-представление бизнес-процесса из индивида, включая связанные документы
@@ -55,11 +59,6 @@ pub fn extract_process_json(bp_obj: &mut Individual, module: &mut BusinessProces
 
     Ok(json_value)
 }
-
-use crate::types::{AIResponseValues, PropertyMapping};
-use std::{io, thread, time};
-use v_common::onto::datatype::Lang;
-use v_common::search::common::{FTQuery, QueryResult};
 
 pub fn get_individuals_by_type(module: &mut BusinessProcessAnalysisModule, type_uri: &str) -> Result<Vec<Individual>, Box<dyn std::error::Error>> {
     let res = get_individuals_uris_by_type(module, type_uri)?;
@@ -130,8 +129,8 @@ pub fn get_individuals_uris_by_type(module: &mut BusinessProcessAnalysisModule, 
 pub fn prepare_request_ai_parameters(
     module: &mut BusinessProcessAnalysisModule,
     system_prompt_name: &str,
-    analysis_data: serde_json::Value,
-) -> Result<(openai_dive::v1::resources::chat::ChatCompletionParameters, PropertyMapping), Box<dyn std::error::Error>> {
+    analysis_data: Value,
+) -> Result<(ChatCompletionParameters, PropertyMapping), Box<dyn std::error::Error>> {
     let mut prompt_individual = Individual::default();
     if module.backend.storage.get_individual(system_prompt_name, &mut prompt_individual) != ResultCode::Ok {
         return Err("Failed to load optimization prompt".into());
@@ -180,13 +179,22 @@ pub fn prepare_request_ai_parameters(
 
                     info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
 
-                    serde_json::json!({
-                        short_name: {
-                            "type": "string",
-                            "description": description,
-                            "enum": enum_values
-                        }
-                    })
+                    if enum_values.len() > 0 {
+                        serde_json::json!({
+                            short_name: {
+                                "type": "string",
+                                "description": description,
+                                "enum": enum_values
+                            }
+                        })
+                    } else {
+                        serde_json::json!({
+                            short_name: {
+                                "type": "string",
+                                "description": description,
+                            }
+                        })
+                    }
                 },
                 Err(e) => {
                     error!("Failed to get instances of type {}: {:?}", range, e);
@@ -288,7 +296,7 @@ pub async fn send_request_to_ai(
             ..
         } = &choice.message
         {
-            let response: serde_json::Value = serde_json::from_str(text)?;
+            let response: Value = serde_json::from_str(text)?;
             let response_object = response.as_object().ok_or("Response is not a JSON object")?;
 
             // Преобразуем Map в HashMap
@@ -305,7 +313,7 @@ pub async fn send_request_to_ai(
     }
 }
 
-/// Сохраняет результаты анализа AI в индивид
+/// Сохраняет результаты запроса к AI в индивид
 ///
 /// # Arguments
 /// * `module` - Модуль анализа с настройками и доступом к хранилищу

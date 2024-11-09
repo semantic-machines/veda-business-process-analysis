@@ -37,7 +37,7 @@ fn main() -> std::io::Result<()> {
     init_module_log!("BUSINESS_PROCESS_ANALYSIS");
 
     // Читаем настройки из файла business-process-analysis.toml
-    let settings = config::Config::builder().add_source(config::File::with_name("business-process-analysis")).build().expect("Failed to read configuration");
+    let settings = config::Config::builder().add_source(config::File::with_name("./config/business-process-analysis")).build().expect("Failed to read configuration");
 
     // Парсим настройки в структуру Config
     let config: Config = settings.try_deserialize().expect("Failed to deserialize configuration");
