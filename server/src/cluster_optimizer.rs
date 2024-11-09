@@ -1,8 +1,9 @@
-use crate::common::{extract_process_json, prepare_request_ai_parameters, save_individual_from_ai_response, send_request_to_ai};
+use crate::common::{extract_process_json, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use serde_json;
 use tokio::runtime::Runtime;
 use v_common::onto::individual::Individual;
+use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
 /// Анализирует кластер процессов и предлагает оптимизацию
@@ -55,8 +56,21 @@ pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, 
     let optimization_result = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
 
     info!("@ optimization_result={:?}", optimization_result);
+
+    let mut individual = Individual::default();
+    if module.backend.storage.get_individual(cluster_id, &mut individual) != ResultCode::Ok {
+        error!("Failed to load individual {}", cluster_id);
+        return Err(format!("Failed to load individual {}", cluster_id).into());
+    }
+
     // Сохраняем результат оптимизации с учетом маппинга
-    save_individual_from_ai_response(module, Some(cluster_id), None, &optimization_result, &property_mapping)?;
+    set_to_individual_from_ai_response(module, &mut individual, &optimization_result, &property_mapping)?;
+
+    // Сохраняем обновленный индивид
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut individual) {
+        error!("Failed to update individual {}: {:?}", individual.get_id(), e);
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
+    }
 
     info!("Successfully completed optimization analysis for cluster {}", cluster_id);
     Ok(())
