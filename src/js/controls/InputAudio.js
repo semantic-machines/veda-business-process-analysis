@@ -44,7 +44,8 @@ export default class InputAudio extends Component(HTMLElement) {
         const stream = await navigator.mediaDevices.getUserMedia({audio: true});
         return stream;
       } catch (error) {
-        alert('Доступ к микрофону запрещен: ' + error.message);
+        console.error('Ошибка доступа к микрофону:', error);
+        alert('Ошибка доступа к микрофону: ' + error.message);
         throw error;
       }
     }
@@ -147,93 +148,96 @@ export default class InputAudio extends Component(HTMLElement) {
       });
     }    
 
-    micButton.onclick = async () => {
-      if (micButton.firstElementChild.classList.contains('bi-mic-fill')) {
-        try {
-          micButton.disabled = true;
-          audioChunks = [];
-          const stream = await requestMicrophoneAccess();
-          mediaRecorder = new MediaRecorder(stream);
-  
-          startIntensityVisualization(stream);
-          startRecordingTimer();
-  
-          mediaRecorder.ondataavailable = (event) => {
-            audioChunks.push(event.data);
-          };
-  
-          mediaRecorder.start();
-  
-          hide(micButton);
-          show(approveButton, cancelButton, recordingTimer, canvas);
-        } catch (error) {
-          // обратная смена свойств кнопки и отображение элементов управления
-          micButton.disabled = false;
-          console.error('Ошибка записи аудио:', error);
-        }
-      }
-    }
-  
-    // Обработчик для кнопки "одобрения"
-    approveButton.onclick = async () => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        await stopRecording(); // Дождаться окончания записи
-      }
-  
-      stopIntensityVisualization();
-      stopRecordingTimer();
-  
-      // Очищаем элементы звуковой записи
-      hide(approveButton, cancelButton, recordingTimer, canvas);
-      show(micButton);
-  
-      // Отображаем спиннер
-      micButton.firstElementChild.classList.remove('bi-mic-fill');
-      micButton.firstElementChild.classList.add('spinner-border', 'spinner-border-sm');
-      
-      try {
-        await recognizeAudioFile(new Blob(audioChunks, {type: 'audio/ogg'}), (textChunk) => {
-          const trimmed = textChunk.trim();
-          const currentValue = getFilteredValue(this.model, this.property);
-          let value;
-          if (!currentValue) {
-            value = trimmed;
-          } else if (currentValue.endsWith('\n')) {
-            value = currentValue + trimmed;
-          } else {
-            value = currentValue + '\n' + trimmed;
-          }
-          updateFilteredValue(this.model, this.property, value);
-        });
-      } catch (error) {
-        console.error('Ошибка распознавания аудио:', error);
-      } finally {
+    micButton.onclick = decorator(
+      async () => {
         audioChunks = [];
+        const stream = await requestMicrophoneAccess();
+        mediaRecorder = new MediaRecorder(stream);
+
+        startIntensityVisualization(stream);
+        startRecordingTimer();
+
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+
+        mediaRecorder.start();
+      }, 
+      () => {
+        hide(micButton);
+        show(approveButton, cancelButton, recordingTimer, canvas);
+      },
+      null,
+      (error) => {
+        show(micButton);
+        hide(approveButton, cancelButton, recordingTimer, canvas);
+        console.error('Ошибка записи аудио:', error);
+        alert('Ошибка записи аудио: ' + error.message);
+      },
+    );
+  
+    approveButton.onclick = decorator(
+      async () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          await stopRecording(); // Дождаться окончания записи
+        }
+  
+        stopIntensityVisualization();
+        stopRecordingTimer();
+        
+        try {
+          await recognizeAudioFile(new Blob(audioChunks, {type: 'audio/ogg'}), (textChunk) => {
+            const trimmed = textChunk.trim();
+            const currentValue = getFilteredValue(this.model, this.property);
+            let value;
+            if (!currentValue) {
+              value = trimmed;
+            } else if (currentValue.endsWith('\n')) {
+              value = currentValue + trimmed;
+            } else {
+              value = currentValue + '\n' + trimmed;
+            }
+            updateFilteredValue(this.model, this.property, value);
+          });
+        } catch (error) {
+          console.error('Ошибка распознавания аудио:', error);
+          alert('Ошибка распознавания аудио: ' + error.message);
+        } finally {
+          audioChunks = [];
+        }
+      },
+      () => {
+        hide(approveButton, cancelButton, recordingTimer, canvas);
+        show(micButton);
+        micButton.disabled = true;
+        micButton.firstElementChild.classList.remove('bi-mic-fill');
+        micButton.firstElementChild.classList.add('spinner-border', 'spinner-border-sm');
+      },
+      () => {
         micButton.firstElementChild.classList.remove('spinner-border', 'spinner-border-sm');
         micButton.firstElementChild.classList.add('bi-mic-fill');
         micButton.disabled = false;
-      }
-    }
+      },
+    );
   
     // Обработчик для кнопки отмены
-    cancelButton.onclick = async () => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        await stopRecording(); // Дождаться окончания записи
-      }
-  
-      stopIntensityVisualization();
-      stopRecordingTimer();
-  
-      // Очистка массива аудио чанков
-      audioChunks = [];
-  
-      // Сброс состояния кнопок
-      micButton.firstElementChild.classList.add('bi-mic-fill');
-      micButton.disabled = false;
-  
-      hide(approveButton, cancelButton, recordingTimer, canvas);
-      show(micButton);
-    }
+    cancelButton.onclick = decorator(
+      async () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          await stopRecording(); // Дождаться окончания записи
+        }
+    
+        stopIntensityVisualization();
+        stopRecordingTimer();
+    
+        // Очистка массива аудио чанков
+        audioChunks = [];
+      },
+      () => {
+        hide(approveButton, cancelButton, recordingTimer, canvas);
+        show(micButton);
+      },
+    );
   }
 }
 
@@ -257,35 +261,30 @@ async function recognizeAudioFile (file, fn) {
   const formData = new FormData();
   formData.append('file', file);
 
-  try {
-    const response = await fetch('/recognize_audio', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include',
-    });
+  const response = await fetch('/recognize_audio', {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+  });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || response.status);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let resultText = '';
-
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
-      const decoded = decoder.decode(value, {stream: true});
-      fn(decoded);
-      resultText += decoded;
-    }
-
-    return resultText;
-  } catch (error) {
-    console.error('Ошибка распознавания аудио:', error);
-    throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || response.status);
   }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let resultText = '';
+
+  while (true) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    const decoded = decoder.decode(value, {stream: true});
+    fn(decoded);
+    resultText += decoded;
+  }
+
+  return resultText;
 }
 
 function show (...els) {
