@@ -3,6 +3,7 @@
 use crate::business_process_handler::analyze_process_justification;
 use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
+use crate::generic_processing_handler::process_generic_request;
 use openai_dive::v1::api::Client;
 use v_common::ft_xapian::xapian_reader::XapianReader;
 use v_common::module::module_impl::{get_inner_binobj_as_individual, PrepareError};
@@ -79,6 +80,15 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
             info!("Found new process cluster: {}", new_state.get_id());
             if let Err(e) = analyze_and_optimize_cluster(self, new_state.get_id()) {
                 error!("Error analyze and_optimize cluster: {:?}", e);
+            }
+        } else if new_state.any_exists("rdf:type", &[&"v-bpa:GenericProcessingRequest".to_string()]) {
+            if source == "BPA" {
+                return Ok(true);
+            }
+
+            info!("Found generic processing request: {}", new_state.get_id());
+            if let Err(e) = process_generic_request(self, &mut new_state) {
+                error!("Error processing generic request: {:?}", e);
             }
         }
 

@@ -20,6 +20,8 @@ mod prompt_manager;
 mod queue_processor;
 mod types;
 
+mod generic_processing_handler;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct Config {
     openai: OpenAIConfig,

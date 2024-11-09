@@ -56,7 +56,7 @@ pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, 
 
     info!("@ optimization_result={:?}", optimization_result);
     // Сохраняем результат оптимизации с учетом маппинга
-    save_individual_from_ai_response(module, cluster_id, &optimization_result, &property_mapping)?;
+    save_individual_from_ai_response(module, Some(cluster_id), None, &optimization_result, &property_mapping)?;
 
     info!("Successfully completed optimization analysis for cluster {}", cluster_id);
     Ok(())

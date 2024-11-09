@@ -312,17 +312,23 @@ use v_common::v_api::api_client::IndvOp;
 /// * `Result<(), Box<dyn std::error::Error>>` - Результат сохранения
 pub fn save_individual_from_ai_response(
     module: &mut BusinessProcessAnalysisModule,
-    individual_id: &str,
+    individual_id: Option<&str>,
+    individual: Option<Individual>,
     ai_response: &AIResponseValues,
     property_mapping: &PropertyMapping,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut individual = Individual::default();
-    if module.backend.storage.get_individual(individual_id, &mut individual) != ResultCode::Ok {
-        error!("Failed to load individual {}", individual_id);
-        return Err(format!("Failed to load individual {}", individual_id).into());
-    }
-    individual.parse_all();
-    info!("Updating individual {} with AI analysis results", individual_id);
+    let mut individual = if let Some(id) = individual_id {
+        let mut individual = Individual::default();
+        if module.backend.storage.get_individual(id, &mut individual) != ResultCode::Ok {
+            error!("Failed to load individual {}", id);
+            return Err(format!("Failed to load individual {}", id).into());
+        }
+        individual.parse_all();
+        info!("Updating individual {} with AI analysis results", id);
+        individual
+    } else {
+        individual.unwrap()
+    };
 
     // Получаем вложенный объект optimized_process
     let response_values = if let Some(optimized_process) = ai_response.get("result") {
@@ -393,10 +399,151 @@ pub fn save_individual_from_ai_response(
 
     // Сохраняем обновленный индивид
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut individual) {
-        error!("Failed to update individual {}: {:?}", individual_id, e);
+        error!("Failed to update individual {}: {:?}", individual.get_id(), e);
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
     }
 
-    info!("Successfully saved AI analysis results for individual {}", individual_id);
+    info!("Successfully saved AI analysis results for individual {}", individual.get_id());
     Ok(())
+}
+
+pub fn Lprepare_request_ai_parameters(
+    module: &mut BusinessProcessAnalysisModule,
+    system_prompt_name: &str,
+    analysis_data: serde_json::Value,
+) -> Result<(openai_dive::v1::resources::chat::ChatCompletionParameters, PropertyMapping), Box<dyn std::error::Error>> {
+    let mut prompt_individual = Individual::default();
+    if module.backend.storage.get_individual(system_prompt_name, &mut prompt_individual) != ResultCode::Ok {
+        return Err("Failed to load optimization prompt".into());
+    }
+    prompt_individual.parse_all();
+
+    let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
+    let properties = prompt_individual.get_literals("v-bpa:properties").unwrap_or_default();
+    info!("@A1 properties={:?}", properties);
+
+    // Словарь для хранения соответствия короткое имя -> полное имя
+    let mut property_mapping = PropertyMapping::new();
+
+    // Собираем определения свойств
+    let mut properties_defs = Vec::new();
+
+    for full_prop in properties {
+        let mut prop_individual = Individual::default();
+        if module.backend.storage.get_individual(&full_prop, &mut prop_individual) != ResultCode::Ok {
+            continue;
+        }
+        prop_individual.parse_all();
+
+        let range = prop_individual.get_first_literal("rdfs:range").unwrap_or_default();
+        let description = prop_individual.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]).unwrap_or_else(|| full_prop.clone());
+
+        let short_name = full_prop.split(':').last().unwrap_or(&*full_prop).to_string();
+        property_mapping.insert(short_name.clone(), full_prop.clone());
+
+        let property_def = if !range.starts_with("xsd:") {
+            info!("@A2 Processing class range: {} for property {}", range, full_prop);
+
+            // Получаем все экземпляры этого класса
+            let mut enum_values = Vec::new();
+
+            match get_individuals_by_type(module, &range) {
+                Ok(instances) => {
+                    for mut instance in instances {
+                        // Получаем метку на русском языке
+                        if let Some(label) = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]) {
+                            enum_values.push(label.clone());
+                            // Сохраняем маппинг метка -> URI для этого значения
+                            property_mapping.insert(format!("{}_{}", short_name, label), instance.get_id().to_string());
+                        }
+                    }
+
+                    info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
+
+                    serde_json::json!({
+                        short_name: {
+                            "type": "string",
+                            "description": description,
+                            "enum": enum_values
+                        }
+                    })
+                },
+                Err(e) => {
+                    error!("Failed to get instances of type {}: {:?}", range, e);
+                    // Если не удалось получить экземпляры, обрабатываем как обычное строковое поле
+                    serde_json::json!({
+                        short_name: {
+                            "type": "string",
+                            "description": description
+                        }
+                    })
+                },
+            }
+        } else {
+            // Обрабатываем обычные xsd:* типы
+            let json_type = match range.as_str() {
+                "xsd:string" => "string",
+                "xsd:integer" => "integer",
+                "xsd:decimal" => "number",
+                _ => "string",
+            };
+
+            serde_json::json!({
+                short_name: {
+                    "type": json_type,
+                    "description": description
+                }
+            })
+        };
+
+        properties_defs.push(property_def);
+    }
+
+    // Собираем все свойства в один объект
+    let mut properties_obj = serde_json::Map::new();
+    for prop_def in properties_defs {
+        properties_obj.extend(prop_def.as_object().unwrap().clone());
+    }
+
+    // Собираем имена свойств для списка required
+    let required: Vec<String> = property_mapping
+        .keys()
+        .filter(|k| !k.contains('_')) // Исключаем маппинги для enum значений
+        .cloned()
+        .collect();
+
+    // Формируем полную схему
+    let schema = serde_json::json!({
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "result": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": properties_obj,
+                "required": required
+            }
+        },
+        "required": ["result"]
+    });
+
+    info!("@A4 property_mapping={:?}", property_mapping);
+    info!("@A5 schema={}", schema.to_string());
+
+    let parameters = ChatCompletionParametersBuilder::default()
+        .model(module.model.clone())
+        .messages(vec![
+            ChatMessage::System {
+                content: ChatMessageContent::Text(prompt_text),
+                name: None,
+            },
+            ChatMessage::User {
+                content: ChatMessageContent::Text(analysis_data.to_string()),
+                name: None,
+            },
+        ])
+        .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("process_optimization").schema(schema).strict(true).build()?))
+        .build()?;
+
+    Ok((parameters, property_mapping))
 }
