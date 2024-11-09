@@ -147,7 +147,7 @@ export default class InputAudio extends Component(HTMLElement) {
       });
     }    
 
-    micButton.onclick = async function () {
+    micButton.onclick = async () => {
       if (micButton.firstElementChild.classList.contains('bi-mic-fill')) {
         try {
           micButton.disabled = true;
@@ -180,7 +180,7 @@ export default class InputAudio extends Component(HTMLElement) {
     }
   
     // Обработчик для кнопки "одобрения"
-    approveButton.onclick = async function () {
+    approveButton.onclick = async () => {
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         await stopRecording(); // Дождаться окончания записи
       }
@@ -202,17 +202,16 @@ export default class InputAudio extends Component(HTMLElement) {
       try {
         await decoratedRecognizeAudioFile.call(micButton, new Blob(audioChunks, {type: 'audio/ogg'}), (textChunk) => {
           const trimmed = textChunk.trim();
-          console.log('Часть полученного текста:', trimmed);
-          const currentValue = this.model.get(this.property)[0];
+          const currentValue = getFilteredValue(this.model, this.property);
           let value;
           if (!currentValue) {
             value = trimmed;
           } else if (currentValue.endsWith('\n')) {
             value = currentValue + trimmed;
           } else {
-            value = currentValue + ' ' + trimmed;
+            value = currentValue + '\n' + trimmed;
           }
-          this.model.set(this.property, value);
+          updateFilteredValue(this.model, this.property, value);
         });
       } catch (error) {
         console.error('Ошибка распознавания аудио:', error);
@@ -225,7 +224,7 @@ export default class InputAudio extends Component(HTMLElement) {
     }
   
     // Обработчик для кнопки отмены
-    cancelButton.onclick = async function () {
+    cancelButton.onclick = async () => {
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         await stopRecording(); // Дождаться окончания записи
       }
@@ -251,6 +250,20 @@ export default class InputAudio extends Component(HTMLElement) {
 }
 
 customElements.define(InputAudio.tag, InputAudio);
+
+function getFilteredValue (model, property) {
+  return model[property]
+    ?.filter(str => !str.includes('^^') || str.toLowerCase().endsWith('^^' + document.documentElement.lang.toLowerCase()))
+    .map(str => str.split('^^')[0])
+    .join(' ') ?? '';
+};
+
+function updateFilteredValue (model, property, value) {
+  const existingValues = model[property] || [];
+  const currentLang = document.documentElement.lang.toUpperCase();
+  const newValues = [...existingValues.filter(str => !str.endsWith(`^^${currentLang}`)), `${value}^^${currentLang}`];
+  model[property] = newValues;
+};
 
 async function recognizeAudioFile (file, fn) {
   const formData = new FormData();
