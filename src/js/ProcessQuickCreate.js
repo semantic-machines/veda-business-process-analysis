@@ -8,7 +8,7 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
   added() {
     this.model = new Model;
     this.model['rdf:type'] = 'v-bpa:GenericProcessingRequest';
-    this.model['v-bpa:targetType'] = 'v-bpa:BusinessProcess';
+    this.model['v-bpa:prompt'] = 'v-bpa:CreateBusinessProcessPrompt';
     this.model.on('afterreset', this.handleReset);
   }
 
@@ -32,16 +32,12 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
 
   handleReset = decorator(
     async () => {
-      const json = JSON.parse(JSON.stringify(this.model));
-      delete json['rdf:type'];
-      delete json['v-bpa:targetType'];
-      delete json['v-bpa:rawInput'];
-      json['@'] = genUri();
+      console.log(JSON.stringify(this.model));
 
-      const newProcess = new Model(json);
-      newProcess['rdf:type'] = 'v-bpa:BusinessProcess';
-      newProcess.isNew(true);
-      this.manualCreate(newProcess);
+      // const newProcess = new Model(json);
+      // newProcess['rdf:type'] = 'v-bpa:BusinessProcess';
+      // newProcess.isNew(true);
+      // this.manualCreate(newProcess);
     },
 
     () => this.showSpinner(false),
