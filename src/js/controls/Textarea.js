@@ -17,7 +17,7 @@ export default class Textarea extends Component(HTMLTextAreaElement) {
 
     this.value = getFilteredValue(this.model, this.property);
 
-    this.onkeyup = () => {
+    this.oninput = () => {
       const existingValues = this.model[this.property] || [];
       const currentLang = document.documentElement.lang.toUpperCase();
       const regex = /\^\^[a-z]{2}$/i;
