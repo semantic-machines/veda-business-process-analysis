@@ -69,18 +69,18 @@ export default class ProcessEdit extends Component(HTMLElement) {
               <textarea class="form-control" is="${Textarea}" about="${this.model.id}" data-property="v-bpa:processParticipant" rows="3"></textarea>
             </div>
           </div>
+          <div class="d-flex justify-content-start gap-2 mt-3">
+            <button @click="save" class="btn btn-success">
+              <span about="v-bpa:Save" property="rdfs:label"></span>
+            </button>
+            <button @click="cancel" class="btn btn-light">
+              <span about="v-bpa:Cancel" property="rdfs:label"></span>
+            </button>
+          </div>
         </div>
       </div>
       <div class="sheet">
         <h4 about="v-bpa:ProcessDocument" property="rdfs:label"></h4>
-      </div>
-      <div class="d-flex justify-content-start gap-2 mb-3">
-        <button @click="save" class="btn btn-success">
-          <span about="v-bpa:Save" property="rdfs:label"></span>
-        </button>
-        <button @click="cancel" class="btn btn-secondary">
-          <span about="v-bpa:Cancel" property="rdfs:label"></span>
-        </button>
       </div>
     `;
   }

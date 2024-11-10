@@ -53,7 +53,7 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
   );
 
   manualCreate(newProcess) {
-    if (!(newProcess instanceof Model)) {
+    if (newProcess instanceof Event) {
       newProcess = new Model;
       newProcess['rdf:type'] = 'v-bpa:BusinessProcess';
     }

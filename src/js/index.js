@@ -4,7 +4,7 @@ import '../scss/app.scss';
 import '../../node_modules/bootstrap/dist/js/bootstrap.min.js';
 import App from './App.js';
 import {Backend, Subscription} from 'veda-client';
-import './TTLView.js';
+import './Raw.js';
 
 Backend.init();
 Subscription.init();

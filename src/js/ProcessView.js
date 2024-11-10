@@ -80,13 +80,13 @@ export default class ProcessView extends Component(HTMLElement) {
             <p class="fw-bold" property="v-bpa:processParticipant"></p>
           </div>
         </div>
+        <button @click="edit" class="btn btn-primary mt-3">
+          <span about="v-bpa:Edit" property="rdfs:label"></span>
+        </button>
       </div>
       <div class="sheet">
         <h4 about="v-bpa:ProcessDocument" property="rdfs:label"></h4>
       </div>
-      <button @click="edit" class="btn btn-primary mb-3">
-        <span about="v-bpa:Edit" property="rdfs:label"></span>
-      </button>
     `;
   }
 }

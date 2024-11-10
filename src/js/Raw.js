@@ -1,13 +1,13 @@
 import {Component, html} from 'veda-client';
 
-export default class TTLView extends Component(HTMLElement) {
-  static tag = 'bpa-ttl-view';
+export default class Raw extends Component(HTMLElement) {
+  static tag = 'bpa-raw';
 
-  format = localStorage.getItem('TTLView_format') === 'ttl' ? 'ttl' : 'json';
+  format = localStorage.getItem('Raw_format') === 'ttl' ? 'ttl' : 'json';
 
   toggleFormat() {
     this.format = this.format === 'ttl' ? 'json' : 'ttl';
-    localStorage.setItem('TTLView_format', this.format);
+    localStorage.setItem('Raw_format', this.format);
     this.update();
   }
 
@@ -38,7 +38,7 @@ export default class TTLView extends Component(HTMLElement) {
   }
 }
 
-customElements.define(TTLView.tag, TTLView);
+customElements.define(Raw.tag, Raw);
 
 const handleMouseMove = (e) => {
   if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
@@ -64,7 +64,7 @@ const handleClick = (e) => {
     e.preventDefault(); 
     const target = e.target.closest('[about]');
     if (target) {
-      location.hash = `#/TTLView/${target.getAttribute('about')}`;
+      location.hash = `#/Raw/${target.getAttribute('about')}`;
     }
   }
 };
@@ -94,11 +94,11 @@ function toTurtle(model) {
     if (predicate === 'id') return `<b>${objects}</b>`;
     return objects.map(obj => {
       if (typeof obj === 'object' && obj.id) {
-        return `  <a class="link-secondary" href="#/TTLView/${predicate}">${predicate}</a> <a class="link" href="#/TTLView/${obj.id}">${obj.id}</a> ;`;
+        return `  <a class="link-secondary" href="#/Raw/${predicate}">${predicate}</a> <a class="link" href="#/Raw/${obj.id}">${obj.id}</a> ;`;
         } else if (typeof obj === 'string') {
-          return `  <a class="link-secondary" href="#/TTLView/${predicate}">${predicate}</a> "${obj}" ;`; 
+          return `  <a class="link-secondary" href="#/Raw/${predicate}">${predicate}</a> "${obj}" ;`; 
         } else {
-          return `  <a class="link-secondary" href="#/TTLView/${predicate}">${predicate}</a> ${obj} ;`;
+          return `  <a class="link-secondary" href="#/Raw/${predicate}">${predicate}</a> ${obj} ;`;
         }
       }).join('\n');
     }).filter(Boolean).join('\n');
