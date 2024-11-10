@@ -1,4 +1,4 @@
-import {Component, html, Model, genUri, decorator} from 'veda-client';
+import {Component, html, Model, genUri, decorator, timeout} from 'veda-client';
 import Textarea from './controls/Textarea.js';
 import InputAudio from './controls/InputAudio.js';
 
@@ -16,37 +16,41 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
     this.model.off('afterreset', this.handleReset);
   }
 
-  create = decorator(
-    async () => {
+  create = async () => {
+    this.showSpinner(true);
+    await timeout(1000);
+
+    try {
       this.model.isSync(false);
       await this.model.save();
-    },
-
-    () => this.showSpinner(true),
-    null,
-    (error) => {
-      console.error(error);
+    } catch (error) {
+      alert(`Ошибка создания свободного описания процесса: ${error.message}`);
+      console.error('Ошибка создания свободного описания процесса', error);      
+    } finally {
       this.showSpinner(false);
     }
-  );
+  }
+  
+  handleReset = async () => {
+    if (!this.model.hasValue('v-bpa:hasResult')) return;
 
-  handleReset = decorator(
-    async () => {
-      console.log(JSON.stringify(this.model));
-
-      // const newProcess = new Model(json);
-      // newProcess['rdf:type'] = 'v-bpa:BusinessProcess';
-      // newProcess.isNew(true);
-      // this.manualCreate(newProcess);
-    },
-
-    () => this.showSpinner(false),
-    null,
-    (error) => {
-      console.error(error);
+    try {
+      const result = await this.model['v-bpa:hasResult'][0].load();
+      const json = JSON.parse(JSON.stringify(result));
+      json['@'] = genUri();
+      json['rdf:type'] = json['v-bpa:targetType'];
+      delete json['v-bpa:targetType'];
+      
+      const newProcess = new Model(json);
+      newProcess.isNew(true);
+      this.manualCreate(newProcess);
+    } catch (error) {
+      alert(`Ошибка загрузки результата заполнения: ${error.message}`);
+      console.error('Ошибка загрузки результата заполнения', error);
+    } finally {
       this.showSpinner(false);
     }
-  );
+  }
 
   manualCreate(newProcess) {
     if (newProcess instanceof Event) {
