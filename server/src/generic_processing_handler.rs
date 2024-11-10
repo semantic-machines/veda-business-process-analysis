@@ -2,7 +2,6 @@ use crate::common::{prepare_request_ai_parameters, send_request_to_ai, set_to_in
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use serde_json::Value;
 use tokio::runtime::Runtime;
-use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
@@ -11,9 +10,6 @@ use v_common::v_api::obj::ResultCode;
 /// и заданного типа целевого индивида.
 pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, request: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     info!("Starting generic request processing for request: {}", request.get_id());
-
-    // Получаем тип целевого индивида
-    let target_type = request.get_first_literal("v-bpa:targetType").ok_or("No target type specified")?;
 
     // Получаем пользовательский ввод
     let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
@@ -25,7 +21,8 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     if module.backend.storage.get_individual(&prompt_id, &mut prompt_individual) != ResultCode::Ok {
         return Err(format!("Failed to load prompt: {}", prompt_id).into());
     }
-    prompt_individual.parse_all();
+    // Получаем тип целевого индивида
+    let target_type = prompt_individual.get_first_literal("v-bpa:targetType").ok_or("No target type specified")?;
 
     // Загружаем определение целевого типа из онтологии
     let mut target_type_def = Individual::default();
@@ -49,7 +46,8 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     let result_id = format!("d:generic_result_{}", uuid::Uuid::new_v4());
     let mut result_individual = Individual::default();
     result_individual.set_id(&result_id);
-    //result_individual.set_uri("rdf:type", &target_type);
+    result_individual.set_uri("rdf:type", "v-bpa:GenericProcessingResult");
+    result_individual.set_uri("v-bpa:targetType", &target_type);
 
     // Сохраняем оригинальный текст
     //result_individual.set_string("v-bpa:originalInput", &raw_input, Lang::none());

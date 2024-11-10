@@ -81,15 +81,13 @@ pub fn get_individuals_by_type(module: &mut BusinessProcessAnalysisModule, type_
 }
 
 /// Находит все индивиды заданного типа в системе
-///
-/// # Arguments
-/// * `module` - Модуль с настроенным подключением к базе
-/// * `type_uri` - URI типа для поиска (например, "v-bpa:ProcessRelevance")
-///
-/// # Returns
-/// * `Result<Vec<String>, Box<dyn std::error::Error>>` - Список uri найденных индивидов
 pub fn get_individuals_uris_by_type(module: &mut BusinessProcessAnalysisModule, type_uri: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    info!("Starting search for individuals of type: {}", type_uri);
+    let query = format!("'rdf:type' === '{}'", type_uri);
+    get_individuals_uris_by_query(module, &query)
+}
+
+fn get_individuals_uris_by_query(module: &mut BusinessProcessAnalysisModule, query: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    info!("Starting search for individuals of query: {}", query);
 
     let mut res = QueryResult::default();
     res.result_code = ResultCode::NotReady;
@@ -99,10 +97,9 @@ pub fn get_individuals_uris_by_type(module: &mut BusinessProcessAnalysisModule, 
 
     // Формируем запрос для поиска индивидов заданного типа
     while res.result_code == ResultCode::NotReady || res.result_code == ResultCode::DatabaseModifiedError {
-        let query = format!("'rdf:type' === '{}'", type_uri);
         let ft_query = FTQuery::new_with_user("cfg:VedaSystem", &query);
 
-        info!("Attempting to query individuals of type {} (attempt {})", type_uri, retry_count + 1);
+        info!("Attempting to query individuals of query {} (attempt {})", query, retry_count + 1);
 
         res = module.xr.query(ft_query, &mut module.backend.storage);
 
@@ -113,7 +110,7 @@ pub fn get_individuals_uris_by_type(module: &mut BusinessProcessAnalysisModule, 
 
         if res.result_code != ResultCode::Ok {
             if retry_count >= MAX_RETRIES {
-                error!("Max retries reached while searching for type {}", type_uri);
+                error!("Max retries reached while searching for query {}", query);
                 return Err(io::Error::new(io::ErrorKind::Other, format!("Failed to search after {} attempts", MAX_RETRIES)).into());
             }
             warn!("Failed to search individuals, retry in 3 seconds... (attempt {})", retry_count + 1);

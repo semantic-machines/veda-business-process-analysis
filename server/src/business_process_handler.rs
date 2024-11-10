@@ -2,7 +2,6 @@
 
 use crate::common::{extract_process_json, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
 use crate::queue_processor::BusinessProcessAnalysisModule;
-use serde_json;
 use std::io;
 use tokio::runtime::Runtime;
 use v_common::onto::individual::Individual;
