@@ -28,6 +28,7 @@ v-bpa:promptText
 .
 
 # Класс для обработки произвольных запросов
+
 v-bpa:GenericProcessingRequest
   rdf:type owl:Class ;
   rdfs:subClassOf v-s:UserThing ;
@@ -35,11 +36,18 @@ v-bpa:GenericProcessingRequest
   rdfs:label "Processing Request"@en ;
 .
 
+v-bpa:GenericProcessingResult
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Результат обработки"@ru ;
+  rdfs:label "Result"@en ;
+.
+
 v-bpa:targetType
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Целевой тип"@ru ;
   rdfs:label "Target Type"@en ;
-  rdfs:domain v-bpa:GenericProcessingRequest ;
+  rdfs:domain v-bpa:GenericProcessingRequest, v-bpa:GenericProcessingResult ;
   rdfs:range rdfs:Class ;
 .
 

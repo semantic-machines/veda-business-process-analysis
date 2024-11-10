@@ -72,4 +72,5 @@ v-bpa:CreateBusinessProcessPrompt
    - Участники процесса: Список ответственных должностей
 """@ru ;
   v-bpa:properties rdfs:label, v-bpa:processDescription, v-bpa:responsibleDepartment, v-bpa:laborCosts, v-bpa:processFrequency, v-bpa:processParticipant;
+  v-bpa:targetType v-bpa:BusinessProcess;
 .
