@@ -96,8 +96,10 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
         </h3>
         <p class="text-muted fw-bold" about="v-bpa:ProcessQuickCreate" property="rdfs:comment"></p>
         <div class="mb-3 position-relative">
-          <textarea placeholder="Введите текст с клавиатуры или воспользуйтесь микрофоном" class="form-control" is="${Textarea}" about="${this.model.id}" data-property="v-bpa:rawInput" rows="7"
-            @input="storeValue"></textarea>
+          <textarea class="form-control" placeholder="Введите текст с клавиатуры или воспользуйтесь микрофоном" 
+            is="${Textarea}" about="${this.model.id}" data-property="v-bpa:rawInput" rows="7"
+            @input="storeValue">
+          </textarea>
           <div class="position-absolute bottom-0" style="right:0.75rem;">
             <${InputAudio} about="${this.model.id}" data-property="v-bpa:rawInput"></${InputAudio}>
           </div>

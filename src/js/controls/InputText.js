@@ -29,7 +29,11 @@ export default class InputText extends Component(HTMLInputElement) {
     };
         
     this.modifiedHandler = () => {
-      this.value = getFilteredValue(this.model, this.property);
+      const newValue = getFilteredValue(this.model, this.property);
+      if (this.value !== newValue) {
+        this.value = newValue;
+        this.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     };
 
     this.model.on(this.property, this.modifiedHandler);
