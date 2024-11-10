@@ -18,7 +18,6 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
 
   create = async () => {
     this.showSpinner(true);
-    await timeout(1000);
 
     try {
       this.model.isSync(false);
@@ -26,7 +25,6 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
     } catch (error) {
       alert(`Ошибка создания свободного описания процесса: ${error.message}`);
       console.error('Ошибка создания свободного описания процесса', error);      
-    } finally {
       this.showSpinner(false);
     }
   }
