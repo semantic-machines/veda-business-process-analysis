@@ -105,8 +105,28 @@ v-bpa:Save
   rdfs:label "Save"@en ;
 .
 
+v-bpa:Create
+  rdf:type rdfs:Resource ;
+  rdfs:label "Создать"@ru ;
+  rdfs:label "Create"@en ;
+.
+
 v-bpa:Cancel
   rdf:type rdfs:Resource ;
   rdfs:label "Отменить"@ru ;
   rdfs:label "Cancel"@en ;
+.
+
+v-bpa:ProcessQuickCreate
+  rdf:type rdfs:Resource ;
+  rdfs:label "Быстрое создание бизнес-процесса"@ru ;
+  rdfs:label "Business process quick create"@en ;
+  rdfs:comment "Опишите бизнес-процесс в свободной форме, процесс будет создан автоматически"@ru ;
+  rdfs:comment "Describe the business process in free form, the process will be created automatically"@en ;
+.
+
+v-bpa:ManualCreate
+  rdf:type rdfs:Resource ;
+  rdfs:label "Заполнить вручную"@ru ;
+  rdfs:label "Manual fill"@en ;
 .

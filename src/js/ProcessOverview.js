@@ -20,9 +20,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
   }
 
   addProcess() {
-    const newProcess = new Model();
-    newProcess['rdf:type'] = 'v-bpa:BusinessProcess';
-    location.hash = `#/ProcessEdit/${newProcess.id}`;
+    location.hash = `#/ProcessQuickCreate`;
   }
 
   render() {

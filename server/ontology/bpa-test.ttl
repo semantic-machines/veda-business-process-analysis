@@ -8,73 +8,79 @@
 # Экземпляр бизнес-процесса "Ежеквартальная финансовая отчетность"
 v-bpa:QuarterlyFinancialReportingProcess
   rdf:type v-bpa:BusinessProcess ;
-  v-bpa:processName "Ежеквартальная финансовая отчетность"@ru ;
+  rdfs:label "Ежеквартальная финансовая отчетность"@ru ;
   v-bpa:processDescription "Процесс ежеквартальной финансовой отчетности"@ru ;
   v-bpa:processParticipant "Финансовый аналитик, бухгалтер, финансовый менеджер"@ru ;
   v-bpa:responsibleDepartment "Финансовый департамент"@ru ;
-  v-bpa:processFrequency "4"^^xsd:integer ;
-  v-bpa:laborCosts "250"^^xsd:decimal ;
+  v-bpa:processFrequency 4 ;
+  v-bpa:laborCosts 250.0 ;
   v-bpa:processJustification v-bpa:GovernmentDirective , v-bpa:CEODirective , v-bpa:InterdepartmentalMemo ;
+  v-bpa:processRelevance v-bpa:CompletelyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Европе"
 v-bpa:EuropeMarketAnalysisProcess
   rdf:type v-bpa:BusinessProcess ;
-  v-bpa:processName "Анализ рынка в Европе"@ru ;
+  rdfs:label "Анализ рынка в Европе"@ru ;
   v-bpa:processDescription "Процесс анализа рыночных тенденций и конкурентов в Европейском регионе"@ru ;
   v-bpa:processParticipant "Маркетолог-аналитик, менеджер по развитию"@ru ;
   v-bpa:responsibleDepartment "Европейский отдел продаж"@ru ;
-  v-bpa:processFrequency "12"^^xsd:integer ;
-  v-bpa:laborCosts "180"^^xsd:decimal ;
+  v-bpa:processFrequency 12 ;
+  v-bpa:laborCosts 180.0 ;
   v-bpa:processJustification v-bpa:EuropeMarketAnalysisDirective ;
+  v-bpa:processRelevance v-bpa:PartlyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Азии"
 v-bpa:AsiaMarketAnalysisProcess
   rdf:type v-bpa:BusinessProcess ;
-  v-bpa:processName "Анализ рынка в Азии"@ru ;
+  rdfs:label "Анализ рынка в Азии"@ru ;
   v-bpa:processDescription "Процесс анализа рыночных тенденций и конкурентов в Азиатском регионе"@ru ;
   v-bpa:processParticipant "Маркетолог-аналитик, менеджер по развитию"@ru ;
   v-bpa:responsibleDepartment "Азиатский отдел продаж"@ru ;
-  v-bpa:processFrequency "12"^^xsd:integer ;
-  v-bpa:laborCosts "175"^^xsd:decimal ;
+  v-bpa:processFrequency 12 ;
+  v-bpa:laborCosts 175.0 ;
   v-bpa:processJustification v-bpa:AsiaMarketAnalysisDirective ;
+  v-bpa:processRelevance v-bpa:PartlyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Америке"
 v-bpa:AmericaMarketAnalysisProcess
   rdf:type v-bpa:BusinessProcess ;
-  v-bpa:processName "Анализ рынка в Америке"@ru ;
+  rdfs:label "Анализ рынка в Америке"@ru ;
   v-bpa:processDescription "Процесс анализа рыночных тенденций и конкурентов в Американском регионе"@ru ;
   v-bpa:processParticipant "Маркетолог-аналитик, менеджер по развитию"@ru ;
   v-bpa:responsibleDepartment "Американский отдел продаж"@ru ;
-  v-bpa:processFrequency "12"^^xsd:integer ;
-  v-bpa:laborCosts "190"^^xsd:decimal ;
+  v-bpa:processFrequency 12 ;
+  v-bpa:laborCosts 190.0 ;
   v-bpa:processJustification v-bpa:AmericaMarketAnalysisDirective ;
+  v-bpa:processRelevance v-bpa:PartlyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Разработка новых продуктов"
 v-bpa:ProductDevelopmentProcess
   rdf:type v-bpa:BusinessProcess ;
-  v-bpa:processName "Разработка новых продуктов"@ru ;
+  rdfs:label "Разработка новых продуктов"@ru ;
   v-bpa:processDescription "Процесс создания и тестирования новых продуктов"@ru ;
   v-bpa:processParticipant "Продуктовый менеджер, инженер-разработчик, дизайнер"@ru ;
   v-bpa:responsibleDepartment "Отдел разработки продуктов"@ru ;
-  v-bpa:processFrequency "6"^^xsd:integer ;
-  v-bpa:laborCosts "450"^^xsd:decimal ;
+  v-bpa:processFrequency 6 ;
+  v-bpa:laborCosts 450.0 ;
   v-bpa:processJustification v-bpa:ProductDevelopmentDirective ;
+  v-bpa:processRelevance v-bpa:CompletelyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Управление персоналом"
 v-bpa:HRManagementProcess
   rdf:type v-bpa:BusinessProcess ;
-  v-bpa:processName "Управление персоналом"@ru ;
+  rdfs:label "Управление персоналом"@ru ;
   v-bpa:processDescription "Процесс найма, обучения и развития сотрудников"@ru ;
   v-bpa:processParticipant "HR-менеджер, рекрутер, тренинг-менеджер"@ru ;
   v-bpa:responsibleDepartment "Отдел кадров"@ru ;
-  v-bpa:processFrequency "12"^^xsd:integer ;
-  v-bpa:laborCosts "200"^^xsd:decimal ;
+  v-bpa:processFrequency 12 ;
+  v-bpa:laborCosts 200.0 ;
   v-bpa:processJustification v-bpa:HRManagementDirective ;
+  v-bpa:processRelevance v-bpa:CompletelyJustified ;
 .
 
 # Документ обоснования процесса - Директива о финансовом контроле правительства

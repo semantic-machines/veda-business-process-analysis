@@ -40,7 +40,7 @@ v-bpa:targetType
   rdfs:label "Целевой тип"@ru ;
   rdfs:label "Target Type"@en ;
   rdfs:domain v-bpa:GenericProcessingRequest ;
-  rdfs:range xsd:string ;
+  rdfs:range rdfs:Class ;
 .
 
 v-bpa:rawInput

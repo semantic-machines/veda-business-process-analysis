@@ -16,8 +16,8 @@ export default class InputAudio extends Component(HTMLElement) {
         <button class="approve-button btn btn-link p-0 d-none">
           <i class="bi bi-check-circle-fill text-success fs-5"></i>
         </button>
-        <button class="btn btn-link mic-button p-0 text-dark" title="[Ии] Записать аудио и распознать текст">
-          <i class="bi bi-mic-fill fs-5"></i>
+        <button class="btn btn-link mic-button p-0" title="[Ии] Записать аудио и распознать текст">
+          <i class="bi bi-mic-fill text-dark fs-5"></i>
         </button>
       </div>
     `;
@@ -211,10 +211,10 @@ export default class InputAudio extends Component(HTMLElement) {
         show(micButton);
         micButton.disabled = true;
         micButton.firstElementChild.classList.remove('bi-mic-fill');
-        micButton.firstElementChild.classList.add('spinner-border', 'spinner-border-sm');
+        micButton.firstElementChild.classList.add('spinner-grow', 'spinner-grow-sm');
       },
       () => {
-        micButton.firstElementChild.classList.remove('spinner-border', 'spinner-border-sm');
+        micButton.firstElementChild.classList.remove('spinner-grow', 'spinner-grow-sm');
         micButton.firstElementChild.classList.add('bi-mic-fill');
         micButton.disabled = false;
       },
