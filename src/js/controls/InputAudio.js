@@ -244,16 +244,18 @@ export default class InputAudio extends Component(HTMLElement) {
 customElements.define(InputAudio.tag, InputAudio);
 
 function getFilteredValue (model, property) {
+  const regex = /\^\^[a-z]{2}$/i;
   return model[property]
-    ?.filter(str => !str.includes('^^') || str.toLowerCase().endsWith('^^' + document.documentElement.lang.toLowerCase()))
-    .map(str => str.split('^^')[0])
+    ?.filter(str => !regex.test(str) || str.toUpperCase().endsWith(`^^${document.documentElement.lang.toUpperCase()}`))
+    .map(str => str.split(regex)[0])
     .join(' ') ?? '';
 };
 
 function updateFilteredValue (model, property, value) {
+  const regex = /\^\^[a-z]{2}$/i;
   const existingValues = model[property] || [];
   const currentLang = document.documentElement.lang.toUpperCase();
-  const newValues = [...existingValues.filter(str => !str.endsWith(`^^${currentLang}`)), `${value}^^${currentLang}`];
+  const newValues = [...existingValues.filter(str => !regex.test(str) || !str.endsWith(`^^${currentLang}`)), `${value}^^${currentLang}`];
   model[property] = newValues;
 };
 
