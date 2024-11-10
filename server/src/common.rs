@@ -359,7 +359,8 @@ pub fn set_to_individual_from_ai_response(
                         info!("Setting enum value {} -> {} for property {}", str_val, uri, full_prop);
                         individual.set_uri(full_prop, uri);
                     } else {
-                        warn!("Enum mapping not found for value {} in property {}", str_val, full_prop);
+                        info!("Setting value {} -> {} for property {}", enum_key, str_val, full_prop);
+                        individual.set_string(full_prop, &str_val, Lang::none());
                     }
                 }
             } else {
