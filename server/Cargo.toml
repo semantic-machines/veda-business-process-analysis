@@ -16,7 +16,8 @@ openai_dive = "0.6"
 
 tokio = "1.0"
 
-#v_common = { package = "v-common", version = "=0.10.18", features = ["tokio-1"] }
-v_common = { package = "v-common", path = "../../v-common", features = ["tokio-1"]}
+v_common = { package = "v-common", version = "=0.10.19", features = ["tokio_1", "tt_3", "awc_3"] }
+#v_common = { package = "v-common", path = "../../v-common", features = ["tokio_1", "tt_3", "awc_3"]}
+
 uuid = "0.8.2"
 chrono = "0.4.38"
