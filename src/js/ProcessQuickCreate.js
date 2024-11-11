@@ -25,46 +25,72 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
     this.model = new Model;
     this.model['rdf:type'] = 'v-bpa:GenericProcessingRequest';
     this.model['v-bpa:prompt'] = 'v-bpa:CreateBusinessProcessPrompt';
-    this.model.on('afterreset', this.handleReset);
     this.restoreValue();
   }
 
-  removed() {
-    this.model.off('afterreset', this.handleReset);
-  }
-
   create = async () => {
-    this.showSpinner(true);
-
     try {
-      this.model.isSync(false);
-      await this.model.save();
+      this.showSpinner(true);
+      await this.createProcess();
     } catch (error) {
-      alert(`Ошибка создания свободного описания процесса: ${error.message}`);
-      console.error('Ошибка создания свободного описания процесса', error);      
-      this.showSpinner(false);
-    }
-  }
-  
-  handleReset = async () => {
-    if (!this.model.hasValue('v-bpa:hasResult')) return;
-
-    try {
-      const result = await this.model['v-bpa:hasResult'][0].load();
-      const json = JSON.parse(JSON.stringify(result));
-      json['@'] = genUri();
-      json['rdf:type'] = json['v-bpa:targetType'];
-      delete json['v-bpa:targetType'];
-      
-      const newProcess = new Model(json);
-      newProcess.isNew(true);
-      this.manualCreate(newProcess);
-    } catch (error) {
-      alert(`Ошибка загрузки результата заполнения: ${error.message}`);
-      console.error('Ошибка загрузки результата заполнения', error);
+      this.handleError(error);
     } finally {
       this.showSpinner(false);
     }
+  }
+
+  createProcess = async () => {
+    this.model.isSync(false);
+    await this.model.save();
+    await this.waitForProcessResult();
+  }
+
+  waitForProcessResult = async () => {
+    return Promise.race([
+      this.handleProcessResult(),
+      this.createTimeout()
+    ]);
+  }
+
+  handleProcessResult = () => {
+    return new Promise((resolve, reject) => {
+      const handleReset = async () => {
+        if (!this.model.hasValue('v-bpa:hasResult')) return;
+        
+        try {
+          const result = await this.model['v-bpa:hasResult'][0].load();
+          const newProcess = this.prepareNewProcess(result);
+          this.manualCreate(newProcess);
+          resolve();
+        } catch (error) {
+          reject(error);
+        } finally {
+          this.model.off('afterreset', handleReset);
+        }
+      }
+      
+      this.model.on('afterreset', handleReset);
+    });
+  }
+
+  prepareNewProcess = (result) => {
+    const json = JSON.parse(JSON.stringify(result));
+    json['@'] = genUri();
+    json['rdf:type'] = json['v-bpa:targetType'];
+    delete json['v-bpa:targetType'];
+    
+    return new Model(json);
+  }
+
+  createTimeout = () => {
+    return timeout(30000).then(() => {
+      throw new Error('Превышено время ожидания обработки запроса');
+    });
+  }
+
+  handleError = (error) => {
+    alert(`Ошибка создания свободного описания процесса: ${error.message}`);
+    console.error('Ошибка создания свободного описания процесса', error);
   }
 
   manualCreate(newProcess) {
