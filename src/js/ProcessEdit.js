@@ -8,16 +8,16 @@ import InputAudio from './controls/InputAudio.js';
 export default class ProcessEdit extends Component(HTMLElement) {
   static tag = 'bpa-process-edit';
 
-  save() {
-    this.model.save();
+  async save() {
+    await this.model.save();
     location.hash = `#/ProcessView/${this.model.id}`;
   }
 
-  cancel() {
+  async cancel() {
     if (this.model.isNew()) {
       history.back();
     } else {
-      this.model.reset();
+      await this.model.reset();
       location.hash = `#/ProcessView/${this.model.id}`;
     }
   }
