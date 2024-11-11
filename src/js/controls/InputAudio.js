@@ -255,7 +255,7 @@ function updateFilteredValue (model, property, value) {
   const regex = /\^\^[a-z]{2}$/i;
   const existingValues = model[property] || [];
   const currentLang = document.documentElement.lang.toUpperCase();
-  const newValues = [...existingValues.filter(str => !regex.test(str) || !str.endsWith(`^^${currentLang}`)), `${value}^^${currentLang}`];
+  const newValues = [...existingValues.filter(str => regex.test(str) && !str.endsWith(`^^${currentLang}`)), `${value}^^${currentLang}`];
   model[property] = newValues;
 };
 
