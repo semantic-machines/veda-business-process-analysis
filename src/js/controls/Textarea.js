@@ -21,10 +21,10 @@ export default class Textarea extends Component(HTMLTextAreaElement) {
       const existingValues = this.model[this.property] || [];
       const currentLang = document.documentElement.lang.toUpperCase();
       const regex = /\^\^[a-z]{2}$/i;
-      const newValues = [
-        ...existingValues.filter(str => regex.test(str) && !str.endsWith(`^^${currentLang}`)), 
-        `${this.value}^^${currentLang}`
-      ];
+      const newValues = [...existingValues.filter(str => regex.test(str) && !str.endsWith(`^^${currentLang}`))];
+      if (this.value) {
+        newValues.push(`${this.value}^^${currentLang}`);
+      }
       this.model[this.property] = newValues;
     };
         

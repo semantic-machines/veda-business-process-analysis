@@ -7,6 +7,11 @@ export default class ProcessView extends Component(HTMLElement) {
   edit() {
     location.hash = `#/ProcessEdit/${this.model.id}`;
   }
+
+  async remove() {
+    await this.model.remove();
+    location.hash = '#/';
+  }
   
   async added() {
     const params = new Model; 
@@ -78,9 +83,14 @@ export default class ProcessView extends Component(HTMLElement) {
             <p class="fw-bold" property="v-bpa:processParticipant"></p>
           </div>
         </div>
-        <button @click="edit" class="btn btn-primary mt-3">
-          <span about="v-bpa:Edit" property="rdfs:label"></span>
-        </button>
+        <div class="d-flex justify-content-start gap-2 mt-3">
+          <button @click="edit" class="btn btn-primary">
+            <span about="v-bpa:Edit" property="rdfs:label"></span>
+          </button>
+          <button @click="remove" class="btn btn-link text-danger text-decoration-none">
+            <span about="v-bpa:Remove" property="rdfs:label"></span>
+          </button>
+        </div>
       </div>
       <div class="sheet">
         <h4 about="v-bpa:ProcessDocument" property="rdfs:label"></h4>

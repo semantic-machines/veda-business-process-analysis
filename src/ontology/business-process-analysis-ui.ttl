@@ -99,6 +99,12 @@ v-bpa:Edit
   rdfs:label "Edit"@en ;
 .
 
+v-bpa:Remove
+  rdf:type rdfs:Resource ;
+  rdfs:label "Удалить"@ru ;
+  rdfs:label "Remove"@en ;
+.
+
 v-bpa:Save
   rdf:type rdfs:Resource ;
   rdfs:label "Сохранить"@ru ;
