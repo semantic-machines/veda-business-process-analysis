@@ -29,21 +29,21 @@ export default class ClusterList extends Component(HTMLElement) {
               <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
               <h5 class="mb-0">
                 <span class="align-bottom me-2" about="v-bpa:Clustered" property="rdfs:label"></span>
-                <span class="badge bg-success">${this.clusters.reduce((acc, [,,clustered]) => acc + clustered, 0)}</span>
+                <span class="badge bg-success">${this.clusters?.reduce((acc, [,,clustered]) => acc + clustered, 0) ?? 0}</span>
               </h5>
             </div>
           </div>
           <div class="text-end"> 
             <strong about="v-bpa:TotalTimeEffort" property="rdfs:label"></strong>
             <p class="text-muted mb-0 mt-1">
-              ${this.clusters.reduce((acc, [,totalTime]) => acc + totalTime, 0)}&nbsp;<span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
+              ${this.clusters?.reduce((acc, [,totalTime]) => acc + totalTime, 0) ?? 0}&nbsp;<span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
             </p>
           </div>
         </div>
-        ${this.clusters.map(([clusterId, totalTime]) => html`
+        ${this.clusters?.map(([clusterId, totalTime]) => html`
           <hr class="my-0">
           <${ClusterCard} about=${clusterId} data-total-time=${totalTime}></${ClusterCard}>
-        `).join('')}
+        `).join('') ?? ''}
       </div>
     `;
   }

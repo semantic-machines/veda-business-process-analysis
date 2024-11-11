@@ -1,4 +1,5 @@
 import {Model, Backend, Component, html} from 'veda-client';
+import ProcessRelevanceIndicator from './ProcessRelevanceIndicator';
 
 export default class ProcessView extends Component(HTMLElement) {
   static tag = 'bpa-process-view';
@@ -17,22 +18,19 @@ export default class ProcessView extends Component(HTMLElement) {
   }
   
   render() {
+    const laborCosts = this.model['v-bpa:laborCosts']?.[0];
+    const processFrequency = this.model['v-bpa:processFrequency']?.[0];
+
     return html`
       <div class="sheet">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div>
             <p class="mb-0 text-muted" about="v-bpa:BusinessProcess" property="rdfs:label"></p>
             <h3>
-              <i class="bi bi-diagram-3 me-2"></i>  
+              <i class="bi bi-diagram-3 me-2"></i>
               <span class="me-3" property="rdfs:label"></span>
               <span class="me-2 fs-5 align-middle" rel="v-bpa:processRelevance">
-              ${this.model['v-bpa:processRelevance'][0].id === 'v-bpa:CompletelyJustified' ? html`
-                <span class="badge text-bg-success border border-success" property="rdfs:label"></span>
-              ` : this.model['v-bpa:processRelevance'][0].id === 'v-bpa:PartlyJustified' ? html`
-                <span class="badge text-bg-warning border border-warning" property="rdfs:label"></span>
-              ` : html`
-                <span class="badge text-bg-danger border border-danger" property="rdfs:label"></span>
-                `}
+                <${ProcessRelevanceIndicator} about="{{this.model.id}}"></${ProcessRelevanceIndicator}>
               </span>
             </h3>
           </div>
@@ -43,7 +41,7 @@ export default class ProcessView extends Component(HTMLElement) {
                   <div class="card border-0 bg-success p-1 text-dark bg-opacity-10">
                     <div class="card-body p-2">
                       <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
-                      <h5 class="mb-0" >
+                      <h5 class="mb-0">
                         <i class="bi bi-collection me-2"></i>
                         <span about="${this.cluster}" property="rdfs:label"></span>
                       </h5>
@@ -71,7 +69,7 @@ export default class ProcessView extends Component(HTMLElement) {
 
             <p class="mb-0 text-muted" about="v-bpa:laborCosts" property="rdfs:label"></p>
             <p class="fw-bold mb-0">
-              <span>${(this.model['v-bpa:laborCosts'][0] * this.model['v-bpa:processFrequency'][0]).toFixed(2)}</span>&nbsp;
+              <span>${laborCosts && processFrequency ? (laborCosts * processFrequency).toFixed(2) : '0.00'}</span>&nbsp;
               <span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
             </p>
           </div>
