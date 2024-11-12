@@ -9,8 +9,10 @@ export default class ProcessView extends Component(HTMLElement) {
   }
 
   async remove() {
-    await this.model.remove();
-    location.hash = '#/';
+    if (confirm('Вы уверены?')) {
+      await this.model.remove();
+      location.hash = '#/ProcessOverview';
+    }
   }
   
   async added() {
@@ -87,7 +89,7 @@ export default class ProcessView extends Component(HTMLElement) {
           <button @click="edit" class="btn btn-primary">
             <span about="v-bpa:Edit" property="rdfs:label"></span>
           </button>
-          <button @click="remove" class="btn btn-link text-danger text-decoration-none">
+          <button @click="remove" class="btn btn-link text-muted text-decoration-none">
             <span about="v-bpa:Remove" property="rdfs:label"></span>
           </button>
         </div>
