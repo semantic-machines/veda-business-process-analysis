@@ -37,7 +37,7 @@ export default class ProcessView extends Component(HTMLElement) {
               <i class="bi bi-diagram-3 me-2"></i>
               <span class="me-3" property="rdfs:label"></span>
               <span class="me-2 fs-5 align-middle" rel="v-bpa:processRelevance">
-                <${ProcessRelevanceIndicator} about="{{this.model.id}}"></${ProcessRelevanceIndicator}>
+                <${ProcessRelevanceIndicator} about="{{this.model.id}}" property="rdfs:comment"></${ProcessRelevanceIndicator}>
               </span>
             </h3>
           </div>

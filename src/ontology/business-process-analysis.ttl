@@ -34,6 +34,8 @@ v-bpa:processParticipant
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Участник процесса"@ru ;
   rdfs:label "Process participant"@en ;
+  rdfs:comment "Участники"@ru ;
+  rdfs:comment "Participants"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:string ;
 .
@@ -42,6 +44,8 @@ v-bpa:responsibleDepartment
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Ответственный департамент"@ru ;
   rdfs:label "Responsible department"@en ;
+  rdfs:comment "Отдел"@ru ;
+  rdfs:comment "Department"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:string ;
 .
@@ -103,26 +107,32 @@ v-bpa:ProcessRelevance
 
 v-bpa:CompletelyJustified
   rdf:type v-bpa:ProcessRelevance ;
-  rdfs:label "Полностью обоснованный"@ru ;
-  rdfs:label "Completely Justified"@en ;
+  rdfs:label "Хорошо"@ru ;
+  rdfs:label "Well"@en ;
+  rdfs:comment "Хорошо обоснованный"@ru ;
+  rdfs:comment "Well Justified"@en ;
 .
 
 v-bpa:PartlyJustified
   rdf:type v-bpa:ProcessRelevance ;
-  rdfs:label "Частично обоснованный"@ru ;
-  rdfs:label "Partly Justified"@en ;
+  rdfs:label "Частично"@ru ;
+  rdfs:label "Partly"@en ;
+  rdfs:comment "Частично обоснованный"@ru ;
+  rdfs:comment "Partly Justified"@en ;
 .
 
 v-bpa:NotJustified
   rdf:type v-bpa:ProcessRelevance ;
-  rdfs:label "Не обоснованный"@ru ;
-  rdfs:label "Not Justified"@en ;
+  rdfs:label "Плохо"@ru ;
+  rdfs:label "Poor"@en ;
+  rdfs:comment "Не обоснованный"@ru ;
+  rdfs:comment "Not Justified"@en ;
 .
 
 v-bpa:processRelevance
   rdf:type owl:ObjectProperty ;
-  rdfs:label "Оценка релевантности"@ru ;
-  rdfs:label "Relevance assessment"@en ;
+  rdfs:label "Обоснованность"@ru ;
+  rdfs:label "Justification"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range v-bpa:ProcessRelevance ;
 .

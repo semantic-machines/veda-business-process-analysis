@@ -22,13 +22,40 @@ v-bpa:AllBusinessProcesses
   v-s:resultFormat "rows" ;
   v-s:authorizationLevel "query" ;
   v-s:queryString """
-    SELECT 
+    SELECT
       id,
-      v_bpa_processFrequency_int[1] * v_bpa_laborCosts_dec[1] as total_time,
-      v_bpa_processRelevance_str[1] as relevance
+      arrayMap(x -> if(x LIKE '%@ru', substring(x, 1, length(x) - 3), null), rdfs_label_str)[1] as "rdfs:label",
+      arrayMap(x -> if(x LIKE '%@ru', substring(x, 1, length(x) - 3), null), v_bpa_processDescription_str)[1] as "v-bpa:processDescription",
+      v_bpa_processRelevance_str[1] as "v-bpa:processRelevance",
+      arrayMap(x -> if(x LIKE '%@ru', substring(x, 1, length(x) - 3), null), v_bpa_responsibleDepartment_str)[1] as "v-bpa:responsibleDepartment",
+      arrayMap(x -> if(x LIKE '%@ru', substring(x, 1, length(x) - 3), null), v_bpa_processParticipant_str)[1] as "v-bpa:processParticipant",
+      v_bpa_processFrequency_int[1] * v_bpa_laborCosts_dec[1] as "v-bpa:totalTimeEffort"
     FROM veda_tt."v-bpa:BusinessProcess" FINAL
 """ ;
 .
+
+v-bpa:OverallCounts
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Общее количество"@ru ;
+  rdfs:label "Query: Overall count"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "cols" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT 
+      (
+        SELECT 
+          count(id) as count
+        FROM veda_tt."v-bpa:BusinessProcess" FINAL
+      ) as processes,
+      (
+        SELECT 
+          count(id) as count
+        FROM veda_tt."v-bpa:ProcessCluster" FINAL
+      ) as clusters;
+  """ ;
+.
+
 
 v-bpa:AllProcessClusters
   rdf:type v-s:StoredQuery ;

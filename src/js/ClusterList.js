@@ -1,20 +1,15 @@
 import {Component, html, Backend, Model} from 'veda-client';
 import ClusterCard from './ClusterCard.js';
 
-let queryResult;
-
 export default class ClusterList extends Component(HTMLElement) {
   static tag = 'bpa-cluster-list';
 
   async added() {
-    if (!queryResult) {
-      const params = new Model;
-      params['rdf:type'] = 'v-s:QueryParams';
-      params['v-s:storedQuery'] = 'v-bpa:AllProcessClusters';
-      const {rows: clusters} = await Backend.stored_query(params);
-      queryResult = clusters;
-    }
-    this.clusters = queryResult;
+    const params = new Model;
+    params['rdf:type'] = 'v-s:QueryParams';
+    params['v-s:storedQuery'] = 'v-bpa:AllProcessClusters';
+    const {rows: clusters} = await Backend.stored_query(params);
+    this.clusters = clusters;
   }
   
   render() {
