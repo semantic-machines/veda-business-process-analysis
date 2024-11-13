@@ -144,3 +144,21 @@ v-bpa:ManualCreate
   rdfs:label "Заполнить вручную"@ru ;
   rdfs:label "Manual fill"@en ;
 .
+
+v-bpa:Filters
+  rdf:type rdfs:Resource ;
+  rdfs:label "Фильтры"@ru ;
+  rdfs:label "Filters"@en ;
+.
+
+v-bpa:ApplyFilters
+  rdf:type rdfs:Resource ;
+  rdfs:label "Применить"@ru ;
+  rdfs:label "Apply"@en ;
+.
+
+v-bpa:ResetFilters
+  rdf:type rdfs:Resource ;
+  rdfs:label "Сбросить"@ru ;
+  rdfs:label "Reset"@en ;
+.

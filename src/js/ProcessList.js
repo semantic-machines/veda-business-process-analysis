@@ -21,7 +21,7 @@ export default class ProcessList extends Component(HTMLElement) {
   render() {
     return html`
       <div class="sheet">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center">
           <div class="d-flex justify-content-start align-items-center">
             <div class="me-3 fs-1">
               <i class="bi bi-diagram-3"></i>
@@ -30,39 +30,28 @@ export default class ProcessList extends Component(HTMLElement) {
               <h3 class="mb-1">
                 <span about="v-bpa:BusinessProcesses" property="rdfs:label"></span>
               </h3>
-              <h5 class="mb-0">
-                <span class="align-bottom me-2" about="v-bpa:CompletelyJustified" property="rdfs:comment"></span>
-                <span class="badge bg-success align-top me-4">${this.processes.reduce((acc, [,,,relevance]) => acc + (relevance === 'v-bpa:CompletelyJustified' ? 1 : 0), 0)}</span>
-                <span class="align-bottom me-2" about="v-bpa:PartlyJustified" property="rdfs:comment"></span>
-                <span class="badge bg-warning align-top me-4">${this.processes.reduce((acc, [,,,relevance]) => acc + (relevance === 'v-bpa:PartlyJustified' ? 1 : 0), 0)}</span>
-                <span class="align-bottom me-2" about="v-bpa:NotJustified" property="rdfs:comment"></span>
-                <span class="badge bg-danger align-top me-4">${this.processes.reduce((acc, [,,,relevance]) => acc + (relevance === 'v-bpa:NotJustified' ? 1 : 0), 0)}</span>
-              </h5>
             </div>
           </div>
-          <div class="text-end ps-2"> 
-            <strong about="v-bpa:TotalTimeEffort" property="rdfs:label"></strong>
-            <p class="text-muted mb-0 mt-1">
-              ${this.processes.reduce((acc, [,,,,,,processTime]) => acc + processTime, 0)}&nbsp;<span about="v-bpa:HoursPerYear" property="rdfs:label"></span>
-            </p>
-          </div>
+          <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#filters">
+            <i class="bi bi-chevron-down"></i>
+            Фильтры
+          </button>
         </div>
-        <hr>
         <div class="table-responsive">
           <table class="table table-hover mb-4">
             <thead>
               <tr>
                 <th width="50%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
                 <th width="10%" class="text-secondary fw-normal" about="v-bpa:processRelevance" property="rdfs:label"></th>
-                <th width="30%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
-                <th width="15%" class="text-secondary fw-normal" about="v-bpa:processParticipant" property="rdfs:comment"></th>
-                <th width="15%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
+                <th width="20%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
+                <th width="10%" class="text-secondary fw-normal" about="v-bpa:processParticipant" property="rdfs:comment"></th>
+                <th width="10%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
               </tr>
             </thead>
             <tbody>
               ${this.processes.map(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => html`
                 <tr @click="goToProcess" data-about="${id}">
-                  <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 50 ? description.slice(0, 50) + '...' : description}</p></td>
+                  <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
                   <td class="align-middle"><${ProcessRelevanceIndicator} about="${relevance}" property="rdfs:label"></${ProcessRelevanceIndicator}></td>
                   <td class="align-middle">${responsibleDepartment}</td>
                   <td class="align-middle"><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
@@ -71,6 +60,21 @@ export default class ProcessList extends Component(HTMLElement) {
               `).join('')}
             </tbody>
           </table>
+
+          <div class="modal fade" id="filters" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="staticBackdropLabel" about="v-bpa:Filters" property="rdfs:label"></h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <button type="button" class="btn btn-secondary me-2" about="v-bpa:ApplyFilters" property="rdfs:label"></button>
+                  <button type="button" class="btn btn-light" about="v-bpa:ResetFilters" property="rdfs:label"></button>
+                </div>
+              </div>
+            </div>
+          </div>        
         </div>
       </div>
     `;
