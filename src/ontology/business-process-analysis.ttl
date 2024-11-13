@@ -42,9 +42,9 @@ v-bpa:processParticipant
 
 v-bpa:responsibleDepartment
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Ответственный департамент"@ru ;
+  rdfs:label "Ответственное подразделение"@ru ;
   rdfs:label "Responsible department"@en ;
-  rdfs:comment "Отдел"@ru ;
+  rdfs:comment "Подразделение"@ru ;
   rdfs:comment "Department"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:string ;
@@ -52,8 +52,10 @@ v-bpa:responsibleDepartment
 
 v-bpa:processFrequency
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Частота выполнения"@ru ;
+  rdfs:label "Частота исполнения"@ru ;
   rdfs:label "Execution frequency"@en ;
+  rdfs:comment "Частота"@ru ;
+  rdfs:comment "Frequency"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:integer ;
 .
@@ -74,7 +76,6 @@ v-bpa:hasProcessDocument
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range v-bpa:ProcessDocument ;
 .
-
 
 v-bpa:ProcessDocument
   rdf:type owl:Class ;
@@ -107,11 +108,11 @@ v-bpa:justificationReason
   rdfs:range xsd:string ;
 .
 
-# Process Relevance Options
+# Process Justification Options
 v-bpa:ProcessJustification
   rdf:type owl:Class ;
-  rdfs:label "Релевантность процесса"@ru ;
-  rdfs:label "Process Relevance"@en ;
+  rdfs:label "Обоснованность процесса"@ru ;
+  rdfs:label "Process Justification"@en ;
 .
 
 v-bpa:CompletelyJustified
@@ -140,10 +141,10 @@ v-bpa:PoorlyJustified
 
 v-bpa:NoDocumentForJustification
   rdf:type v-bpa:ProcessJustification ;
-  rdfs:label "Нет документа для обоснования"@ru ;
-  rdfs:label "No document for justification"@en ;
-  rdfs:comment "Отсутствуют документы обоснования процесса"@ru ;
-  rdfs:comment "Process justification documents are missing"@en ;
+  rdfs:label "Нет документа"@ru ;
+  rdfs:label "No document"@en ;
+  rdfs:comment "Нет документа для обоснования"@ru ;
+  rdfs:comment "No document for justification"@en ;
 .
 
 v-bpa:hasProcessJustification

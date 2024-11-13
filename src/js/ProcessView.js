@@ -1,5 +1,5 @@
 import {Model, Backend, Component, html} from 'veda-client';
-import ProcessRelevanceIndicator from './ProcessRelevanceIndicator';
+import ProcessJustificationIndicator from './ProcessJustificationIndicator';
 
 export default class ProcessView extends Component(HTMLElement) {
   static tag = 'bpa-process-view';
@@ -38,8 +38,8 @@ export default class ProcessView extends Component(HTMLElement) {
                 <i class="bi bi-diagram-3 me-2"></i>
                 <span class="me-3" property="rdfs:label"></span>
               </h3>
-              <span class="me-2 align-middle" rel="v-bpa:processRelevance">
-                <${ProcessRelevanceIndicator} about="{{this.model.id}}" property="rdfs:comment"></${ProcessRelevanceIndicator}>
+              <span class="me-2 align-middle" rel="v-bpa:hasProcessJustification">
+                <${ProcessJustificationIndicator} about="{{this.model.id}}" property="rdfs:comment"></${ProcessJustificationIndicator}>
               </span>
             </div>
             <p class="mb-0 text-muted" about="v-bpa:processDescription" property="rdfs:label"></p>

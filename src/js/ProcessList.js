@@ -1,5 +1,5 @@
 import {Component, html, Backend, Model} from 'veda-client';
-import ProcessRelevanceIndicator from './ProcessRelevanceIndicator.js';
+import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
 
 export default class ProcessList extends Component(HTMLElement) {
   static tag = 'bpa-process-list';
@@ -32,7 +32,7 @@ export default class ProcessList extends Component(HTMLElement) {
         return false;
       }
       // Фильтр по релевантности
-      if (data['v-bpa:processRelevance'] && relevance !== data['v-bpa:processRelevance']) {
+      if (data['v-bpa:hasProcessJustification'] && relevance !== data['v-bpa:hasProcessJustification']) {
         return false;
       }
       // Фильтр по ответственному подразделению
@@ -73,10 +73,10 @@ export default class ProcessList extends Component(HTMLElement) {
   renderFilteredProcesses() {
     const container = this.querySelector('#filtered-processes');
     container.innerHTML = `
-      ${this.filtered.map(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => html`
+      ${this.filtered.map(([id, label, description, justification, responsibleDepartment, processParticipant, laborCosts]) => html`
         <tr onclick="location.hash = '#/ProcessView/${id}'">
           <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
-          <td class="align-middle"><${ProcessRelevanceIndicator} about="${relevance}" property="rdfs:label"></${ProcessRelevanceIndicator}></td>
+          <td class="align-middle"><${ProcessJustificationIndicator} about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
           <td class="align-middle">${responsibleDepartment}</td>
           <td class="align-middle"><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
           <td class="align-middle"><strong>${laborCosts ?? 0}</strong><br><span class="text-muted" about="v-bpa:HoursPerYear" property="rdfs:comment"></span></td>
@@ -120,7 +120,7 @@ export default class ProcessList extends Component(HTMLElement) {
             <thead>
               <tr>
                 <th width="50%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
-                <th width="10%" class="text-secondary fw-normal" about="v-bpa:processRelevance" property="rdfs:label"></th>
+                <th width="10%" class="text-secondary fw-normal" about="v-bpa:hasProcessJustification" property="rdfs:label"></th>
                 <th width="20%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
                 <th width="10%" class="text-secondary fw-normal" about="v-bpa:processParticipant" property="rdfs:comment"></th>
                 <th width="10%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
@@ -143,12 +143,13 @@ export default class ProcessList extends Component(HTMLElement) {
                         <input type="text" class="form-control" id="label" name="rdfs:label">
                       </div>
                       <div class="mb-3">
-                        <label for="relevance" class="form-label" about="v-bpa:processRelevance" property="rdfs:label"></label>
-                        <select class="form-select" id="relevance" name="v-bpa:processRelevance">
+                        <label for="justification" class="form-label" about="v-bpa:hasProcessJustification" property="rdfs:label"></label>
+                        <select class="form-select" id="justification" name="v-bpa:hasProcessJustification">
                           <option value="">---</option>
                           <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label"></option>
                           <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label"></option>
-                          <option value="v-bpa:NotJustified" about="v-bpa:NotJustified" property="rdfs:label"></option>
+                          <option value="v-bpa:PoorlyJustified" about="v-bpa:PoorlyJustified" property="rdfs:label"></option>
+                          <option value="v-bpa:NoDocumentForJustification" about="v-bpa:NoDocumentForJustification" property="rdfs:label"></option>
                         </select>
                       </div>
                       <div class="mb-3">
