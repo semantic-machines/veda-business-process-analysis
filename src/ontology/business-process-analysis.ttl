@@ -108,7 +108,7 @@ v-bpa:justificationReason
 .
 
 # Process Relevance Options
-v-bpa:ProcessJustificationOptions
+v-bpa:ProcessJustification
   rdf:type owl:Class ;
   rdfs:label "Релевантность процесса"@ru ;
   rdfs:label "Process Relevance"@en ;
@@ -146,12 +146,12 @@ v-bpa:NoDocumentForJustification
   rdfs:comment "Process justification documents are missing"@en ;
 .
 
-v-bpa:processJustification
+v-bpa:hasProcessJustification
   rdf:type owl:ObjectProperty ;
   rdfs:label "Обоснованность"@ru ;
   rdfs:label "Justification"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
-  rdfs:range v-bpa:ProcessJustificationOptions ;
+  rdfs:range v-bpa:ProcessJustification ;
 .
 
 # Кластер процессов
