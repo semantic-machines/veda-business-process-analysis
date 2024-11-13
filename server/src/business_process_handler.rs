@@ -12,21 +12,21 @@ use v_common::v_api::api_client::IndvOp;
 ///
 /// # Arguments
 /// * `module` - Модуль анализа бизнес-процессов с настройками и клиентом AI
-/// * `bp_individual` - Индивид бизнес-процесса для анализа
+/// * `bp_obj` - Индивид бизнес-процесса для анализа
 ///
 /// # Returns
 /// * `Result<(), Box<dyn std::error::Error>>` - Результат анализа и сохранения оценки
 pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule, bp_obj: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     bp_obj.parse_all();
 
-    // Check if processJustification is empty
-    let has_justification = bp_obj.get_literals("v-bpa:processJustification").map_or(false, |j| !j.is_empty());
+    // Check if process documents exist
+    let has_documents = bp_obj.get_literals("v-bpa:hasProcessDocument").map_or(false, |j| !j.is_empty());
 
-    if !has_justification {
-        info!("Process {} has no justification documents. Setting status to NoJustification", bp_obj.get_id());
+    if !has_documents {
+        info!("Process {} has no justification documents. Setting status to NoDocumentForJustification", bp_obj.get_id());
 
-        // Set the process relevance to NoJustification
-        bp_obj.set_uri("v-bpa:processRelevance", "v-bpa:NoJustification");
+        // Set the process justification status
+        bp_obj.set_uri("v-bpa:hasProcessJustification", "v-bpa:NoDocumentForJustification");
 
         // Save the updated individual to storage
         if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, bp_obj) {

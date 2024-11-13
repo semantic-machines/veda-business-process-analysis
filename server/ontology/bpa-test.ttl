@@ -15,7 +15,6 @@ v-bpa:QuarterlyFinancialReportingProcess
   v-bpa:processFrequency 4 ;
   v-bpa:laborCosts 250.0 ;
   v-bpa:hasProcessDocument v-bpa:GovernmentDirective , v-bpa:CEODirective , v-bpa:InterdepartmentalMemo ;
-  v-bpa:hasProcessJustification v-bpa:CompletelyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Европе"
@@ -28,7 +27,6 @@ v-bpa:EuropeMarketAnalysisProcess
   v-bpa:processFrequency 12 ;
   v-bpa:laborCosts 180.0 ;
   v-bpa:hasProcessDocument v-bpa:EuropeMarketAnalysisDirective ;
-  v-bpa:hasProcessJustification v-bpa:PartlyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Азии"
@@ -41,7 +39,6 @@ v-bpa:AsiaMarketAnalysisProcess
   v-bpa:processFrequency 12 ;
   v-bpa:laborCosts 175.0 ;
   v-bpa:hasProcessDocument v-bpa:AsiaMarketAnalysisDirective ;
-  v-bpa:hasProcessJustification v-bpa:PartlyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Америке"
@@ -54,7 +51,6 @@ v-bpa:AmericaMarketAnalysisProcess
   v-bpa:processFrequency 12 ;
   v-bpa:laborCosts 190.0 ;
   v-bpa:hasProcessDocument v-bpa:AmericaMarketAnalysisDirective ;
-  v-bpa:hasProcessJustification v-bpa:PartlyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Разработка новых продуктов"
@@ -67,7 +63,6 @@ v-bpa:ProductDevelopmentProcess
   v-bpa:processFrequency 6 ;
   v-bpa:laborCosts 450.0 ;
   v-bpa:hasProcessDocument v-bpa:ProductDevelopmentDirective ;
-  v-bpa:hasProcessJustification v-bpa:CompletelyJustified ;
 .
 
 # Экземпляр бизнес-процесса "Управление персоналом"
@@ -80,7 +75,6 @@ v-bpa:HRManagementProcess
   v-bpa:processFrequency 12 ;
   v-bpa:laborCosts 200.0 ;
   v-bpa:hasProcessDocument v-bpa:HRManagementDirective ;
-  v-bpa:hasProcessJustification v-bpa:CompletelyJustified ;
 .
 
 # Документ обоснования процесса - Директива о финансовом контроле правительства

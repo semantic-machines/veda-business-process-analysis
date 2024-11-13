@@ -32,8 +32,8 @@ pub fn extract_process_json(bp_obj: &mut Individual, module: &mut BusinessProces
 
     // Собираем документы
     let mut documents = Vec::new();
-    let justification_refs = bp_obj.get_literals_nm("v-bpa:processJustification").unwrap_or_default();
-    for ref_id in justification_refs {
+    let document_refs = bp_obj.get_literals_nm("v-bpa:hasProcessDocument").unwrap_or_default();
+    for ref_id in document_refs {
         let mut document = Individual::default();
         if module.backend.storage.get_individual(&ref_id, &mut document) == ResultCode::Ok {
             document.parse_all();
