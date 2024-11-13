@@ -17,6 +17,10 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
     }
   }
 
+  clearValue() {
+    sessionStorage.removeItem('ProcessQuickCreate_rawInput');
+  }
+
   added() {
     this.model = new Model;
     this.model['rdf:type'] = 'v-bpa:GenericProcessingRequest';
@@ -44,15 +48,8 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
   waitForProcessResult = async () => {
     return Promise.race([
       this.handleProcessResult(),
-      this.createTimeout(),
-      this.waitForCancel()
+      this.createTimeout()
     ]);
-  }
-
-  waitForCancel = () => {
-    return new Promise((resolve, reject) => {
-      this.cancelPromise = resolve;
-    });
   }
 
   handleProcessResult = () => {
@@ -108,13 +105,10 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
   }
 
   cancel() {
-    if (this.cancelPromise) {
-      this.cancelPromise();
-      this.cancelPromise = null;
-    }
+    this.clearValue();
     history.back();
   }
-  
+
   showSpinner(show) {
     const createButton = this.querySelector('.create-button');
     const spinner = createButton.querySelector('.spinner-grow');
