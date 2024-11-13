@@ -181,7 +181,34 @@ fn calculate_clustering_metrics(state: &ComparisonState, total_processes: usize)
 /// Находит все бизнес-процессы в системе
 fn find_all_business_processes(module: &mut BusinessProcessAnalysisModule) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     info!("Starting business process search");
-    get_individuals_uris_by_type(module, "v-bpa:BusinessProcess")
+
+    // Получаем все бизнес-процессы
+    let all_processes = get_individuals_uris_by_type(module, "v-bpa:BusinessProcess")?;
+    let mut filtered_processes = Vec::new();
+
+    // Проверяем каждый процесс на наличие обоснования
+    for process_id in &all_processes {
+        let mut process = Individual::default();
+        if module.backend.storage.get_individual(process_id, &mut process) == ResultCode::Ok {
+            process.parse_all();
+
+            // Проверяем наличие обоснования
+            let has_justification = process.get_literals("v-bpa:processJustification").map_or(false, |j| !j.is_empty());
+
+            // Также проверяем, что процесс не помечен как NotSufficientlyFilled
+            let is_not_sufficiently_filled = process.get_first_literal("v-bpa:processRelevance").map_or(false, |r| r == "v-bpa:NotSufficientlyFilled");
+
+            if has_justification && !is_not_sufficiently_filled {
+                filtered_processes.push(process_id.to_string());
+            }
+        } else {
+            warn!("Failed to load process {}", process_id);
+        }
+    }
+
+    info!("Found {} processes with justification out of {} total processes", filtered_processes.len(), all_processes.len());
+
+    Ok(filtered_processes)
 }
 
 /// Инициализирует процесс кластеризации

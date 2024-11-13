@@ -129,6 +129,14 @@ v-bpa:NotJustified
   rdfs:comment "Not Justified"@en ;
 .
 
+v-bpa:NotSufficientlyFilled
+  rdf:type v-bpa:ProcessRelevance ;
+  rdfs:label "Не достаточно заполнен"@ru ;
+  rdfs:label "Not sufficiently filled"@en ;
+  rdfs:comment "Информация о процессе не полностью заполнена или недостаточна для анализа"@ru ;
+  rdfs:comment "Process information is incomplete or insufficient for analysis"@en ;
+.
+
 v-bpa:processRelevance
   rdf:type owl:ObjectProperty ;
   rdfs:label "Обоснованность"@ru ;
