@@ -8,11 +8,11 @@ export default class ProcessRelevanceIndicator extends Component(HTMLElement) {
   render() {
     return (
       this.model.id === 'v-bpa:CompletelyJustified'
-      ? html`<i class="bi bi-check-circle-fill text-success me-1"></i><strong class="text-success" property="${this.property}"></strong>`
+      ? html`<i class="bi bi-check-circle-fill text-success"></i>&nbsp;<strong class="text-success" property="${this.property}"></strong>`
       : this.model.id === 'v-bpa:PartlyJustified'
-      ? html`<i class="bi bi-exclamation-circle-fill text-warning me-1"></i><strong class="text-warning" property="${this.property}"></strong>`
+      ? html`<i class="bi bi-exclamation-circle-fill text-warning"></i>&nbsp;<strong class="text-warning" property="${this.property}"></strong>`
       : this.model.id === 'v-bpa:NotJustified'
-      ? html`<i class="bi bi-dash-circle-fill text-danger me-1"></i><strong class="text-danger" property="${this.property}"></strong>`
+      ? html`<i class="bi bi-dash-circle-fill text-danger"></i>&nbsp;<strong class="text-danger" property="${this.property}"></strong>`
       : ''
     );
   }

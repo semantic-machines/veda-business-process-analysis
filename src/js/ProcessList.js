@@ -69,8 +69,42 @@ export default class ProcessList extends Component(HTMLElement) {
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                  <button type="button" class="btn btn-secondary me-2" about="v-bpa:ApplyFilters" property="rdfs:label"></button>
-                  <button type="button" class="btn btn-light" about="v-bpa:ResetFilters" property="rdfs:label"></button>
+                  <form>
+                    <div class="mb-5">
+                      <div class="mb-3">
+                        <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
+                        <input type="text" class="form-control" id="label" name="label">
+                      </div>
+                      <div class="mb-3">
+                        <label for="relevance" class="form-label" about="v-bpa:processRelevance" property="rdfs:label"></label>
+                        <select class="form-select" id="relevance" name="relevance">
+                          <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label"></option>
+                          <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label"></option>
+                          <option value="v-bpa:NotJustified" about="v-bpa:NotJustified" property="rdfs:label"></option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="responsibleDepartment" class="form-label" about="v-bpa:responsibleDepartment" property="rdfs:comment"></label>
+                        <input type="text" class="form-control" id="responsibleDepartment" name="responsibleDepartment">
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label me-2" about="v-bpa:processParticipant" property="rdfs:comment"></label>
+                        <div class="mb-3 d-flex align-items-center">
+                          <input type="number" placeholder="от" class="form-control me-2 w-25" id="processParticipantCountFrom" name="processParticipantCountFrom">
+                          <input type="number" placeholder="до" class="form-control w-25" id="processParticipantCountTo" name="processParticipantCountTo">
+                        </div>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label" for="laborCosts" about="v-bpa:laborCosts" property="rdfs:label"></label>
+                        <div class="mb-3 d-flex align-items-center" id="laborCosts">
+                          <input type="number" placeholder="от" class="form-control me-2 w-25" id="laborCostsFrom" name="laborCostsFrom">
+                          <input type="number" placeholder="до" class="form-control w-25" id="laborCostsTo" name="laborCostsTo">
+                        </div>
+                      </div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary me-2" about="v-bpa:ApplyFilters" property="rdfs:label"></button>
+                    <button type="reset" class="btn btn-light" about="v-bpa:ResetFilters" property="rdfs:label"></button>
+                  </form>
                 </div>
               </div>
             </div>
