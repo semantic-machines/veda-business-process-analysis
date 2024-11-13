@@ -28,7 +28,7 @@ td:VacationRequestProcess
   v-bpa:responsibleDepartment "Отдел кадров"@ru ;
   v-bpa:responsibleDepartment "HR Department"@en ;
   v-bpa:processFrequency 500 ;
-  v-bpa:processRelevance v-bpa:CompletelyJustified ;
+  v-bpa:hasProcessJustification v-bpa:CompletelyJustified ;
   v-bpa:laborCosts 2.5 ;
 .
 
@@ -44,7 +44,7 @@ td:OfficeSuppliesPurchaseProcess
   v-bpa:responsibleDepartment "Административный отдел"@ru ;
   v-bpa:responsibleDepartment "Administrative Department"@en ;
   v-bpa:processFrequency 12 ;
-  v-bpa:processRelevance v-bpa:PartlyJustified ;
+  v-bpa:hasProcessJustification v-bpa:PartlyJustified ;
   v-bpa:laborCosts 4.0 ;
 .
 
@@ -60,7 +60,7 @@ td:FinancialReportingProcess
   v-bpa:responsibleDepartment "Финансовый отдел"@ru ;
   v-bpa:responsibleDepartment "Finance Department"@en ;
   v-bpa:processFrequency 12 ;
-  v-bpa:processRelevance v-bpa:PartlyJustified ;
+  v-bpa:hasProcessJustification v-bpa:PartlyJustified ;
   v-bpa:laborCosts 16.0 ;
 .
 
@@ -76,7 +76,7 @@ td:ITSupportProcess
   v-bpa:responsibleDepartment "IT отдел"@ru ;
   v-bpa:responsibleDepartment "IT Department"@en ;
   v-bpa:processFrequency 1000 ;
-  v-bpa:processRelevance v-bpa:PartlyJustified ;
+  v-bpa:hasProcessJustification v-bpa:PartlyJustified ;
   v-bpa:laborCosts 1.5 ;
 .
 
@@ -92,7 +92,7 @@ td:NewEmployeeOnboardingProcess
   v-bpa:responsibleDepartment "Отдел кадров"@ru ;
   v-bpa:responsibleDepartment "HR Department"@en ;
   v-bpa:processFrequency 100 ;
-  v-bpa:processRelevance v-bpa:NotJustified ;
+  v-bpa:hasProcessJustification v-bpa:PoorlyJustified ;
   v-bpa:laborCosts 8.0 ;
 .
 
@@ -108,7 +108,7 @@ td:PaymentProcessingProcess
   v-bpa:responsibleDepartment "Финансовый отдел"@ru ;
   v-bpa:responsibleDepartment "Finance Department"@en ;
   v-bpa:processFrequency 250 ;
-  v-bpa:processRelevance v-bpa:NotJustified ;
+  v-bpa:hasProcessJustification v-bpa:NoDocumentForJustification ;
   v-bpa:laborCosts 3.0 ;
 .
 
