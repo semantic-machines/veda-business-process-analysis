@@ -54,6 +54,8 @@ v-bpa:processFrequency
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Частота выполнения"@ru ;
   rdfs:label "Execution frequency"@en ;
+  rdfs:comment "Частота"@ru ;
+  rdfs:comment "Frequency"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:integer ;
 .
