@@ -101,7 +101,7 @@ export default class ProcessView extends Component(HTMLElement) {
             ${this.cluster 
               ? html`
               <a href="#/ClusterView/${this.cluster}" class="text-decoration-none d-block text-dark" about="${this.cluster}">  
-                <div class="card border-0 bg-secondary bg-opacity-10 mt-3">
+                <div class="card border-0 bg-secondary bg-opacity-10 mt-4">
                   <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center gap-2">
                       <div>
