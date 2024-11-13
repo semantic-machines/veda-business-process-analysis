@@ -65,7 +65,7 @@ export default class ProcessList extends Component(HTMLElement) {
                   <td><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 50 ? description.slice(0, 50) + '...' : description}</p></td>
                   <td><${ProcessRelevanceIndicator} about="${relevance}" property="rdfs:label"></${ProcessRelevanceIndicator}></td>
                   <td>${responsibleDepartment}</td>
-                  <td>${processParticipant}</td>
+                  <td><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
                   <td><strong>${laborCosts ?? 0}</strong></td>
                 </tr>
               `).join('')}
