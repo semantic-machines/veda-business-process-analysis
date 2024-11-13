@@ -115,7 +115,7 @@ v-bpa:ProcessJustification
 .
 
 v-bpa:CompletelyJustified
-  rdf:type v-bpa:ProcessJustificationOptions ;
+  rdf:type v-bpa:ProcessJustification ;
   rdfs:label "Хорошо"@ru ;
   rdfs:label "Well"@en ;
   rdfs:comment "Хорошо обоснованный"@ru ;
@@ -123,7 +123,7 @@ v-bpa:CompletelyJustified
 .
 
 v-bpa:PartlyJustified
-  rdf:type v-bpa:ProcessJustificationOptions ;
+  rdf:type v-bpa:ProcessJustification ;
   rdfs:label "Частично"@ru ;
   rdfs:label "Partly"@en ;
   rdfs:comment "Частично обоснованный"@ru ;
@@ -131,7 +131,7 @@ v-bpa:PartlyJustified
 .
 
 v-bpa:PoorlyJustified
-  rdf:type v-bpa:ProcessJustificationOptions ;
+  rdf:type v-bpa:ProcessJustification ;
   rdfs:label "Плохо"@ru ;
   rdfs:label "Poor"@en ;
   rdfs:comment "Плохо обоснованный"@ru ;
@@ -139,7 +139,7 @@ v-bpa:PoorlyJustified
 .
 
 v-bpa:NoDocumentForJustification
-  rdf:type v-bpa:ProcessJustificationOptions ;
+  rdf:type v-bpa:ProcessJustification ;
   rdfs:label "Нет документа для обоснования"@ru ;
   rdfs:label "No document for justification"@en ;
   rdfs:comment "Отсутствуют документы обоснования процесса"@ru ;
