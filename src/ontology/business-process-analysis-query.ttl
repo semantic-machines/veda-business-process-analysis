@@ -31,6 +31,7 @@ v-bpa:AllBusinessProcesses
       arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_processParticipant_str)) as "v-bpa:processParticipant",
       v_bpa_processFrequency_int[1] * v_bpa_laborCosts_dec[1] as "v-bpa:totalTimeEffort"
     FROM veda_tt."v-bpa:BusinessProcess" FINAL
+    ORDER BY "rdfs:label" ASC
   """ ;
 .
 

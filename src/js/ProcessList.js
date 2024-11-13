@@ -1,5 +1,4 @@
 import {Component, html, Backend, Model} from 'veda-client';
-import ProcessCard from './ProcessCard.js';
 import ProcessRelevanceIndicator from './ProcessRelevanceIndicator.js';
 
 export default class ProcessList extends Component(HTMLElement) {
