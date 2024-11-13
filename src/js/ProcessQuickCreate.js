@@ -78,8 +78,11 @@ export default class ProcessQuickCreate extends Component(HTMLElement) {
     json['@'] = genUri();
     json['rdf:type'] = json['v-bpa:targetType'];
     delete json['v-bpa:targetType'];
-    
-    return new Model(json);
+
+    const newProcess = new Model(json);
+    newProcess.isNew(true);
+    newProcess.isSync(false);
+    return newProcess;
   }
 
   createTimeout = () => {

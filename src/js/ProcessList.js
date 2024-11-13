@@ -128,7 +128,6 @@ export default class ProcessList extends Component(HTMLElement) {
             </thead>
             <tbody id="filtered-processes"></tbody>
           </table>
-
           <div class="modal" id="filters" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
