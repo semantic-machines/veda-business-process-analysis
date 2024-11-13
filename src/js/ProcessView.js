@@ -46,8 +46,10 @@ export default class ProcessView extends Component(HTMLElement) {
             <p property="v-bpa:processDescription"></p>
           </div>
           <div class="col-12 col-md-4">
-            <p class="mb-0 text-muted" about="v-bpa:responsibleDepartment" property="rdfs:comment"></p>
-            <p property="v-bpa:responsibleDepartment"></p>
+            <div class="mb-3" style="margin-left:1.33em;">
+              <p class="mb-0 text-muted" about="v-bpa:responsibleDepartment" property="rdfs:comment"></p>
+              <p class="fw-bold" property="v-bpa:responsibleDepartment"></p>
+            </div>
 
             <div class="accordion" id="ProcessViewAccordion">
               <style>
@@ -95,23 +97,29 @@ export default class ProcessView extends Component(HTMLElement) {
                 </div>
               </div>
             </div>
-
-            <div class="d-flex gap-2">
-              ${this.cluster 
-                ? html`
-                  <a href="#/ClusterView/${this.cluster}" style="text-decoration: none;">
-                    <div class="card border-0 bg-success p-1 text-dark bg-opacity-10">
-                      <div class="card-body p-2">
+            
+            ${this.cluster 
+              ? html`
+              <a href="#/ClusterView/${this.cluster}" class="text-decoration-none d-block text-dark" about="${this.cluster}">  
+                <div class="card border-0 bg-secondary bg-opacity-10 mt-3">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                      <div>
                         <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
                         <h5 class="mb-0">
                           <i class="bi bi-collection me-2"></i>
-                          <span about="${this.cluster}" property="rdfs:label"></span>
+                          <span property="rdfs:label"></span>
                         </h5>
                       </div>
+                      <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-chevron-right align-bottom mt-1 fs-5"></i>
+                      </div>
                     </div>
-                  </a>`
-                : ''}
-            </div>
+                  </div>
+                </div>
+              </a>` 
+              : ''
+            }
           </div>
         </div>
       </div>
