@@ -52,21 +52,21 @@ export default class ProcessList extends Component(HTMLElement) {
           <table class="table table-hover mb-4">
             <thead>
               <tr>
-                <th width="40%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
+                <th width="50%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
                 <th width="10%" class="text-secondary fw-normal" about="v-bpa:processRelevance" property="rdfs:label"></th>
-                <th width="20%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
+                <th width="30%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
                 <th width="15%" class="text-secondary fw-normal" about="v-bpa:processParticipant" property="rdfs:comment"></th>
-                <th width="15%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span>,&nbsp;<span class="text-muted" about="v-bpa:HoursPerYear" property="rdfs:label"></span></th>
+                <th width="15%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
               </tr>
             </thead>
             <tbody>
               ${this.processes.map(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => html`
                 <tr @click="goToProcess" data-about="${id}">
-                  <td><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 50 ? description.slice(0, 50) + '...' : description}</p></td>
-                  <td><${ProcessRelevanceIndicator} about="${relevance}" property="rdfs:label"></${ProcessRelevanceIndicator}></td>
-                  <td>${responsibleDepartment}</td>
-                  <td><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
-                  <td><strong>${laborCosts ?? 0}</strong></td>
+                  <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 50 ? description.slice(0, 50) + '...' : description}</p></td>
+                  <td class="align-middle"><${ProcessRelevanceIndicator} about="${relevance}" property="rdfs:label"></${ProcessRelevanceIndicator}></td>
+                  <td class="align-middle">${responsibleDepartment}</td>
+                  <td class="align-middle"><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
+                  <td class="align-middle"><strong>${laborCosts ?? 0}</strong><br><span class="text-muted" about="v-bpa:HoursPerYear" property="rdfs:comment"></span></td>
                 </tr>
               `).join('')}
             </tbody>
