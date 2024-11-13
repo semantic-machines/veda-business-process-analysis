@@ -74,7 +74,7 @@ export default class ProcessList extends Component(HTMLElement) {
     const container = this.querySelector('#filtered-processes');
     container.innerHTML = `
       ${this.filtered.map(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => html`
-        <tr @click="goToProcess" data-about="${id}">
+        <tr onclick="location.hash = '#/ProcessView/${id}'">
           <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
           <td class="align-middle"><${ProcessRelevanceIndicator} about="${relevance}" property="rdfs:label"></${ProcessRelevanceIndicator}></td>
           <td class="align-middle">${responsibleDepartment}</td>
@@ -122,7 +122,7 @@ export default class ProcessList extends Component(HTMLElement) {
             <tbody id="filtered-processes"></tbody>
           </table>
 
-          <div class="modal fade" id="filters" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          <div class="modal" id="filters" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
                 <div class="modal-header">
