@@ -47,6 +47,12 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
             return Ok(false);
         }
 
+        let is_deleted = new_state.is_exists_bool("v-s:deleted", true);
+
+        if is_deleted {
+            return Ok(true);
+        }
+
         let counter = new_state.get_first_integer("v-s:updateCounter").unwrap_or(-1);
 
         // Обработка в зависимости от типа индивида

@@ -19,7 +19,25 @@ use v_common::v_api::api_client::IndvOp;
 pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule, bp_obj: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     bp_obj.parse_all();
 
-    // Получаем JSON-представление процесса, включая документы
+    // Check if processJustification is empty
+    let has_justification = bp_obj.get_literals("v-bpa:processJustification").map_or(false, |j| !j.is_empty());
+
+    if !has_justification {
+        info!("Process {} has no justification documents. Setting status to NoJustification", bp_obj.get_id());
+
+        // Set the process relevance to NoJustification
+        bp_obj.set_uri("v-bpa:processRelevance", "v-bpa:NoJustification");
+
+        // Save the updated individual to storage
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, bp_obj) {
+            error!("Failed to update individual {}: {:?}", bp_obj.get_id(), e);
+            return Err(Box::new(std::io::Error::new(io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
+        }
+
+        return Ok(());
+    }
+
+    // Continue with existing analysis if justification documents are present
     let process_json = extract_process_json(bp_obj, module)?;
 
     info!("Process Name: {}", process_json["processName"]);

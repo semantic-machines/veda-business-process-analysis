@@ -131,6 +131,14 @@ v-bpa:NotJustified
   rdfs:comment "Not Justified"@en ;
 .
 
+v-bpa:NoJustification
+  rdf:type v-bpa:ProcessRelevance ;
+  rdfs:label "Не заполнено обоснование"@ru ;
+  rdfs:label "No justification"@en ;
+  rdfs:comment "Отсутствуют документы обоснования процесса"@ru ;
+  rdfs:comment "Process justification documents are missing"@en ;
+.
+
 v-bpa:processRelevance
   rdf:type owl:ObjectProperty ;
   rdfs:label "Обоснованность"@ru ;
