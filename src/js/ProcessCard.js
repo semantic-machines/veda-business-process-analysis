@@ -30,7 +30,7 @@ export default class ProcessCard extends Component(HTMLElement) {
             <div class="mt-2 d-flex justify-content-between align-items-center">
               <div>
                 <span rel="v-bpa:hasProcessJustification">
-                  <${ProcessJustificationIndicator} class="me-2" about="{{this.model.id}}"></${ProcessJustificationIndicator}>
+                  <${ProcessJustificationIndicator} class="me-2" about="{{this.model.id}}" property="rdfs:label"></${ProcessJustificationIndicator}>
                 </span>
                 <span class="badge text-bg-secondary border border-secondary me-2" property="v-bpa:responsibleDepartment"></span>
                 <span class="badge text-bg-light border border-secondary me-2 text-muted">
