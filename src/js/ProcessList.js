@@ -22,7 +22,7 @@ export default class ProcessList extends Component(HTMLElement) {
 
   applyFilters(event) {
     event.preventDefault();
-    const form = event.target;
+    const form = event.target.closest('form');
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
     this.filtersData = data;
@@ -69,7 +69,6 @@ export default class ProcessList extends Component(HTMLElement) {
   resetFilters() {
     this.filtersData = null;
     this.filtered = this.processes;
-    this.renderFiltersCount();
   }
 
   renderFilteredProcesses() {
