@@ -11,11 +11,82 @@ export default class ProcessList extends Component(HTMLElement) {
     params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
     const {rows: processes} = await Backend.stored_query(params);
     this.processes = processes;
+    this.filtersData = {};
+    this.filtered = this.processes;
   }
 
   goToProcess(event) {
     const id = event.target.closest('tr').dataset.about;
     location.hash = `#/ProcessView/${id}`;
+  }
+
+  applyFilters(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    this.filtersData = data;
+    
+    this.filtered = this.processes.filter(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => {
+      // Фильтр по названию
+      if (data['rdfs:label'] && !label.toLowerCase().includes(data['rdfs:label'].toLowerCase())) {
+        return false;
+      }
+      // Фильтр по релевантности
+      if (data['v-bpa:processRelevance'] && relevance !== data['v-bpa:processRelevance']) {
+        return false;
+      }
+      // Фильтр по ответственному подразделению
+      if (data['v-bpa:responsibleDepartment'] && 
+          !responsibleDepartment.toLowerCase().includes(data['v-bpa:responsibleDepartment'].toLowerCase())) {
+        return false;
+      }
+      // Фильтр по количеству участников
+      const participantsCount = processParticipant && typeof processParticipant === 'string' 
+        ? processParticipant.split(',').length 
+        : 0;
+      if (data.participantsCountFrom && participantsCount < Number(data.participantsCountFrom)) {
+        return false;
+      }
+      if (data.participantsCountTo && participantsCount > Number(data.participantsCountTo)) {
+        return false;
+      }
+      // Фильтр по трудозатратам
+      const costs = laborCosts ?? 0;
+      if (data.laborCostsFrom && costs < Number(data.laborCostsFrom)) {
+        return false;
+      }
+      if (data.laborCostsTo && costs > Number(data.laborCostsTo)) {
+        return false;
+      }
+      return true;
+    });
+
+    this.renderFilteredProcesses();
+  }
+
+  resetFilters() {
+    this.filtersData = {};
+    this.filtered = this.processes;
+  }
+
+  renderFilteredProcesses() {
+    const container = this.querySelector('#filtered-processes');
+    container.innerHTML = `
+      ${this.filtered.map(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => html`
+        <tr @click="goToProcess" data-about="${id}">
+          <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
+          <td class="align-middle"><${ProcessRelevanceIndicator} about="${relevance}" property="rdfs:label"></${ProcessRelevanceIndicator}></td>
+          <td class="align-middle">${responsibleDepartment}</td>
+          <td class="align-middle"><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
+          <td class="align-middle"><strong>${laborCosts ?? 0}</strong><br><span class="text-muted" about="v-bpa:HoursPerYear" property="rdfs:comment"></span></td>
+        </tr>
+      `).join('')}
+    `;
+  }
+
+  post() {
+    this.renderFilteredProcesses();
   }
 
   render() {
@@ -48,17 +119,7 @@ export default class ProcessList extends Component(HTMLElement) {
                 <th width="10%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
               </tr>
             </thead>
-            <tbody>
-              ${this.processes.map(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => html`
-                <tr @click="goToProcess" data-about="${id}">
-                  <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
-                  <td class="align-middle"><${ProcessRelevanceIndicator} about="${relevance}" property="rdfs:label"></${ProcessRelevanceIndicator}></td>
-                  <td class="align-middle">${responsibleDepartment}</td>
-                  <td class="align-middle"><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
-                  <td class="align-middle"><strong>${laborCosts ?? 0}</strong><br><span class="text-muted" about="v-bpa:HoursPerYear" property="rdfs:comment"></span></td>
-                </tr>
-              `).join('')}
-            </tbody>
+            <tbody id="filtered-processes"></tbody>
           </table>
 
           <div class="modal fade" id="filters" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -69,15 +130,16 @@ export default class ProcessList extends Component(HTMLElement) {
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                  <form>
+                  <form @submit="applyFilters">
                     <div class="mb-5">
                       <div class="mb-3">
                         <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
-                        <input type="text" class="form-control" id="label" name="label">
+                        <input type="text" class="form-control" id="label" name="rdfs:label">
                       </div>
                       <div class="mb-3">
                         <label for="relevance" class="form-label" about="v-bpa:processRelevance" property="rdfs:label"></label>
-                        <select class="form-select" id="relevance" name="relevance">
+                        <select class="form-select" id="relevance" name="v-bpa:processRelevance">
+                          <option value="">---</option>
                           <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label"></option>
                           <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label"></option>
                           <option value="v-bpa:NotJustified" about="v-bpa:NotJustified" property="rdfs:label"></option>
@@ -85,25 +147,25 @@ export default class ProcessList extends Component(HTMLElement) {
                       </div>
                       <div class="mb-3">
                         <label for="responsibleDepartment" class="form-label" about="v-bpa:responsibleDepartment" property="rdfs:comment"></label>
-                        <input type="text" class="form-control" id="responsibleDepartment" name="responsibleDepartment">
+                        <input type="text" class="form-control" id="responsibleDepartment" name="v-bpa:responsibleDepartment">
                       </div>
                       <div class="mb-3">
                         <label class="form-label me-2" about="v-bpa:processParticipant" property="rdfs:comment"></label>
-                        <div class="mb-3 d-flex align-items-center">
-                          <input type="number" placeholder="от" class="form-control me-2 w-25" id="processParticipantCountFrom" name="processParticipantCountFrom">
-                          <input type="number" placeholder="до" class="form-control w-25" id="processParticipantCountTo" name="processParticipantCountTo">
+                        <div class="mb-3 d-flex align-items-center" id="participantsCount">
+                          <input type="number" placeholder="от" class="form-control me-2 w-25" name="participantsCountFrom">
+                          <input type="number" placeholder="до" class="form-control w-25" name="participantsCountTo">
                         </div>
                       </div>
                       <div class="mb-3">
                         <label class="form-label" for="laborCosts" about="v-bpa:laborCosts" property="rdfs:label"></label>
                         <div class="mb-3 d-flex align-items-center" id="laborCosts">
-                          <input type="number" placeholder="от" class="form-control me-2 w-25" id="laborCostsFrom" name="laborCostsFrom">
-                          <input type="number" placeholder="до" class="form-control w-25" id="laborCostsTo" name="laborCostsTo">
+                          <input type="number" placeholder="от" class="form-control me-2 w-25" name="laborCostsFrom">
+                          <input type="number" placeholder="до" class="form-control w-25" name="laborCostsTo">
                         </div>
                       </div>
                     </div>
-                    <button type="submit" class="btn btn-secondary me-2" about="v-bpa:ApplyFilters" property="rdfs:label"></button>
-                    <button type="reset" class="btn btn-light" about="v-bpa:ResetFilters" property="rdfs:label"></button>
+                    <button type="submit" class="btn btn-secondary me-2" data-bs-dismiss="modal"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
+                    <button type="reset" @click="resetFilters" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
                   </form>
                 </div>
               </div>
