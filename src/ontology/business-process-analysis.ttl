@@ -67,7 +67,7 @@ v-bpa:laborCosts
   rdfs:range xsd:decimal ;
 .
 
-v-bpa:documentsForJustification
+v-bpa:hasProcessDocument
   rdf:type owl:ObjectProperty ;
   rdfs:label "Документы для обоснования процесса"@ru ;
   rdfs:label "Documents for process justification"@en ;
@@ -99,7 +99,7 @@ v-bpa:documentContent
   rdfs:range xsd:string ;
 .
 
-v-bpa:JustificationReason
+v-bpa:justificationReason
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Причина обоснования"@ru ;
   rdfs:label "Justification Reason"@en ;
@@ -115,7 +115,7 @@ v-bpa:ProcessJustificationOptions
 .
 
 v-bpa:CompletelyJustified
-  rdf:type v-bpa:ProcessRelevance ;
+  rdf:type v-bpa:ProcessJustificationOptions ;
   rdfs:label "Хорошо"@ru ;
   rdfs:label "Well"@en ;
   rdfs:comment "Хорошо обоснованный"@ru ;
@@ -123,7 +123,7 @@ v-bpa:CompletelyJustified
 .
 
 v-bpa:PartlyJustified
-  rdf:type v-bpa:ProcessRelevance ;
+  rdf:type v-bpa:ProcessJustificationOptions ;
   rdfs:label "Частично"@ru ;
   rdfs:label "Partly"@en ;
   rdfs:comment "Частично обоснованный"@ru ;
@@ -131,22 +131,22 @@ v-bpa:PartlyJustified
 .
 
 v-bpa:PoorlyJustified
-  rdf:type v-bpa:ProcessRelevance ;
+  rdf:type v-bpa:ProcessJustificationOptions ;
   rdfs:label "Плохо"@ru ;
   rdfs:label "Poor"@en ;
   rdfs:comment "Плохо обоснованный"@ru ;
   rdfs:comment "Poorly Justified"@en ;
 .
 
-v-bpa:NoDucumentForJustification
-  rdf:type v-bpa:ProcessRelevance ;
+v-bpa:NoDocumentForJustification
+  rdf:type v-bpa:ProcessJustificationOptions ;
   rdfs:label "Нет документа для обоснования"@ru ;
   rdfs:label "No document for justification"@en ;
   rdfs:comment "Отсутствуют документы обоснования процесса"@ru ;
   rdfs:comment "Process justification documents are missing"@en ;
 .
 
-v-bpa:ProcessJustification
+v-bpa:processJustification
   rdf:type owl:ObjectProperty ;
   rdfs:label "Обоснованность"@ru ;
   rdfs:label "Justification"@en ;
