@@ -11,7 +11,7 @@ export default class ProcessList extends Component(HTMLElement) {
     params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
     const {rows: processes} = await Backend.stored_query(params);
     this.processes = processes;
-    this.filtersData = {};
+    this.filtersData = null;
     this.filtered = this.processes;
   }
 
@@ -26,7 +26,7 @@ export default class ProcessList extends Component(HTMLElement) {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
     this.filtersData = data;
-    
+
     this.filtered = this.processes.filter(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => {
       // Фильтр по названию
       if (data['rdfs:label'] && !label.toLowerCase().includes(data['rdfs:label'].toLowerCase())) {
@@ -63,11 +63,13 @@ export default class ProcessList extends Component(HTMLElement) {
     });
 
     this.renderFilteredProcesses();
+    this.renderFiltersCount();
   }
 
   resetFilters() {
-    this.filtersData = {};
+    this.filtersData = null;
     this.filtered = this.processes;
+    this.renderFiltersCount();
   }
 
   renderFilteredProcesses() {
@@ -83,6 +85,12 @@ export default class ProcessList extends Component(HTMLElement) {
         </tr>
       `).join('')}
     `;
+  }
+
+  renderFiltersCount() {
+    const button = this.querySelector('#filters-button');
+    const count = this.filtersData ? Object.values(this.filtersData).filter(value => value).length || null : null;
+    button.lastElementChild.textContent = count ?? '';
   }
 
   post() {
@@ -103,9 +111,10 @@ export default class ProcessList extends Component(HTMLElement) {
               </h3>
             </div>
           </div>
-          <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#filters">
-            <i class="bi bi-chevron-down"></i>
-            Фильтры
+          <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
+            <i class="bi bi-chevron-down me-1"></i>
+            <span about="v-bpa:Filters" property="rdfs:label"></span>
+            <span class="badge rounded-pill bg-danger ms-1"></span>
           </button>
         </div>
         <div class="table-responsive">
