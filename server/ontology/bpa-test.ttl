@@ -14,8 +14,7 @@ v-bpa:QuarterlyFinancialReportingProcess
   v-bpa:responsibleDepartment "Финансовый департамент"@ru ;
   v-bpa:processFrequency 4 ;
   v-bpa:laborCosts 250.0 ;
-  v-bpa:processJustification v-bpa:GovernmentDirective , v-bpa:CEODirective , v-bpa:InterdepartmentalMemo ;
-  v-bpa:processRelevance v-bpa:CompletelyJustified ;
+  v-bpa:hasProcessDocument v-bpa:GovernmentDirective , v-bpa:CEODirective , v-bpa:InterdepartmentalMemo ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Европе"
@@ -27,8 +26,7 @@ v-bpa:EuropeMarketAnalysisProcess
   v-bpa:responsibleDepartment "Европейский отдел продаж"@ru ;
   v-bpa:processFrequency 12 ;
   v-bpa:laborCosts 180.0 ;
-  v-bpa:processJustification v-bpa:EuropeMarketAnalysisDirective ;
-  v-bpa:processRelevance v-bpa:PartlyJustified ;
+  v-bpa:hasProcessDocument v-bpa:EuropeMarketAnalysisDirective ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Азии"
@@ -40,8 +38,7 @@ v-bpa:AsiaMarketAnalysisProcess
   v-bpa:responsibleDepartment "Азиатский отдел продаж"@ru ;
   v-bpa:processFrequency 12 ;
   v-bpa:laborCosts 175.0 ;
-  v-bpa:processJustification v-bpa:AsiaMarketAnalysisDirective ;
-  v-bpa:processRelevance v-bpa:PartlyJustified ;
+  v-bpa:hasProcessDocument v-bpa:AsiaMarketAnalysisDirective ;
 .
 
 # Экземпляр бизнес-процесса "Анализ рынка в Америке"
@@ -53,8 +50,7 @@ v-bpa:AmericaMarketAnalysisProcess
   v-bpa:responsibleDepartment "Американский отдел продаж"@ru ;
   v-bpa:processFrequency 12 ;
   v-bpa:laborCosts 190.0 ;
-  v-bpa:processJustification v-bpa:AmericaMarketAnalysisDirective ;
-  v-bpa:processRelevance v-bpa:PartlyJustified ;
+  v-bpa:hasProcessDocument v-bpa:AmericaMarketAnalysisDirective ;
 .
 
 # Экземпляр бизнес-процесса "Разработка новых продуктов"
@@ -66,8 +62,7 @@ v-bpa:ProductDevelopmentProcess
   v-bpa:responsibleDepartment "Отдел разработки продуктов"@ru ;
   v-bpa:processFrequency 6 ;
   v-bpa:laborCosts 450.0 ;
-  v-bpa:processJustification v-bpa:ProductDevelopmentDirective ;
-  v-bpa:processRelevance v-bpa:CompletelyJustified ;
+  v-bpa:hasProcessDocument v-bpa:ProductDevelopmentDirective ;
 .
 
 # Экземпляр бизнес-процесса "Управление персоналом"
@@ -79,8 +74,7 @@ v-bpa:HRManagementProcess
   v-bpa:responsibleDepartment "Отдел кадров"@ru ;
   v-bpa:processFrequency 12 ;
   v-bpa:laborCosts 200.0 ;
-  v-bpa:processJustification v-bpa:HRManagementDirective ;
-  v-bpa:processRelevance v-bpa:CompletelyJustified ;
+  v-bpa:hasProcessDocument v-bpa:HRManagementDirective ;
 .
 
 # Документ обоснования процесса - Директива о финансовом контроле правительства
