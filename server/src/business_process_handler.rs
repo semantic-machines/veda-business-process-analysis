@@ -23,10 +23,10 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
     let has_justification = bp_obj.get_literals("v-bpa:processJustification").map_or(false, |j| !j.is_empty());
 
     if !has_justification {
-        info!("Process {} has no justification documents. Setting status to NotSufficientlyFilled", bp_obj.get_id());
+        info!("Process {} has no justification documents. Setting status to NoJustification", bp_obj.get_id());
 
-        // Set the process relevance to NotSufficientlyFilled
-        bp_obj.set_uri("v-bpa:processRelevance", "v-bpa:NotSufficientlyFilled");
+        // Set the process relevance to NoJustification
+        bp_obj.set_uri("v-bpa:processRelevance", "v-bpa:NoJustification");
 
         // Save the updated individual to storage
         if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, bp_obj) {
