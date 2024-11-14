@@ -77,7 +77,7 @@ export default class ProcessList extends Component(HTMLElement) {
       ${this.filtered.map(([id, label, description, justification, responsibleDepartment, processParticipant, laborCosts]) => html`
         <tr onclick="location.hash = '#/ProcessView/${id}'">
           <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
-          <td class="align-middle"><${ProcessJustificationIndicator} about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
+          <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
           <td class="align-middle">${responsibleDepartment}</td>
           <td class="align-middle"><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
           <td class="align-middle lh-sm">
