@@ -46,17 +46,34 @@ export default class ProcessView extends Component(HTMLElement) {
             <p property="v-bpa:processDescription"></p>
           </div>
           <div class="col-12 col-md-4">
-            <div class="mb-3" style="margin-left:1.33em;">
-              <p class="mb-0 text-muted" about="v-bpa:responsibleDepartment" property="rdfs:comment"></p>
-              <p class="fw-bold" property="v-bpa:responsibleDepartment"></p>
-            </div>
-
             <div class="accordion" id="ProcessViewAccordion">
               <style>
                 #ProcessViewAccordion .accordion-button:after {
                   margin-left: 0.5em;
                 }
               </style>
+              <div class="accordion-item" style="padding:1rem 1.25rem;>
+                <h5 class="accordion-header">
+                  <p class="mb-0 text-muted" about="v-bpa:responsibleDepartment" property="rdfs:comment"></p>
+                  <p class="mb-0 fw-bold" property="v-bpa:responsibleDepartment"></p>
+                </h5>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    <div class="me-auto fw-bold" about="v-bpa:processParticipant" property="rdfs:comment"></div>
+                    <div class="ms-auto">
+                      <i class="bi bi-people-fill me-1"></i>
+                      ${this.model.hasValue('v-bpa:processParticipant') ? this.model['v-bpa:processParticipant']?.[0].split(',').length : 0}
+                    </div>
+                  </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                  <div class="accordion-body">
+                    <div property="v-bpa:processParticipant"></div>
+                  </div>
+                </div>
+              </div>
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
@@ -77,22 +94,6 @@ export default class ProcessView extends Component(HTMLElement) {
                       <div class="text-secondary" about="v-bpa:processFrequency" property="rdfs:comment"></div>
                       <div><span property="v-bpa:processFrequency"></span>&nbsp;<span about="v-bpa:TimesPerYear" property="rdfs:label"></span></div>
                     </div>
-                  </div>
-                </div>
-              </div>
-              <div class="accordion-item">
-                <h2 class="accordion-header">
-                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                    <div class="me-auto fw-bold" about="v-bpa:processParticipant" property="rdfs:comment"></div>
-                    <div class="ms-auto">
-                      <i class="bi bi-people-fill me-1"></i>
-                      ${this.model.hasValue('v-bpa:processParticipant') ? this.model['v-bpa:processParticipant']?.[0].split(',').length : 0}
-                    </div>
-                  </button>
-                </h2>
-                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                  <div class="accordion-body">
-                    <div property="v-bpa:processParticipant"></div>
                   </div>
                 </div>
               </div>
