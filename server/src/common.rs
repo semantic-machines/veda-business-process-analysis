@@ -54,7 +54,7 @@ pub fn extract_process_json(bp_obj: &mut Individual, module: &mut BusinessProces
         "responsibleDepartment": responsible_department,
         "frequency": process_frequency,
         "laborCosts": labor_costs,
-        "justificationDocuments": documents
+        "hasProcessDocument": documents
     });
 
     Ok(json_value)
