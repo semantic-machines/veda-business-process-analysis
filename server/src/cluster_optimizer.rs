@@ -57,18 +57,19 @@ pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, 
 
     info!("@ optimization_result={:?}", optimization_result);
 
-    let mut individual = Individual::default();
-    if module.backend.storage.get_individual(cluster_id, &mut individual) != ResultCode::Ok {
+    let mut cluster_indv = Individual::default();
+    if module.backend.storage.get_individual(cluster_id, &mut cluster_indv) != ResultCode::Ok {
         error!("Failed to load individual {}", cluster_id);
         return Err(format!("Failed to load individual {}", cluster_id).into());
     }
+    cluster_indv.parse_all();
 
     // Сохраняем результат оптимизации с учетом маппинга
-    set_to_individual_from_ai_response(module, &mut individual, &optimization_result, &property_mapping)?;
+    set_to_individual_from_ai_response(module, &mut cluster_indv, &optimization_result, &property_mapping)?;
 
     // Сохраняем обновленный индивид
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut individual) {
-        error!("Failed to update individual {}: {:?}", individual.get_id(), e);
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut cluster_indv) {
+        error!("Failed to update individual {}: {:?}", cluster_indv.get_id(), e);
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
     }
 
