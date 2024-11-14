@@ -62,7 +62,7 @@ v-bpa:HoursPerYear
   rdfs:label "часов в год"@ru ;
   rdfs:label "hours per year"@en ;
   rdfs:comment "ч/год"@ru ;
-  rdfs:label "h/year"@en ;
+  rdfs:comment "h/year"@en ;
 .
 
 v-bpa:Hours

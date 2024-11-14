@@ -1,5 +1,6 @@
 import {Component, html, Backend, Model} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
+import Literal from './Literal.js';
 
 export default class ProcessList extends Component(HTMLElement) {
   static tag = 'bpa-process-list';
@@ -79,7 +80,10 @@ export default class ProcessList extends Component(HTMLElement) {
           <td class="align-middle"><${ProcessJustificationIndicator} about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
           <td class="align-middle">${responsibleDepartment}</td>
           <td class="align-middle"><i class="bi bi-people-fill me-1"></i>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</td>
-          <td class="align-middle"><strong>${laborCosts ?? 0}</strong><br><span class="text-muted" about="v-bpa:HoursPerYear" property="rdfs:comment"></span></td>
+          <td class="align-middle lh-sm">
+            <strong>${laborCosts ?? 0}</strong><br>
+            <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
+          </td>
         </tr>
       `).join('')}
     `;
