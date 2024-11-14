@@ -116,7 +116,12 @@ export default class ProcessList extends Component(HTMLElement) {
           </button>
         </div>
         <div class="table-responsive">
-          <table class="table table-hover mb-4">
+          <style>
+            #processes-table tbody tr:last-child {
+              border-bottom: 1px solid transparent;
+            }
+          </style>
+          <table class="table table-hover mb-0" id="processes-table">
             <thead>
               <tr>
                 <th width="50%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
