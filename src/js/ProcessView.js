@@ -58,7 +58,7 @@ export default class ProcessView extends Component(HTMLElement) {
                   <p class="mb-0 fw-bold" property="v-bpa:responsibleDepartment"></p>
                 </h5>
               </div>
-              <div class="accordion-item">
+              <div class="accordion-item border-bottom-0">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                     <div class="me-auto fw-bold" about="v-bpa:processParticipant" property="rdfs:comment"></div>
