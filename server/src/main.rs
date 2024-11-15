@@ -20,6 +20,7 @@ mod prompt_manager;
 mod queue_processor;
 mod types;
 
+mod clustering_common;
 mod generic_processing_handler;
 
 #[derive(Debug, Serialize, Deserialize)]

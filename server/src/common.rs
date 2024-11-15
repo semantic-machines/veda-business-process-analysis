@@ -86,7 +86,7 @@ pub fn get_individuals_uris_by_type(module: &mut BusinessProcessAnalysisModule, 
     get_individuals_uris_by_query(module, &query)
 }
 
-fn get_individuals_uris_by_query(module: &mut BusinessProcessAnalysisModule, query: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+pub fn get_individuals_uris_by_query(module: &mut BusinessProcessAnalysisModule, query: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     info!("Starting search for individuals of query: {}", query);
 
     let mut res = QueryResult::default();

@@ -371,3 +371,102 @@ v-bpa:Failed
   rdfs:label "Завершено с ошибкой"@ru ;
   rdfs:label "Failed"@en ;
 .
+
+v-bpa:executionState
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Состояние выполнения"@ru ;
+  rdfs:label "Execution state"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range v-bpa:ExecutionState ;
+.
+
+v-bpa:ExecutionState
+  rdf:type owl:Class ;
+  rdfs:label "Состояние выполнения"@ru ;
+  rdfs:label "Execution state"@en ;
+.
+
+v-bpa:ExecutionInProgress
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "Выполняется"@ru ;
+  rdfs:label "In Progress"@en ;
+.
+
+v-bpa:ExecutionPaused
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "На паузе"@ru ;
+  rdfs:label "Paused"@en ;
+.
+
+v-bpa:ExecutionCompleted
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "Завершен"@ru ;
+  rdfs:label "Completed"@en ;
+.
+
+v-bpa:ExecutionTerminated
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "Прерван"@ru ;
+  rdfs:label "Terminated"@en ;
+.
+
+v-bpa:ExecutionError
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "Ошибка выполнения"@ru ;
+  rdfs:label "Execution Error"@en ;
+.
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+
+v-bpa:controlAction
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Действие управления"@ru ;
+  rdfs:label "Control action"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range v-bpa:ExecutionControl ;
+.
+
+v-bpa:ExecutionControl
+  rdf:type owl:Class ;
+  rdfs:label "Управление выполнением"@ru ;
+  rdfs:label "Execution control"@en ;
+.
+
+v-bpa:StartExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Запустить выполнение"@ru ;
+  rdfs:label "Start execution"@en ;
+.
+
+v-bpa:StopExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Остановить выполнение"@ru ;
+  rdfs:label "Stop execution"@en ;
+.
+
+v-bpa:ResumeExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Возобновить выполнение"@ru ;
+  rdfs:label "Resume execution"@en ;
+.
+
+v-bpa:CancelExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Отменить выполнение"@ru ;
+  rdfs:label "Cancel execution"@en ;
+.
+
+v-bpa:NoneExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Отменить выполнение"@ru ;
+  rdfs:label "Cancel execution"@en ;
+.
+
+v-bpa:NoActionExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Нет действия"@ru ;
+  rdfs:label "No action"@en ;
+.
