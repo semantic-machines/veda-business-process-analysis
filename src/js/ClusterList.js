@@ -15,29 +15,32 @@ export default class ClusterList extends Component(HTMLElement) {
   }
   
   async post () {
-    await timeout(100);
-    const component = this;
-    this.querySelectorAll('.toggle-processes').forEach(el => {
-      // const id = el.dataset.for;
-      // const isExpanded = localStorage.getItem(`ClusterList_expanded_${id}`) === 'true';
-      // 
-      // if (isExpanded) {
-      //   [...el.children].forEach(child => child.classList.toggle('d-none'));
-      //   const processes = el.parentNode.parentNode.querySelector(`[data-id="${id}"]`);
-      //   processes.classList.remove('d-none');
-      // }
+    this.addEventListener('click', (e) => {
+      const toggleBtn = e.target.closest('.toggle-processes');
+      if (!toggleBtn) return;
+      
+      e.stopPropagation();
+      e.preventDefault();
+      
+      [...toggleBtn.children].forEach(el => el.classList.toggle('d-none'));
+      const id = toggleBtn.dataset.for;
+      const processes = toggleBtn.parentNode.parentNode.querySelector(`[data-id="${id}"]`);
+      processes.classList.toggle('d-none');
+      
+      const isExpanded = !processes.classList.contains('d-none');
+      localStorage.setItem(`ClusterList_expanded_${id}`, isExpanded);
+    }, true);
+    
+    this.addEventListener('click', (e) => {
+      const processRow = e.target.closest('.process-row');
+      const about = processRow?.getAttribute('about');
+      if (about) location.hash = `#/ProcessView/${about}`;
+    });
 
-      el.addEventListener('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        [...this.children].forEach(el => el.classList.toggle('d-none'));
-        const id = this.dataset.for;
-        const processes = this.parentNode.parentNode.querySelector(`[data-id="${id}"]`);
-        processes.classList.toggle('d-none');
-        
-        const isExpanded = !processes.classList.contains('d-none');
-        localStorage.setItem(`ClusterList_expanded_${id}`, isExpanded);
-      });
+    this.addEventListener('click', (e) => {
+      const clusterRow = e.target.closest('.cluster-row');
+      const about = clusterRow?.getAttribute('about');
+      if (about) location.hash = `#/ClusterView/${about}`;
     });
   }
 
@@ -67,7 +70,7 @@ export default class ClusterList extends Component(HTMLElement) {
             <tbody>
               ${this.clusters?.map(([clusterId]) => html`
                 ${(isExpanded = localStorage.getItem(`ClusterList_expanded_${clusterId}`) === 'true', '')}
-                <tr about="${clusterId}" class="border-top" onclick="location.hash = '#/ClusterView/${clusterId}'">
+                <tr about="${clusterId}" class="border-top cluster-row">
                   <td class="text-center toggle-processes" style="cursor:pointer;" data-for="${clusterId}">
                     <i class="bi bi-chevron-up text-secondary ${isExpanded ? '' : 'd-none'}"></i>
                     <span class="${isExpanded ? 'd-none' : ''}">
@@ -103,7 +106,7 @@ export default class ClusterList extends Component(HTMLElement) {
                           </tr>
                         </thead-->
                         <tbody rel="v-bpa:hasProcess">
-                          <tr onclick="location.hash = '#/ProcessView/{{this.model.id}}'">
+                          <tr about="{{this.model.id}}" class="process-row">
                             <td class="align-middle">
                               <h5 class="mb-0" property="rdfs:label"></h5>
                               <p class="text-muted mb-0">
