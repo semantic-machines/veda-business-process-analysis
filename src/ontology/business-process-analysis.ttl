@@ -371,3 +371,47 @@ v-bpa:Failed
   rdfs:label "Завершено с ошибкой"@ru ;
   rdfs:label "Failed"@en ;
 .
+
+v-bpa:executionState
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Состояние выполнения"@ru ;
+  rdfs:label "Execution state"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range v-bpa:ExecutionState ;
+.
+
+v-bpa:ExecutionState
+  rdf:type owl:Class ;
+  rdfs:label "Состояние выполнения"@ru ;
+  rdfs:label "Execution state"@en ;
+.
+
+v-bpa:ExecutionInProgress
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "Выполняется"@ru ;
+  rdfs:label "In Progress"@en ;
+.
+
+v-bpa:ExecutionPaused
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "На паузе"@ru ;
+  rdfs:label "Paused"@en ;
+.
+
+v-bpa:ExecutionCompleted
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "Завершен"@ru ;
+  rdfs:label "Completed"@en ;
+.
+
+v-bpa:ExecutionTerminated
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "Прерван"@ru ;
+  rdfs:label "Terminated"@en ;
+.
+
+v-bpa:ExecutionError
+  rdf:type v-bpa:ExecutionState ;
+  rdfs:label "Ошибка выполнения"@ru ;
+  rdfs:label "Execution Error"@en ;
+.

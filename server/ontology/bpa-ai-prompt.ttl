@@ -70,7 +70,7 @@ v-bpa:OptimizeProcessesPrompt
 6. Трудозатраты: предполагаемые затраты времени (часы в год) на процесс
 
 """@ru ;
- v-bpa:properties v-bpa:clusterReason, v-bpa:clusterSimilarities, v-bpa:clusterDifferences, v-bpa:proposedClusterName, v-bpa:proposedClusterDescription, v-bpa:proposedDepartment, v-bpa:proposedParticipants, v-bpa:proposedFrequency, v-bpa:estimatedLaborCost ;
+ v-bpa:properties v-bpa:clusterReason, v-bpa:clusterSimilarities, v-bpa:clusterDifferences, rdfs:label, v-bpa:proposedClusterName, v-bpa:proposedClusterDescription, v-bpa:proposedDepartment, v-bpa:proposedParticipants, v-bpa:proposedFrequency, v-bpa:estimatedLaborCost ;
 .
 
 # Промпт для создания бизнес-процесса
