@@ -76,10 +76,16 @@ export default class ClusterList extends Component(HTMLElement) {
                     </td>
                     <td>
                       <p class="mb-0 fw-bold" property="rdfs:label"></p>
-                      <p class="mb-0 text-secondary" property="v-bpa:proposedClusterDescription"></p>
+                      <p class="mb-0 text-secondary">
+                        <${Literal} about="${clusterId}" property="v-bpa:proposedClusterDescription" max-chars="100"></${Literal}>
+                      </p>
                     </td>
-                    <td property="v-bpa:clusterSimilarities"></td>
-                    <td property="v-bpa:clusterDifferences"></td>
+                    <td>
+                      <${Literal} about="${clusterId}" property="v-bpa:clusterSimilarities" max-chars="100"></${Literal}>
+                    </td>
+                    <td>
+                      <${Literal} about="${clusterId}" property="v-bpa:clusterDifferences" max-chars="100"></${Literal}>
+                    </td>
                   </tr>
                   <tr about="${clusterId}" class="d-none" data-id="${clusterId}" style="background-color: white!important;">
                     <td></td>
@@ -99,7 +105,9 @@ export default class ClusterList extends Component(HTMLElement) {
                             <tr onclick="location.hash = '#/ProcessView/{{this.model.id}}'">
                               <td class="align-middle">
                                 <h5 class="mb-0" property="rdfs:label"></h5>
-                                <p class="text-muted mb-0" property="v-bpa:processDescription"></p>
+                                <p class="text-muted mb-0">
+                                  <${Literal} about="{{this.model.id}}" property="v-bpa:processDescription" max-chars="100"></${Literal}>
+                                </p>
                               </td>
                               <td class="align-middle" rel="v-bpa:hasProcessJustification">
                                 <${ProcessJustificationIndicator} class="text-nowrap" about="{{this.model.id}}" property="rdfs:label"></${ProcessJustificationIndicator}>
@@ -112,7 +120,7 @@ export default class ClusterList extends Component(HTMLElement) {
                               <td class="align-middle lh-sm">
                                 <strong>{{ this.model.hasValue('v-bpa:laborCosts') && this.model.hasValue('v-bpa:processFrequency') ? this.model['v-bpa:laborCosts'][0] * this.model['v-bpa:processFrequency'][0] : 0 }}</strong>
                                 <br>
-                                <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
+                                <small class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></small>
                               </td>
                             </tr>
                           </tbody>
