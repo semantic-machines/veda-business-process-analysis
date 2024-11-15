@@ -22,7 +22,7 @@ export default class Auth extends Component(HTMLElement) {
       this.handleAuthError();
     }
   }
-
+  
   handleAuthSuccess () {
     // Activity handler
     let lastActivity = Date.now();

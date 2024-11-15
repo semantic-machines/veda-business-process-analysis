@@ -17,6 +17,19 @@ const htmlMin = {
   },
 };
 
+const updateServiceWorkerVersion = {
+  name: 'update-sw-version',
+  setup(build) {
+    build.onEnd(async () => {
+      const swPath = './src/ServiceWorker.js';
+      let swContent = await fs.promises.readFile(swPath, 'utf8');
+      const version = Date.now();
+      swContent = swContent.replace(/const VERSION = \d+/, `const VERSION = ${version}`);
+      await fs.promises.writeFile(swPath, swContent);
+    });
+  },
+};
+
 const options = {
   entryPoints: ['./src/js/index.js'],
   minify: true,
@@ -35,6 +48,7 @@ const options = {
   },
   plugins: [
     // htmlMin,
+    updateServiceWorkerVersion,
     sassPlugin(),
     copy({
       assets: {

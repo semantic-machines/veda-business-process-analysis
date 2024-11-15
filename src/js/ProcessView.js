@@ -14,7 +14,7 @@ export default class ProcessView extends Component(HTMLElement) {
       location.hash = '#/ProcessOverview';
     }
   }
-  
+
   async added() {
     const params = new Model; 
     params['rdf:type'] = 'v-s:QueryParams';
@@ -23,7 +23,7 @@ export default class ProcessView extends Component(HTMLElement) {
     const {id: [cluster]} = await Backend.stored_query(params);
     this.cluster = cluster;
   }
-  
+
   render() {
     const laborCosts = this.model['v-bpa:laborCosts']?.[0];
     const processFrequency = this.model['v-bpa:processFrequency']?.[0];

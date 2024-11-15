@@ -1,9 +1,21 @@
-/*
-// API calls caching service worker
+const VERSION = 1731707394261;
+const FILES = `files-${VERSION}`;
+const API = `api-${VERSION}`;
 
-const watchTimeout = 60 * 1000;
-const FILES = 'files';
-const API = 'api';
+const FILES_TO_CACHE = [
+  'bootstrap-icons-OCU552PF.woff',
+  'bootstrap-icons-X6UQXWUS.woff2',
+  'calibri-6HZ4FOZK.otf',
+  'calibri-CUMK4OKU.woff2',
+  'calibri-B45TIHX4.woff',
+  'calibri-WWLRWMHF.ttf',
+  'favicon.ico',
+  'index.css',
+  'index.html',
+  'index.js',
+  'index.js.map',
+  'manifest',
+];
 
 const API_FNS = [
   '/authenticate',
@@ -27,47 +39,39 @@ const API_FNS = [
   '/watch',
 ];
 
-function watchChanges (CACHE) {
-  if (typeof EventSource === 'undefined') return;
-
-  const events = new EventSource('/watch');
-
-  events.onopen = () => {
-    console.log(new Date().toISOString(), 'Watching resources changes');
-  };
-
-  events.onerror = (event) => {
-    console.log(new Date().toISOString(), `Failed to watch resources changes, reconnect in ${Math.floor(watchTimeout / 1000)} sec`);
-    event.target.close();
-    setTimeout(watchChanges, watchTimeout);
-  };
-
-  events.onmessage = (event) => {
-    const change = JSON.parse(event.data);
-    Object.keys(change).forEach((_path) => {
-      const path = (_path === '/index.html' ? '/' : _path);
-      caches.match(path).then((response) => {
-        if (response && response.ok) {
-          const cache_modified = response.headers.get('last-modified');
-          const event_modified = change[path];
-          if (cache_modified !== event_modified) {
-            caches.open(CACHE).then((cache) => cache.delete(path)).then(() => {
-              console.log(new Date().toISOString(), 'Cached resource deleted: ', path);
-            });
-          }
-        }
-      });
-    });
-  };
-}
-watchChanges(FILES);
-
 // Clear cached resources
 self.addEventListener('install', (event) => {
-  this.skipWaiting();
-  console.log('Service worker updated, clear cache');
+  self.skipWaiting();
+  console.log('Service worker installed, caching files');
   event.waitUntil(
-    caches.keys().then((keyList) => Promise.all(keyList.map((key) => caches.delete(key)))),
+    caches.open(FILES).then((cache) => {
+      return Promise.all(
+        FILES_TO_CACHE.map((file) => {
+          return cache.add(file).catch((error) => {
+            console.error(`Failed to cache ${file}:`, error);
+            throw error;
+          });
+        })
+      );
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+  console.log('Service worker activated, cleaning up old caches');
+  const cacheWhitelist = [FILES, API];
+  event.waitUntil(
+    caches.keys().then((keyList) => {
+      return Promise.all(
+        keyList.map((key) => {
+          if (!cacheWhitelist.includes(key)) {
+            console.log(`Deleting cache: ${key}`);
+            return caches.delete(key);
+          }
+        })
+      );
+    })
   );
 });
 
@@ -157,5 +161,3 @@ function handleAPI (event, CACHE) {
     return fetch(event.request);
   }
 }
-
-*/
