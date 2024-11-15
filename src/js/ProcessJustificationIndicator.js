@@ -6,6 +6,7 @@ export default class ProcessJustificationIndicator extends Component(HTMLElement
   property = this.getAttribute('property');
 
   render() {
+    if (!this.model) return '';
     return (
       this.model.id === 'v-bpa:CompletelyJustified'
       ? html`<i class="bi bi-check-circle-fill text-success"></i>&nbsp;<strong class="text-success" property="${this.property}"></strong>`
