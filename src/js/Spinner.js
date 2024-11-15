@@ -33,7 +33,7 @@ class Spinner extends Component(HTMLElement) {
       </style>
       <div class="overlay" style="display: none;">
         <div class="spinner-container">
-          <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+          <div class="spinner-border text-secondary" role="status" style="width: 3rem; height: 3rem;">
             <span class="visually-hidden">Loading...</span>
           </div>
         </div>
