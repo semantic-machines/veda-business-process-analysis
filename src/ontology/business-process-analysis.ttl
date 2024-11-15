@@ -458,3 +458,15 @@ v-bpa:CancelExecution
   rdfs:label "Отменить выполнение"@ru ;
   rdfs:label "Cancel execution"@en ;
 .
+
+v-bpa:NoneExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Отменить выполнение"@ru ;
+  rdfs:label "Cancel execution"@en ;
+.
+
+v-bpa:NoActionExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Нет действия"@ru ;
+  rdfs:label "No action"@en ;
+.
