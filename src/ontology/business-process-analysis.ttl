@@ -415,3 +415,46 @@ v-bpa:ExecutionError
   rdfs:label "Ошибка выполнения"@ru ;
   rdfs:label "Execution Error"@en ;
 .
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+
+v-bpa:controlAction
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Действие управления"@ru ;
+  rdfs:label "Control action"@en ;
+  rdfs:domain v-bpa:ClusterizationAttempt ;
+  rdfs:range v-bpa:ExecutionControl ;
+.
+
+v-bpa:ExecutionControl
+  rdf:type owl:Class ;
+  rdfs:label "Управление выполнением"@ru ;
+  rdfs:label "Execution control"@en ;
+.
+
+v-bpa:StartExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Запустить выполнение"@ru ;
+  rdfs:label "Start execution"@en ;
+.
+
+v-bpa:StopExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Остановить выполнение"@ru ;
+  rdfs:label "Stop execution"@en ;
+.
+
+v-bpa:ResumeExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Возобновить выполнение"@ru ;
+  rdfs:label "Resume execution"@en ;
+.
+
+v-bpa:CancelExecution
+  rdf:type v-bpa:ExecutionControl ;
+  rdfs:label "Отменить выполнение"@ru ;
+  rdfs:label "Cancel execution"@en ;
+.

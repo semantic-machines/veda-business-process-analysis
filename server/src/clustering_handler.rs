@@ -53,7 +53,7 @@ fn update_activity_timestamps(clustering_attempt: &mut Individual, status: &str)
 fn check_control_action(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<bool, Box<dyn std::error::Error>> {
     if let Some(control_action) = clustering_attempt.get_first_literal("v-bpa:controlAction") {
         match control_action.as_str() {
-            "v-bpa:Stop" => {
+            "v-bpa:StopExecution" => {
                 info!("Received stop command for clustering attempt {}", clustering_attempt.get_id());
                 clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Paused");
                 clustering_attempt.set_uri("v-bpa:executionState", "v-bpa:ExecutionPaused");
@@ -61,7 +61,7 @@ fn check_control_action(module: &mut BusinessProcessAnalysisModule, clustering_a
                 update_individual(module, clustering_attempt)?;
                 return Ok(false);
             },
-            "v-bpa:Cancel" => {
+            "v-bpa:CancelExecution" => {
                 info!("Received cancel command for clustering attempt {}", clustering_attempt.get_id());
                 clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Cancelled");
                 clustering_attempt.set_uri("v-bpa:executionState", "v-bpa:ExecutionTerminated");
@@ -89,9 +89,13 @@ fn check_control_action(module: &mut BusinessProcessAnalysisModule, clustering_a
 /// - Ведется учет затраченного времени
 /// - Обновляется процент выполнения
 pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
-    info!("Starting process cluster analysis for attempt: {}", clustering_attempt.get_id());
-
     let mut comparison_state = None;
+
+    if !clustering_attempt.any_exists("v-bpa:controlAction", &["v-bpa:StartExecution"]) {
+            return Ok(());
+    }
+
+    info!("Starting process cluster analysis for attempt: {}", clustering_attempt.get_id());
 
     loop {
         // Проверяем команды управления процессом
@@ -119,13 +123,13 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
             },
             "v-bpa:Paused" => {
                 if let Some(control_action) = clustering_attempt.get_first_literal("v-bpa:controlAction") {
-                    if control_action == "v-bpa:Resume" {
+                    if control_action == "v-bpa:ResumeExecution" {
                         info!("Resuming clustering attempt {}", clustering_attempt.get_id());
                         clustering_attempt.remove("v-bpa:controlAction");
                         clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:ComparingPairs");
                         clustering_attempt.set_uri("v-bpa:executionState", "v-bpa:ExecutionInProgress");
                         update_individual(module, clustering_attempt)?;
-                    } else if control_action == "v-bpa:Cancel" {
+                    } else if control_action == "v-bpa:CancelExecution" {
                         info!("Cancelling paused clustering attempt {}", clustering_attempt.get_id());
                         clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Cancelled");
                         clustering_attempt.set_uri("v-bpa:executionState", "v-bpa:ExecutionTerminated");
@@ -202,7 +206,6 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
     info!("Process cluster analysis completed for attempt: {}", clustering_attempt.get_id());
     Ok(())
 }
-
 /// Вычисляет прогресс кластеризации и оставшееся время
 fn calculate_clustering_metrics(state: &ComparisonState, total_processes: usize) -> (i64, i64) {
     // Вычисляем общее количество пар для сравнения
@@ -329,7 +332,6 @@ fn compare_next_pair(
 
     Ok(ComparisonResult::Continue)
 }
-
 /// Сравнивает два процесса с помощью AI
 fn compare_processes(module: &mut BusinessProcessAnalysisModule, process1_id: &str, process2_id: &str) -> Result<bool, Box<dyn std::error::Error>> {
     let mut process1 = Individual::default();
