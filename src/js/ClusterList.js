@@ -81,14 +81,14 @@ export default class ClusterList extends Component(HTMLElement) {
                   <td>
                     <p class="mb-0 fw-bold" property="rdfs:label"></p>
                     <p class="mb-0 text-secondary">
-                      <${Literal} about="${clusterId}" property="v-bpa:proposedClusterDescription" max-chars="100"></${Literal}>
+                      <${Literal} about="${clusterId}" property="v-bpa:proposedClusterDescription" max-chars="70"></${Literal}>
                     </p>
                   </td>
                   <td>
-                    <${Literal} about="${clusterId}" property="v-bpa:clusterSimilarities" max-chars="100"></${Literal}>
+                    <${Literal} about="${clusterId}" property="v-bpa:clusterSimilarities" max-chars="70"></${Literal}>
                   </td>
                   <td>
-                    <${Literal} about="${clusterId}" property="v-bpa:clusterDifferences" max-chars="100"></${Literal}>
+                    <${Literal} about="${clusterId}" property="v-bpa:clusterDifferences" max-chars="70"></${Literal}>
                   </td>
                 </tr>
                 <tr about="${clusterId}" class="${isExpanded ? '' : 'd-none'}" data-id="${clusterId}" style="background-color: white!important;">
@@ -110,7 +110,7 @@ export default class ClusterList extends Component(HTMLElement) {
                             <td class="align-middle">
                               <h5 class="mb-0" property="rdfs:label"></h5>
                               <p class="text-muted mb-0">
-                                <${Literal} about="{{this.model.id}}" property="v-bpa:processDescription" max-chars="100"></${Literal}>
+                                <${Literal} about="{{this.model.id}}" property="v-bpa:processDescription" max-chars="70"></${Literal}>
                               </p>
                             </td>
                             <td class="align-middle" rel="v-bpa:hasProcessJustification">
