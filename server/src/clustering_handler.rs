@@ -63,7 +63,7 @@ fn check_control_action(module: &mut BusinessProcessAnalysisModule, clustering_a
         match control_action.as_str() {
             "v-bpa:StopExecution" => {
                 info!("Received stop command for clustering attempt {}", clustering_attempt.get_id());
-                clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Paused");
+                clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Paused");
                 clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionPaused");
                 update_activity_timestamps(clustering_attempt, "v-bpa:Paused")?;
                 clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
@@ -71,7 +71,7 @@ fn check_control_action(module: &mut BusinessProcessAnalysisModule, clustering_a
             },
             "v-bpa:CancelExecution" => {
                 info!("Received cancel command for clustering attempt {}", clustering_attempt.get_id());
-                clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Cancelled");
+                clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Cancelled");
                 clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionTerminated");
                 update_activity_timestamps(clustering_attempt, "v-bpa:Cancelled")?;
                 clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
@@ -101,7 +101,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
     if !get_individuals_uris_by_query(module, &format!("'v-bpa:hasExecutionState' == 'v-bpa:ExecutionInProgress' && '@' != '{}'", clustering_attempt.get_id()))?.is_empty() {
         let error_msg = "Невозможно начать расчет - уже существует активный процесс кластеризации";
         clustering_attempt.set_string("v-bpa:lastError", error_msg, Lang::none());
-        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+        clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Failed");
         clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionError");
         update_activity_timestamps(clustering_attempt, "v-bpa:Failed")?;
         clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
@@ -123,7 +123,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
         }
 
         // Получаем актуальный статус на каждой итерации
-        let status = clustering_attempt.get_first_literal("v-bpa:clusterizationStatus").unwrap_or_default();
+        let status = clustering_attempt.get_first_literal("v-bpa:hasClusterizationStatus").unwrap_or_default();
 
         match status.as_str() {
             "" => {
@@ -146,12 +146,12 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
                         info!("Resuming clustering attempt {}", clustering_attempt.get_id());
                         clustering_attempt.set_uri("v-bpa:controlAction", "v-bpa:NoActionExecution");
 
-                        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:ComparingPairs");
+                        clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:ComparingPairs");
                         clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionInProgress");
                         clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
                     } else if control_action == "v-bpa:CancelExecution" {
                         info!("Cancelling paused clustering attempt {}", clustering_attempt.get_id());
-                        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Cancelled");
+                        clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Cancelled");
                         clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionTerminated");
                         update_activity_timestamps(clustering_attempt, "v-bpa:Cancelled")?;
                         clustering_attempt.set_uri("v-bpa:controlAction", "v-bpa:NoActionExecution");
@@ -177,7 +177,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
 
                 match compare_next_pair(module, clustering_attempt, comparison_state.as_mut().unwrap()) {
                     Ok(ComparisonResult::Completed) => {
-                        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:PairsCompared");
+                        clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:PairsCompared");
                         update_activity_timestamps(clustering_attempt, "v-bpa:PairsCompared")?;
                         clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
                     },
@@ -191,7 +191,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
                 info!("Building clusters for attempt: {}", clustering_attempt.get_id());
                 match build_clusters(module, clustering_attempt) {
                     Ok(_) => {
-                        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Completed");
+                        clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Completed");
                         clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionCompleted");
                         update_activity_timestamps(clustering_attempt, "v-bpa:Completed")?;
                         clustering_attempt.set_uri("v-bpa:controlAction", "v-bpa:NoActionExecution");
@@ -217,7 +217,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
             _ => {
                 error!("Unknown clustering status: {}", status);
                 clustering_attempt.set_string("v-bpa:lastError", "Invalid clustering status", Lang::none());
-                clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+                clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Failed");
                 clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionError");
                 clustering_attempt.set_uri("v-bpa:controlAction", "v-bpa:NoActionExecution");
 
@@ -277,7 +277,7 @@ fn initialize_clustering(module: &mut BusinessProcessAnalysisModule, clustering_
     clustering_attempt.set_string("v-bpa:currentPairIndex", "0,1", Lang::none());
 
     info!("Setting initial clustering status to ComparingPairs");
-    clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:ComparingPairs");
+    clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:ComparingPairs");
     clustering_attempt.remove("v-bpa:similarPairs");
     clustering_attempt.remove("v-bpa:controlAction");
 
@@ -407,7 +407,7 @@ fn build_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt
 
     if similar_pairs.is_empty() {
         info!("No similar pairs found, skipping cluster creation");
-        clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Completed");
+        clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Completed");
         clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
         return Ok(());
     }
@@ -447,7 +447,7 @@ fn build_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt
                 Err(e) => {
                     error!("Failed to create cluster {}: {}", cluster_index + 1, e);
                     clustering_attempt.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
-                    clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+                    clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Failed");
                     clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionError");
                     update_activity_timestamps(clustering_attempt, "v-bpa:Failed")?;
                     clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
@@ -538,7 +538,7 @@ fn handle_error(
 ) -> Result<(), Box<dyn std::error::Error>> {
     error!("Error in clustering process: {}", error);
     clustering_attempt.set_string("v-bpa:lastError", &error.to_string(), Lang::none());
-    clustering_attempt.set_uri("v-bpa:clusterizationStatus", "v-bpa:Failed");
+    clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Failed");
     clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionError");
     update_activity_timestamps(clustering_attempt, "v-bpa:Failed")?;
     clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
