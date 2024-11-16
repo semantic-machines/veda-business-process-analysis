@@ -173,24 +173,24 @@ v-bpa:hasProcess
 
 v-bpa:clusterReason
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Обоснование кластера"@ru ;
-  rdfs:label "Reason cluster"@en ;
+  rdfs:label "Причина формирования кластера"@ru ;
+  rdfs:label "Reason for cluster formation"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
 
 v-bpa:clusterSimilarities
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Общие характеристики"@ru ;
-  rdfs:label "Common characteristics"@en ;
+  rdfs:label "Общие черты процессов"@ru ;
+  rdfs:label "Common properties of processes"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .
 
 v-bpa:clusterDifferences
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Различия"@ru ;
-  rdfs:label "Differences"@en ;
+  rdfs:label "Различия процессов"@ru ;
+  rdfs:label "Differences of processes"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
   rdfs:range xsd:string ;
 .

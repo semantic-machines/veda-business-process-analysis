@@ -78,16 +78,18 @@ export default class ClusterList extends Component(HTMLElement) {
                       <i class="bi bi-chevron-down text-secondary"></i>
                     </span>
                   </td>
-                  <td>
+                  <td class="align-middle">
                     <p class="mb-0 fw-bold" property="rdfs:label"></p>
                     <p class="mb-0 text-secondary">
                       <${Literal} about="${clusterId}" property="v-bpa:proposedClusterDescription" max-chars="70"></${Literal}>
                     </p>
                   </td>
-                  <td>
+                  <td class="align-middle">
+                    <i class="bi bi-intersect fs-6 me-2 text-secondary"></i>
                     <${Literal} about="${clusterId}" property="v-bpa:clusterSimilarities" max-chars="70"></${Literal}>
                   </td>
-                  <td>
+                  <td class="align-middle">
+                    <i class="bi bi-exclude fs-6 me-2 text-secondary"></i>
                     <${Literal} about="${clusterId}" property="v-bpa:clusterDifferences" max-chars="70"></${Literal}>
                   </td>
                 </tr>

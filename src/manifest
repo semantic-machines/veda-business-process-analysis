@@ -1,11 +1,11 @@
 {
-  "name": "Veda business process analysis",
-  "short_name": "Veda BPA",
+  "name": "Optiflow business process analysis",
+  "short_name": "Optiflow BPA",
   "start_url": "/bpa/#",
   "display": "minimal-ui",
   "background_color": "#fff",
   "theme_color": "white",
-  "description": "Veda business process analysis",
+  "description": "Optiflow business process analysis",
   "serviceworker": {"src": "ServiceWorker.js" },
   "icons": [{
     "src": "images/sm-192.png",

@@ -166,3 +166,15 @@ v-bpa:ResetFilters
   rdfs:label "Сбросить"@ru ;
   rdfs:label "Reset"@en ;
 .
+
+v-bpa:SimilarProcesses
+  rdf:type rdfs:Resource ;
+  rdfs:label "Схожие процессы"@ru ;
+  rdfs:label "Similar processes"@en ;
+.
+
+v-bpa:ProposedProcess
+  rdf:type rdfs:Resource ;
+  rdfs:label "Предлагаемый процесс"@ru ;
+  rdfs:label "Proposed process"@en ;
+.
