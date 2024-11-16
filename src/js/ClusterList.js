@@ -13,7 +13,15 @@ export default class ClusterList extends Component(HTMLElement) {
     const {rows: clusters} = await Backend.stored_query(params);
     this.clusters = clusters;
   }
-  
+
+  async pre() {
+    const params = new Model;
+    params['rdf:type'] = 'v-s:QueryParams';
+    params['v-s:storedQuery'] = 'v-bpa:CompletedAndRunningClusterizationAttempts';
+    const result = await Backend.stored_query(params);
+    console.log(result);
+  }
+
   async post () {
     this.addEventListener('click', (e) => {
       const toggleBtn = e.target.closest('.toggle-processes');

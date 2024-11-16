@@ -110,3 +110,30 @@ v-bpa:CurrentClusterizationAttempts
 """ ;
 .
 
+v-bpa:CompletedAndRunningClusterizationAttempts
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Последняя и текущая попытки кластеризации"@ru ;
+  rdfs:label "Query: Last and current clusterization attempts"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "cols" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT
+      (
+        SELECT id
+        FROM veda_tt."v-bpa:ClusterizationAttempt"
+        WHERE v_bpa_clusterizationStatus_str = ['v-bpa:Completed']
+        ORDER BY v_bpa_endDate_date DESC
+        LIMIT 1
+      ) AS completed,
+      (
+        SELECT id
+        FROM veda_tt."v-bpa:ClusterizationAttempt"
+        WHERE v_bpa_clusterizationStatus_str != ['v-bpa:Completed'] AND v_bpa_clusterizationStatus_str != ['v-bpa:Failed']
+        ORDER BY v_bpa_startDate_date DESC
+        LIMIT 1
+      ) AS running;
+""" ;
+.
+
+
