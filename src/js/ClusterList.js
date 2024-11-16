@@ -18,8 +18,9 @@ export default class ClusterList extends Component(HTMLElement) {
     const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:CompletedAndRunningClusterizationAttempts';
-    const result = await Backend.stored_query(params);
-    console.log(result);
+    params['v-s:resultFormat'] = 'cols';
+    const {completed: [completed], running: [running]} = await Backend.stored_query(params);
+    console.log(completed, running);
   }
 
   async post () {
