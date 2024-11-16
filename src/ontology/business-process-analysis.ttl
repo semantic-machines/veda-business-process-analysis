@@ -372,7 +372,7 @@ v-bpa:Failed
   rdfs:label "Failed"@en ;
 .
 
-v-bpa:executionState
+v-bpa:hasExecutionState
   rdf:type owl:ObjectProperty ;
   rdfs:label "Состояние выполнения"@ru ;
   rdfs:label "Execution state"@en ;
