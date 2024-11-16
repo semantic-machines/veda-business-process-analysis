@@ -87,7 +87,7 @@ pub fn get_individuals_uris_by_type(module: &mut BusinessProcessAnalysisModule, 
 }
 
 pub fn get_individuals_uris_by_query(module: &mut BusinessProcessAnalysisModule, query: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    info!("Starting search for individuals of query: {}", query);
+    //info!("Starting search for individuals of query: {}", query);
 
     let mut res = QueryResult::default();
     res.result_code = ResultCode::NotReady;
@@ -115,6 +115,8 @@ pub fn get_individuals_uris_by_query(module: &mut BusinessProcessAnalysisModule,
             }
             warn!("Failed to search individuals, retry in 3 seconds... (attempt {})", retry_count + 1);
             thread::sleep(time::Duration::from_secs(3));
+        } else {
+            return Ok(res.result);
         }
         retry_count += 1;
     }

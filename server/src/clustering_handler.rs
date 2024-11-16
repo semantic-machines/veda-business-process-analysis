@@ -98,7 +98,8 @@ fn check_control_action(module: &mut BusinessProcessAnalysisModule, clustering_a
 /// - Ведется учет затраченного времени
 /// - Обновляется процент выполнения
 pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
-    if !get_individuals_uris_by_query(module, &format!("'v-bpa:hasExecutionState' == 'v-bpa:ExecutionInProgress' && '@' != '{}'", clustering_attempt.get_id()))?.is_empty() {
+    let ca = get_individuals_uris_by_query(module, &format!("'rdf:type' == 'v-bpa:ClusterizationAttempt' && 'v-bpa:hasExecutionState' == 'v-bpa:ExecutionInProgress' && '@' != '{}'", clustering_attempt.get_id()))?;
+    if !ca.is_empty() {
         let error_msg = "Невозможно начать расчет - уже существует активный процесс кластеризации";
         clustering_attempt.set_string("v-bpa:lastError", error_msg, Lang::none());
         clustering_attempt.set_uri("v-bpa:hasClusterizationStatus", "v-bpa:Failed");
