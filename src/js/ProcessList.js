@@ -105,17 +105,13 @@ export default class ProcessList extends Component(HTMLElement) {
   render() {
     return html`
       <div class="sheet">
-        <div class="d-flex justify-content-between align-items-center">
-          <div class="d-flex justify-content-start align-items-center">
-            <div class="me-3 fs-1">
-              <i class="bi bi-diagram-3"></i>
-            </div>
-            <div>
-              <h3 class="mb-1">
-                <span about="v-bpa:BusinessProcesses" property="rdfs:label"></span>
-              </h3>
-            </div>
-          </div>
+        <div class="d-flex align-items-center">
+          <i class="bi bi-diagram-3 ms-2 me-3 fs-1"></i>
+          <h3 class="mb-1" about="v-bpa:BusinessProcesses" property="rdfs:label"></h3>
+          <a href="#/ProcessQuickCreate" class="btn btn-success ms-auto me-3">
+            <i class="bi bi-plus me-1"></i>
+            <span about="v-bpa:AddProcess" property="rdfs:label"></span>
+          </a>
           <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
             <i class="bi bi-chevron-down me-1"></i>
             <span about="v-bpa:Filters" property="rdfs:label"></span>

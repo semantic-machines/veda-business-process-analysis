@@ -116,6 +116,19 @@ export default class Raw extends Component(HTMLElement) {
         `${toJSON(this.model)}`;
     }
   }
+  
+  added() {
+    this.model.on('modified', this.modifiedHandler);
+  }
+
+  modifiedHandler = () => {
+    console.log('model modified');
+    this.update();
+  }
+
+  removed() {
+    this.model.off('modified', this.modifiedHandler);
+  }
 }
 
 customElements.define(Raw.tag, Raw);

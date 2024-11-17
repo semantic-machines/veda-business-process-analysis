@@ -122,14 +122,14 @@ v-bpa:CompletedAndRunningClusterizationAttempts
       (
         SELECT id
         FROM veda_tt."v-bpa:ClusterizationAttempt" FINAL
-        WHERE v_bpa_clusterizationStatus_str = ['v-bpa:Completed']
+        WHERE v_bpa_hasExecutionState_str = ['v-bpa:ExecutionCompleted']
         ORDER BY v_bpa_endDate_date DESC
         LIMIT 1
       ) AS completed,
       (
         SELECT id
         FROM veda_tt."v-bpa:ClusterizationAttempt" FINAL
-        WHERE v_bpa_clusterizationStatus_str != ['v-bpa:Completed'] AND v_bpa_clusterizationStatus_str != ['v-bpa:Failed']
+        WHERE v_bpa_hasExecutionState_str = ['v-bpa:ExecutionInProgress'] 
         ORDER BY v_bpa_startDate_date DESC
         LIMIT 1
       ) AS running;

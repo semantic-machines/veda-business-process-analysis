@@ -1,7 +1,7 @@
 import {Component, html, Backend, Model, timeout} from 'veda-client';
 import Literal from './Literal.js';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator';
-
+import ClusterizationButton from './ClusterizationButton';
 
 export default class ClusterList extends Component(HTMLElement) {
   static tag = 'bpa-cluster-list';
@@ -19,8 +19,13 @@ export default class ClusterList extends Component(HTMLElement) {
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:CompletedAndRunningClusterizationAttempts';
     params['v-s:resultFormat'] = 'cols';
-    const {completed: [completed], running: [running]} = await Backend.stored_query(params);
-    console.log(completed, running);
+    try {
+      const {completed: [completed], running: [running]} = await Backend.stored_query(params);
+      this.completedClusterizationAttempt = completed;
+      this.runningClusterizationAttempt = running;
+    } catch (e) {
+      console.error('Error querying completed and running clusterization attempts', e);
+    }
   }
 
   async post () {
@@ -62,9 +67,10 @@ export default class ClusterList extends Component(HTMLElement) {
         }
       </style>
       <div class="sheet">
-        <div class="d-flex justify-content-start align-items-center">
+        <div class="d-flex align-items-center">
           <i class="bi bi-collection me-3 fs-1"></i>
           <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
+          <${ClusterizationButton} class="ms-auto"></${ClusterizationButton}>
         </div>
         <div class="table-responsive">
           <table class="table table-hover mb-0 table-borderless" id="clusters-table">

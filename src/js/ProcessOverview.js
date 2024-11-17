@@ -23,16 +23,6 @@ export default class ProcessOverview extends Component(HTMLElement) {
     this.update();
   }
 
-  async updateClusters() {
-    const clusterizationAttempt = new Model();
-    clusterizationAttempt['rdf:type'] = 'v-bpa:ClusterizationAttempt';
-    await clusterizationAttempt.save();
-  }
-
-  addProcess() {
-    location.hash = `#/ProcessQuickCreate`;
-  }
-
   render() {
     return html`
       <div class="mb-2 ms-3 d-flex justify-content-between">
@@ -50,10 +40,6 @@ export default class ProcessOverview extends Component(HTMLElement) {
             </button>
           </li>
         </ul>
-        ${this.showClusters 
-          ? html`<button class="btn text-dark" @click="updateClusters"><i class="bi bi-arrow-repeat"></i>&nbsp;<span about="v-bpa:UpdateClusters" property="rdfs:label"></span></button>`
-          : html`<button class="btn text-dark" @click="addProcess"><i class="bi bi-plus"></i>&nbsp;<span about="v-bpa:AddProcess" property="rdfs:label"></span></button>`
-        }
       </div>
       ${this.showClusters 
         ? html`<${ClusterList}></${ClusterList}>` 
