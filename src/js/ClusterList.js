@@ -1,32 +1,9 @@
 import {Component, html, Backend, Model, timeout} from 'veda-client';
 import Literal from './Literal.js';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator';
-import ClusterizationButton from './ClusterizationButton';
 
 export default class ClusterList extends Component(HTMLElement) {
   static tag = 'bpa-cluster-list';
-
-  async added() {
-    const params = new Model;
-    params['rdf:type'] = 'v-s:QueryParams';
-    params['v-s:storedQuery'] = 'v-bpa:AllProcessClusters';
-    const {rows: clusters} = await Backend.stored_query(params);
-    this.clusters = clusters;
-  }
-
-  async pre() {
-    const params = new Model;
-    params['rdf:type'] = 'v-s:QueryParams';
-    params['v-s:storedQuery'] = 'v-bpa:CompletedAndRunningClusterizationAttempts';
-    params['v-s:resultFormat'] = 'cols';
-    try {
-      const {completed: [completed], running: [running]} = await Backend.stored_query(params);
-      this.completedClusterizationAttempt = completed;
-      this.runningClusterizationAttempt = running;
-    } catch (e) {
-      console.error('Error querying completed and running clusterization attempts', e);
-    }
-  }
 
   async post () {
     this.addEventListener('click', (e) => {
@@ -70,7 +47,6 @@ export default class ClusterList extends Component(HTMLElement) {
         <div class="d-flex align-items-center">
           <i class="bi bi-collection me-3 fs-1"></i>
           <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
-          <${ClusterizationButton} class="ms-auto"></${ClusterizationButton}>
         </div>
         <div class="table-responsive">
           <table class="table table-hover mb-0 table-borderless" id="clusters-table">
@@ -83,10 +59,10 @@ export default class ClusterList extends Component(HTMLElement) {
               </tr>
             </thead>
             <tbody>
-              ${this.clusters?.map(([clusterId]) => html`
-                ${(isExpanded = localStorage.getItem(`ClusterList_expanded_${clusterId}`) === 'true', '')}
-                <tr about="${clusterId}" class="border-top cluster-row">
-                  <td class="text-center toggle-processes" style="cursor:pointer;" data-for="${clusterId}">
+              ${this.model?.['v-bpa:foundClusters']?.map((cluster) => html`
+                ${(isExpanded = localStorage.getItem(`ClusterList_expanded_${cluster.id}`) === 'true', '')}
+                <tr about="${cluster.id}" class="border-top cluster-row">
+                  <td class="text-center toggle-processes" style="cursor:pointer;" data-for="${cluster.id}">
                     <i class="bi bi-chevron-up text-secondary ${isExpanded ? '' : 'd-none'}"></i>
                     <span class="${isExpanded ? 'd-none' : ''}">
                       <span class="badge bg-success-subtle text-dark rounded-pill">{{this.model['v-bpa:hasProcess']?.length}}</span>
@@ -96,19 +72,19 @@ export default class ClusterList extends Component(HTMLElement) {
                   <td class="align-middle">
                     <p class="mb-0 fw-bold" property="rdfs:label"></p>
                     <p class="mb-0 text-secondary">
-                      <${Literal} about="${clusterId}" property="v-bpa:proposedClusterDescription" max-chars="70"></${Literal}>
+                      <${Literal} about="${cluster.id}" property="v-bpa:proposedClusterDescription" max-chars="70"></${Literal}>
                     </p>
                   </td>
                   <td class="align-middle">
                     <i class="bi bi-intersect fs-6 me-2 text-secondary"></i>
-                    <${Literal} about="${clusterId}" property="v-bpa:clusterSimilarities" max-chars="70"></${Literal}>
+                    <${Literal} about="${cluster.id}" property="v-bpa:clusterSimilarities" max-chars="70"></${Literal}>
                   </td>
                   <td class="align-middle">
                     <i class="bi bi-exclude fs-6 me-2 text-secondary"></i>
-                    <${Literal} about="${clusterId}" property="v-bpa:clusterDifferences" max-chars="70"></${Literal}>
+                    <${Literal} about="${cluster.id}" property="v-bpa:clusterDifferences" max-chars="70"></${Literal}>
                   </td>
                 </tr>
-                <tr about="${clusterId}" class="${isExpanded ? '' : 'd-none'}" data-id="${clusterId}" style="background-color: white!important;">
+                <tr about="${cluster.id}" class="${isExpanded ? '' : 'd-none'}" data-id="${cluster.id}" style="background-color: white!important;">
                   <td></td>
                   <td colspan="3" class="p-0">
                     <div class="table-responsive">

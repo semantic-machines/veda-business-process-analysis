@@ -1,6 +1,8 @@
-import {Component, html, Model, Backend} from 'veda-client';
+import {Component, html, Model, Backend, timeout} from 'veda-client';
 import ProcessList from './ProcessList.js';
 import ClusterList from './ClusterList.js';
+import ClusterizationButton from './ClusterizationButton.js';
+import Callback from './Callback.js';
 
 export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
@@ -8,15 +10,50 @@ export default class ProcessOverview extends Component(HTMLElement) {
   showClusters = localStorage.getItem('ProcessOverview_showClusters') === 'true';
   
   async added() {
-    const params = new Model;
-    params['rdf:type'] = 'v-s:QueryParams';
-    params['v-s:storedQuery'] = 'v-bpa:OverallCounts';
-    params['v-s:resultFormat'] = 'cols';
-    const {clusters: [clustersCount], processes: [processesCount]} = await Backend.stored_query(params);
-    this.clustersCount = clustersCount;
-    this.processesCount = processesCount;
+    const params1 = new Model;
+    params1['rdf:type'] = 'v-s:QueryParams';
+    params1['v-s:storedQuery'] = 'v-bpa:OverallCounts';
+    params1['v-s:resultFormat'] = 'cols';
+    try {
+      const {processes: [processesCount]} = await Backend.stored_query(params1);
+      this.processesCount = processesCount;
+    } catch (e) {
+      console.error('Error querying overall counts', e);
+    }
+
+    const params2 = new Model;
+    params2['rdf:type'] = 'v-s:QueryParams';
+    params2['v-s:storedQuery'] = 'v-bpa:CompletedAndRunningClusterizationAttempts';
+    params2['v-s:resultFormat'] = 'cols';
+    try {
+      const {completed: [completed], running: [running]} = await Backend.stored_query(params2);
+      this.completed = completed ? await new Model(completed).load() : null;
+      this.running = running ? await new Model(running).load() : null;
+      this.running?.on('modified', this.switchClusterList);
+      Callback.set('ProcessOverview_setRunning', this.setRunning);
+    } catch (e) {
+      console.error('Error querying running clusterization attempts', e);
+    }
   }
-  
+
+  setRunning = (running) => {
+    this.running = running;
+    this.running?.on('modified', this.switchClusterList);
+  }
+
+  switchClusterList = () => {
+    if (this.running.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionCompleted')) {
+      this.completed = this.running;
+      this.running.off('modified', this.switchClusterList);
+      this.update();
+    }
+  }
+
+  removed() {
+    this.running?.off('modified', this.switchClusterList);
+    Callback.remove('ProcessOverview_setRunning');
+  }
+
   toggleView() {
     this.showClusters = !this.showClusters;
     localStorage.setItem('ProcessOverview_showClusters', this.showClusters);
@@ -36,13 +73,22 @@ export default class ProcessOverview extends Component(HTMLElement) {
           <li class="nav-item">
             <button @click="toggleView" class="nav-link ${this.showClusters ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-2" about="v-bpa:ShowClusters" property="rdfs:label"></span>
-              <span class="align-top badge rounded-pill bg-secondary">${this.clustersCount}</span>
+              <span class="align-top badge rounded-pill bg-secondary">${this.completed?.['v-bpa:foundClusters']?.length ?? 0}</span>
             </button>
           </li>
         </ul>
+        ${this.showClusters 
+          ? html`<${ClusterizationButton} ${this.running ? `about="${this.running.id}"` : ''} callback="ProcessOverview_setRunning" class="ms-auto"></${ClusterizationButton}>` 
+          : html`
+            <a href="#/ProcessQuickCreate" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
+              <i class="bi bi-plus me-1"></i>
+              <span about="v-bpa:AddProcess" property="rdfs:label"></span>
+            </a>
+          `
+        }
       </div>
       ${this.showClusters 
-        ? html`<${ClusterList}></${ClusterList}>` 
+        ? html`<${ClusterList} ${this.completed ? `about="${this.completed.id}"` : ''}></${ClusterList}>`
         : html`<${ProcessList}></${ProcessList}>`
       }
     `;

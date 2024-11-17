@@ -108,11 +108,7 @@ export default class ProcessList extends Component(HTMLElement) {
         <div class="d-flex align-items-center">
           <i class="bi bi-diagram-3 ms-2 me-3 fs-1"></i>
           <h3 class="mb-1" about="v-bpa:BusinessProcesses" property="rdfs:label"></h3>
-          <a href="#/ProcessQuickCreate" class="btn btn-success ms-auto me-3">
-            <i class="bi bi-plus me-1"></i>
-            <span about="v-bpa:AddProcess" property="rdfs:label"></span>
-          </a>
-          <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
+          <button type="button" class="btn btn-link text-dark text-decoration-none ms-auto" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
             <i class="bi bi-chevron-down me-1"></i>
             <span about="v-bpa:Filters" property="rdfs:label"></span>
             <span class="badge rounded-pill bg-danger ms-1"></span>

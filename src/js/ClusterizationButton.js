@@ -1,40 +1,32 @@
-import {Component, html, Backend, Model} from 'veda-client';
+import {Component, html, Model} from 'veda-client';
+import Literal from './Literal';
+import Callback from './Callback.js';
 
 export default class ClusterizationButton extends Component(HTMLElement) {
   static tag = 'bpa-clusterization-button';
 
-  async added() {
-    const params = new Model;
-    params['rdf:type'] = 'v-s:QueryParams';
-    params['v-s:storedQuery'] = 'v-bpa:CompletedAndRunningClusterizationAttempts';
-    params['v-s:resultFormat'] = 'cols';
-    try {
-      const {running: [attempt]} = await Backend.stored_query(params);
-      if (attempt) this.attempt = new Model(attempt);
-    } catch (e) {
-      console.error('Error querying running clusterization attempts', e);
-    }
-  }
+  callback = Callback.get(this.getAttribute('callback'));
 
   async updateClusters() {
-    const attempt = new Model();
-    attempt['rdf:type'] = ['v-bpa:ClusterizationAttempt'];
-    attempt['v-bpa:controlAction'] = ['v-bpa:StartExecution'];
+    const model = new Model();
+    model['rdf:type'] = ['v-bpa:ClusterizationAttempt'];
+    model['v-bpa:controlAction'] = ['v-bpa:StartExecution'];
     try {
-      await attempt.save();
+      await model.save();
+      this.callback?.(model);
     } catch (e) {
       console.error('Error saving clusterization attempt', e);
       alert('Ошибка при запуске кластеризации');
     }
-    this.attempt = attempt;
+    this.model = model;
     this.update();
   }
 
   render() {
     return html`
-      <button class="btn btn-light" @click="updateClusters" ${this.attempt ? 'disabled' : ''}>
-        ${this.attempt 
-          ? `<${Attempt} about=${this.attempt.id}></${Attempt}>`
+      <button class="btn btn-link text-dark text-decoration-none" @click="updateClusters" ${this.model ? 'disabled' : ''}>
+        ${this.model 
+          ? `<${Attempt} about=${this.model.id}></${Attempt}>`
           : `<i class="bi bi-arrow-repeat me-2"></i><span about="v-bpa:UpdateClusters" property="rdfs:label"></span>`
         }
       </button>
@@ -59,19 +51,32 @@ class Attempt extends Component(HTMLElement) {
 
   render() {
     const state = this.model?.['v-bpa:hasExecutionState']?.[0].id;
-    const progress = this.model?.['v-bpa:clusterizationProgress']?.[0];
+    const progress = this.model?.['v-bpa:clusterizationProgress']?.[0] ?? 0;
+    const secondsLeft = this.model?.['v-bpa:estimatedTime']?.[0];
+
+    let timeString = '';
+    if (secondsLeft) {
+      timeString = ', осталось<i class="bi bi-clock-history mx-1"></i>';
+      const minutes = Math.floor(secondsLeft / 60);
+      const seconds = secondsLeft % 60;
+      timeString += `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
 
     return html`
       ${state === 'v-bpa:ExecutionCompleted' 
-        ? '<i class="bi bi-check-circle-fill text-success me-2"></i>'
-        : `<div class="spinner-grow spinner-grow-sm me-2" role="status">
+        ? `<i class="bi bi-check-circle-fill text-success me-2"></i>
+           <${Literal} about="${state}" property="rdfs:label" class="me-1"></${Literal}>`
+        : `
+          <div class="spinner-grow spinner-grow-sm me-2" role="status">
             <span class="visually-hidden">Loading...</span>
-          </div>`
+          </div>
+          ${state ? `<${Literal} about="${state}" property="rdfs:label"></${Literal}>:` : ''}
+          <span class="ms-1">${progress}%</span>${timeString}
+          `
       }
-      ${state ? `<span about="${state}" property="rdfs:label" class="me-1"></span>` : ''}
-      ${progress ? `${progress}%` : ''}
-    `
+    `;
   }
 }
 
 customElements.define(Attempt.tag, Attempt);
+

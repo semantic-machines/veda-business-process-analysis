@@ -28,7 +28,7 @@ export default class Literal extends Component(HTMLElement) {
     this.update();
   }
 
-  post () {
+  added () {
     this.model.on(this.property, this.up);
   }
 
