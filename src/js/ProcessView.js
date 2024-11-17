@@ -124,9 +124,6 @@ export default class ProcessView extends Component(HTMLElement) {
           </div>
         </div>
       </div>
-      <div class="sheet">
-        <h4 about="v-bpa:ProcessDocument" property="rdfs:label"></h4>
-      </div>
       <div class="d-flex justify-content-start gap-2 mt-3">
         <button @click="edit" class="btn btn-primary">
           <span about="v-bpa:Edit" property="rdfs:label"></span>
