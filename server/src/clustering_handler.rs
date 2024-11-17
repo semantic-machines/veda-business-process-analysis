@@ -133,6 +133,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
                     Ok(_) => {
                         update_activity_timestamps(clustering_attempt, "")?;
                         clustering_attempt.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionInProgress");
+                        clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
                         comparison_state = Some(ComparisonState {
                             x: 0,
                             y: 1,
