@@ -21,6 +21,12 @@ v-bpa:BusinessProcessAnalysisApplication
   rdfs:label "Business process analysis"@en ;
 .
 
+v-bpa:Logout
+  rdf:type rdfs:Resource ;
+  rdfs:label "Выйти"@ru ;
+  rdfs:label "Logout"@en ;
+.
+
 v-bpa:BusinessProcesses
   rdf:type rdfs:Resource ;
   rdfs:label "Бизнес-процессы"@ru ;

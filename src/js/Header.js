@@ -24,11 +24,19 @@ export default class Header extends Component(HTMLElement) {
                   <!--li class="nav-item">
                     <button class="btn btn-outline-secondary me-3" is="${Translate}" data-lang="ru, en"></button>
                   </li-->
-                  <li class="nav-item">
-                    <span class="nav-link fs-5" about="${Backend.user}" property="rdfs:label"></span>
-                  </li>
-                  <li class="nav-item">
-                    <button class="btn logout pt-2 bi bi-box-arrow-right fs-5"></button>
+                  <li class="nav-item dropdown">
+                    <a class="nav-link fs-5 dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                      <i class="bi bi-person-circle me-2"></i>
+                      <span about="${Backend.user}" property="rdfs:label"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      <li>
+                        <button class="btn dropdown-item logout">
+                          <i class="bi bi-box-arrow-right me-2"></i>
+                          <span about="v-bpa:Logout" property="rdfs:label"></span>
+                        </button>
+                      </li>
+                    </ul>                    
                   </li>
                 </ul>
               </div>

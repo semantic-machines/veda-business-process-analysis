@@ -149,13 +149,14 @@ export default class Auth extends Component(HTMLElement) {
     });
 
     const logoutHandler = async (e) => {
-      if (e.target.matches('.logout')) {
-        document.removeEventListener('click', logoutHandler);
-        await Backend.logout().catch((error) => console.log('Logout failed', error));
-        this.handleAuthError();
-      }
+      const logoutBtn = e.target.closest('.logout');
+      if (!logoutBtn) return;
+      
+      document.removeEventListener('click', logoutHandler);
+      await Backend.logout().catch((error) => console.log('Logout failed', error));
+      this.handleAuthError();
     };
-    document.addEventListener('click', logoutHandler);
+    document.addEventListener('click', logoutHandler, true);
   }
 
   handleLoginError (error) {
