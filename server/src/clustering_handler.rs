@@ -1,5 +1,5 @@
 use crate::clustering_common;
-use crate::common::{extract_process_json, get_individuals_uris_by_query, get_individuals_uris_by_type};
+use crate::common::{extract_process_json, format_time, get_individuals_uris_by_query, get_individuals_uris_by_type};
 use crate::prompt_manager::get_system_prompt;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use serde_json;
@@ -23,6 +23,7 @@ enum ComparisonResult {
 struct ComparisonState {
     x: usize,
     y: usize,
+    last_metrics_calc: i64, // Timestamp последнего вычисления метрик
 }
 
 /// Обновляет временные метки для отслеживания активности процесса кластеризации
@@ -98,7 +99,10 @@ fn check_control_action(module: &mut BusinessProcessAnalysisModule, clustering_a
 /// - Ведется учет затраченного времени
 /// - Обновляется процент выполнения
 pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clustering_attempt: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
-    let ca = get_individuals_uris_by_query(module, &format!("'rdf:type' == 'v-bpa:ClusterizationAttempt' && 'v-bpa:hasExecutionState' == 'v-bpa:ExecutionInProgress' && '@' != '{}'", clustering_attempt.get_id()))?;
+    let ca = get_individuals_uris_by_query(
+        module,
+        &format!("'rdf:type' == 'v-bpa:ClusterizationAttempt' && 'v-bpa:hasExecutionState' == 'v-bpa:ExecutionInProgress' && '@' != '{}'", clustering_attempt.get_id()),
+    )?;
     if !ca.is_empty() {
         let error_msg = "Невозможно начать расчет - уже существует активный процесс кластеризации";
         clustering_attempt.set_string("v-bpa:lastError", error_msg, Lang::none());
@@ -137,6 +141,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
                         comparison_state = Some(ComparisonState {
                             x: 0,
                             y: 1,
+                            last_metrics_calc: chrono::Utc::now().timestamp(),
                         });
                     },
                     Err(e) => handle_error(module, clustering_attempt, e)?,
@@ -174,6 +179,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
                     comparison_state = Some(ComparisonState {
                         x: indices[0],
                         y: indices[1],
+                        last_metrics_calc: chrono::Utc::now().timestamp(),
                     });
                 }
 
@@ -235,7 +241,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
 }
 
 /// Вычисляет прогресс кластеризации и оставшееся время
-fn calculate_clustering_metrics(state: &ComparisonState, total_processes: usize) -> (i64, i64) {
+fn calculate_clustering_metrics(clustering_attempt: &mut Individual, state: &ComparisonState, total_processes: usize) -> Result<(i64, i64), Box<dyn std::error::Error>> {
     // Вычисляем общее количество пар для сравнения
     let total_pairs = (total_processes * (total_processes - 1)) / 2;
 
@@ -249,12 +255,32 @@ fn calculate_clustering_metrics(state: &ComparisonState, total_processes: usize)
     // Вычисляем прогресс в процентах
     let progress = ((completed_pairs as f64 / total_pairs as f64) * 100.0) as i64;
 
-    // Оцениваем оставшееся время (считаем, что одно сравнение занимает примерно 5 секунд)
-    let seconds_per_comparison = 5;
-    let remaining_pairs = total_pairs - completed_pairs;
-    let estimated_time = (remaining_pairs * seconds_per_comparison) as i64;
+    // Получаем время начала
+    let start_time = clustering_attempt.get_first_datetime("v-bpa:startDate").ok_or("Start date not found")?;
 
-    (progress, estimated_time)
+    let current_time = chrono::Utc::now().timestamp();
+    let elapsed_time = current_time - start_time;
+
+    // Вычисляем среднее время на одно сравнение
+    let avg_time_per_comparison = if completed_pairs > 0 {
+        elapsed_time as f64 / completed_pairs as f64
+    } else {
+        5.0 // Начальная оценка - 5 секунд на сравнение
+    };
+
+    let remaining_pairs = total_pairs - completed_pairs;
+    let estimated_time = (remaining_pairs as f64 * avg_time_per_comparison) as i64;
+
+    info!(
+        "Clustering metrics: total_pairs={}, completed={}, avg_time={}, elapsed={}, remaining={}",
+        total_pairs,
+        completed_pairs,
+        format_time(avg_time_per_comparison as i64),
+        format_time(elapsed_time),
+        format_time(estimated_time)
+    );
+
+    Ok((progress, estimated_time))
 }
 
 /// Инициализирует процесс кластеризации
@@ -310,26 +336,32 @@ fn compare_next_pair(
         return Ok(ComparisonResult::Completed);
     }
 
+    // Замеряем время начала сравнения
+    let comparison_start = chrono::Utc::now().timestamp();
+
     // Сравниваем текущую пару
     let is_similar = compare_processes(module, &processes[state.x], &processes[state.y])?;
+
+    // Считаем время сравнения
+    let comparison_time = chrono::Utc::now().timestamp() - comparison_start;
+
     info!(
-        "Comparison result for processes {} and {}: {}",
+        "Comparison result for processes {} and {}: {} (took {})",
         processes[state.x],
         processes[state.y],
         if is_similar {
             "similar"
         } else {
             "different"
-        }
+        },
+        format_time(comparison_time)
     );
 
     if is_similar {
-        // Сохраняем похожую пару
         let pair = format!("{},{}", processes[state.x], processes[state.y]);
         clustering_attempt.add_string("v-bpa:similarPairs", &pair, Lang::none());
     }
 
-    // Вычисляем и сохраняем следующую пару
     let old_x = state.x;
     if state.y + 1 < processes.len() {
         state.y += 1;
@@ -338,23 +370,26 @@ fn compare_next_pair(
         state.y = state.x + 1;
     }
 
-    // Сохраняем состояние в базу только если нашли похожие процессы или изменился x
-    if is_similar || state.x != old_x {
-        // Вычисляем метрики кластеризации
-        let (progress, estimated_time) = calculate_clustering_metrics(state, processes.len());
+    // Вычисляем метрики если прошло больше 3 секунд или другие условия
+    let current_time = chrono::Utc::now().timestamp();
+    if (current_time - state.last_metrics_calc) >= 3 || is_similar || state.x != old_x {
+        let (progress, estimated_time) = calculate_clustering_metrics(clustering_attempt, state, processes.len())?;
 
-        // Обновляем все поля
-        clustering_attempt.set_string("v-bpa:currentPairIndex", &format!("{},{}", state.x, state.y), Lang::none());
-        clustering_attempt.set_integer("v-bpa:clusterizationProgress", progress);
-        clustering_attempt.set_integer("v-bpa:estimatedTime", estimated_time);
+        state.last_metrics_calc = current_time; // Обновляем время последнего вычисления
 
-        info!("Updating clustering metrics - Progress: {:.1}%, Estimated time remaining: {} seconds", progress, estimated_time);
+        // Сохраняем метрики в базу только если нашли похожие процессы или изменился x
+        if is_similar || state.x != old_x {
+            clustering_attempt.set_string("v-bpa:currentPairIndex", &format!("{},{}", state.x, state.y), Lang::none());
+            clustering_attempt.set_integer("v-bpa:clusterizationProgress", progress);
+            clustering_attempt.set_integer("v-bpa:estimatedTime", estimated_time);
 
-        clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
+            clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
+        }
     }
 
     Ok(ComparisonResult::Continue)
 }
+
 /// Сравнивает два процесса с помощью AI
 fn compare_processes(module: &mut BusinessProcessAnalysisModule, process1_id: &str, process2_id: &str) -> Result<bool, Box<dyn std::error::Error>> {
     let mut process1 = Individual::default();
