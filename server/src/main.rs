@@ -24,14 +24,11 @@ mod clustering_common;
 mod generic_processing_handler;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Config {
-    openai: OpenAIConfig,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct OpenAIConfig {
+struct ApiConfig {
     api_key: String,
     model: String,
+    #[serde(default)]
+    base_url: String,
 }
 
 fn main() -> std::io::Result<()> {
@@ -40,11 +37,25 @@ fn main() -> std::io::Result<()> {
     // Читаем настройки из файла business-process-analysis.toml
     let settings = config::Config::builder().add_source(config::File::with_name("./config/business-process-analysis")).build().expect("Failed to read configuration");
 
-    // Парсим настройки в структуру Config
-    let config: Config = settings.try_deserialize().expect("Failed to deserialize configuration");
+    // Получаем название провайдера
+    let provider = settings.get_string("provider").expect("Failed to get provider from config");
 
-    // Инициализируем клиент OpenAI с использованием API ключа из настроек
-    let client = Client::new(config.openai.api_key.clone());
+    // Читаем конфигурацию для выбранного провайдера
+    let api_config: ApiConfig = settings.get(&provider).expect("Failed to get provider config");
+
+    // Создаем клиент с учетом возможного base_url
+    let client = Client {
+        http_client: reqwest::Client::new(),
+        base_url: if !api_config.base_url.is_empty() {
+            api_config.base_url
+        } else {
+            "https://api.openai.com/v1".to_string()
+        },
+        api_key: api_config.api_key,
+        headers: None,
+        organization: None,
+        project: None,
+    };
 
     // Инициализируем бэкенд для доступа к хранилищу онтологии
     let mut backend = Backend::create(StorageMode::ReadOnly, false);
@@ -65,7 +76,7 @@ fn main() -> std::io::Result<()> {
         client,
         backend,
         xr,
-        model: config.openai.model.clone(),
+        model: api_config.model,
         ticket: systicket,
     };
 
