@@ -1,9 +1,11 @@
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::types::{AIResponseValues, PropertyMapping};
+use humantime::format_duration;
 use openai_dive::v1::resources::chat::{
     ChatCompletionParameters, ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder,
 };
 use serde_json::Value;
+use std::time::Duration;
 use std::{io, thread, time};
 use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
@@ -398,4 +400,9 @@ pub fn set_to_individual_from_ai_response(
 
     info!("Successfully set AI analysis results for individual {}", individual.get_id());
     Ok(())
+}
+
+pub fn format_time(seconds: i64) -> String {
+    let duration = Duration::from_secs(seconds.unsigned_abs() as u64);
+    format_duration(duration).to_string()
 }
