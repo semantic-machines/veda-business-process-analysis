@@ -1,4 +1,4 @@
-const VERSION = 1732013034846;
+const VERSION = 1732022307957;
 const FILES = `files-${VERSION}`;
 const API = `api-${VERSION}`;
 

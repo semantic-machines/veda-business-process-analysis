@@ -1,6 +1,4 @@
 import {Component, html, Backend, Model} from 'veda-client';
-import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
-import Literal from './Literal.js';
 
 export default class DocumentList extends Component(HTMLElement) {
   static tag = 'bpa-document-list';

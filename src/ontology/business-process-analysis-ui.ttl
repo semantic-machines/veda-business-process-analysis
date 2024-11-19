@@ -200,3 +200,9 @@ v-bpa:AddProcessDocument
   rdfs:comment "Добавить документ"@ru ;
   rdfs:comment "Add document"@en ;
 .
+
+v-bpa:ChooseDocuments
+  rdf:type rdfs:Resource ;
+  rdfs:label "Выберите документы"@ru ;
+  rdfs:label "Choose documents"@en ;
+.
