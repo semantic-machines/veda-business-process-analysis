@@ -1,5 +1,6 @@
 import {Model, Backend, Component, html} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator';
+import ProcessDocumentInfo from './ProcessDocumentInfo';
 
 export default class ProcessView extends Component(HTMLElement) {
   static tag = 'bpa-process-view';
@@ -18,7 +19,7 @@ export default class ProcessView extends Component(HTMLElement) {
   async added() {
     const params = new Model; 
     params['rdf:type'] = 'v-s:QueryParams';
-    params['v-s:storedQuery'] = 'v-bpa:ProcessInClusters';
+    params['v-s:storedQuery'] = 'v-bpa:ProcessInLastAttemptClusters';
     params['v-bpa:hasProcess'] = this.model.id;
     const {id: [cluster]} = await Backend.stored_query(params);
     this.cluster = cluster;
@@ -41,6 +42,7 @@ export default class ProcessView extends Component(HTMLElement) {
               <span class="me-2 align-middle" rel="v-bpa:hasProcessJustification">
                 <${ProcessJustificationIndicator} about="{{this.model.id}}" property="rdfs:comment"></${ProcessJustificationIndicator}>
               </span>
+              <${ProcessDocumentInfo} about="{{this.model.id}}"></${ProcessDocumentInfo}>
             </div>
             <p class="mb-0 text-muted" about="v-bpa:processDescription" property="rdfs:label"></p>
             <p property="v-bpa:processDescription"></p>

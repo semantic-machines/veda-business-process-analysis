@@ -53,7 +53,12 @@ v-bpa:OverallCounts
         SELECT 
           count(id) as count
         FROM veda_tt."v-bpa:ProcessCluster" FINAL
-      ) as clusters;
+      ) as clusters,
+      (
+        SELECT 
+          count(id) as count
+        FROM veda_tt."v-bpa:ProcessDocument" FINAL
+      ) as documents;
   """ ;
 .
 
@@ -96,6 +101,33 @@ v-bpa:ProcessInClusters
 """ ;
 .
 
+v-bpa:ProcessInLastAttemptClusters
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Бизнес-процессы в кластерах последней попытки кластеризации"@ru ;
+  rdfs:label "Query: Business processes in clusters of the last clusterization attempt"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "cols" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT 
+      c.id as id
+    FROM veda_tt."v-bpa:ProcessCluster" c FINAL
+    ARRAY JOIN v_bpa_hasProcess_str as process_id
+    WHERE 
+      process_id = '{v-bpa:hasProcess}'
+      AND c.id IN (
+        SELECT arrayJoin(clusters) as id
+        FROM (
+          SELECT v_bpa_foundClusters_str as clusters
+          FROM veda_tt."v-bpa:ClusterizationAttempt" FINAL
+          WHERE v_bpa_hasExecutionState_str = ['v-bpa:ExecutionCompleted']
+          ORDER BY v_bpa_endDate_date DESC
+          LIMIT 1
+        )
+      )
+  """ ;
+.
+
 v-bpa:CurrentClusterizationAttempts
   rdf:type v-s:StoredQuery ;
   rdfs:label "Запрос: Текущие попытки кластеризации"@ru ;
@@ -136,4 +168,44 @@ v-bpa:CompletedAndRunningClusterizationAttempts
 """ ;
 .
 
+v-bpa:AllProcessDocuments
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Все документы бизнес-процессов"@ru ;
+  rdfs:label "Query: All business process documents"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "rows" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT 
+      id,
+      arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_documentName_str)) as "v-bpa:documentName",
+      arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_documentContent_str)) as "v-bpa:documentContent",
+      v_s_created_date[1] as "v-s:created"
+    FROM veda_tt."v-bpa:ProcessDocument" FINAL
+    ORDER BY "v-bpa:documentName" ASC
+  """ ;
+.
 
+v-bpa:DocumentInProcess
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Документы в бизнес-процессах"@ru ;
+  rdfs:label "Query: Documents in business processes"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "cols" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT 
+      p.id as id,
+      arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), p.rdfs_label_str)) as "rdfs:label",
+      arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), p.v_bpa_processDescription_str)) as "v-bpa:processDescription",
+      p.v_bpa_hasProcessJustification_str[1] as "v-bpa:hasProcessJustification",
+      arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), p.v_bpa_responsibleDepartment_str)) as "v-bpa:responsibleDepartment",
+      arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), p.v_bpa_processParticipant_str)) as "v-bpa:processParticipant",
+      p.v_bpa_processFrequency_int[1] * p.v_bpa_laborCosts_dec[1] as "v-bpa:totalTimeEffort"
+    FROM veda_tt."v-bpa:BusinessProcess" p FINAL
+    ARRAY JOIN v_bpa_hasProcessDocument_str as document_id
+    LEFT JOIN veda_tt."v-bpa:ProcessDocument" d FINAL
+    ON document_id = d.id
+    WHERE document_id = '{v-bpa:hasProcessDocument}'
+""" ;
+.

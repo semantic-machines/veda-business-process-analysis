@@ -9,6 +9,7 @@ export default class ProcessList extends Component(HTMLElement) {
     const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
+    params['v-s:resultFormat'] = 'rows';
     const {rows: processes} = await Backend.stored_query(params);
     this.processes = processes;
     this.filtersData = null;

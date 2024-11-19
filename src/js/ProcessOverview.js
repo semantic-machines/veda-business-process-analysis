@@ -1,5 +1,6 @@
 import {Component, html, Model, Backend, timeout} from 'veda-client';
 import ProcessList from './ProcessList.js';
+import DocumentList from './DocumentList.js';
 import ClusterList from './ClusterList.js';
 import ClusterizationButton from './ClusterizationButton.js';
 import Callback from './Callback.js';
@@ -7,7 +8,7 @@ import Callback from './Callback.js';
 export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
 
-  showClusters = localStorage.getItem('ProcessOverview_showClusters') === 'true';
+  activeTab = localStorage.getItem('ProcessOverview_activeTab') || 'processes';
   
   async added() {
     const params1 = new Model;
@@ -15,8 +16,9 @@ export default class ProcessOverview extends Component(HTMLElement) {
     params1['v-s:storedQuery'] = 'v-bpa:OverallCounts';
     params1['v-s:resultFormat'] = 'cols';
     try {
-      const {processes: [processesCount]} = await Backend.stored_query(params1);
+      const {processes: [processesCount], documents: [documentsCount]} = await Backend.stored_query(params1);
       this.processesCount = processesCount;
+      this.documentsCount = documentsCount;
     } catch (e) {
       console.error('Error querying overall counts', e);
     }
@@ -54,9 +56,9 @@ export default class ProcessOverview extends Component(HTMLElement) {
     Callback.remove('ProcessOverview_setRunning');
   }
 
-  toggleView() {
-    this.showClusters = !this.showClusters;
-    localStorage.setItem('ProcessOverview_showClusters', this.showClusters);
+  toggleView(e) {
+    this.activeTab = e.target.closest('button').id;
+    localStorage.setItem('ProcessOverview_activeTab', this.activeTab);
     this.update();
   }
 
@@ -65,31 +67,44 @@ export default class ProcessOverview extends Component(HTMLElement) {
       <div class="mb-2 ms-3 d-flex justify-content-between">
         <ul class="nav nav-underline">
           <li class="nav-item">
-            <button @click="toggleView" class="nav-link ${!this.showClusters ? 'active disabled' : 'text-secondary-emphasis'}">
+            <button id="processes" @click="toggleView" class="nav-link ${this.activeTab === 'processes' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-2" about="v-bpa:ShowProcesses" property="rdfs:label"></span>
               <span class="align-top badge rounded-pill bg-secondary">${this.processesCount}</span>
             </button>
           </li>
           <li class="nav-item">
-            <button @click="toggleView" class="nav-link ${this.showClusters ? 'active disabled' : 'text-secondary-emphasis'}">
+            <button id="documents" @click="toggleView" class="nav-link ${this.activeTab === 'documents' ? 'active disabled' : 'text-secondary-emphasis'}">
+              <span class="me-2" about="v-bpa:ProcessDocuments" property="rdfs:label"></span>
+              <span class="align-top badge rounded-pill bg-secondary">${this.documentsCount}</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button id="clusters" @click="toggleView" class="nav-link ${this.activeTab === 'clusters' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-2" about="v-bpa:ShowClusters" property="rdfs:label"></span>
               <span class="align-top badge rounded-pill bg-secondary">${this.completed?.['v-bpa:foundClusters']?.length ?? 0}</span>
             </button>
           </li>
         </ul>
-        ${this.showClusters 
-          ? html`<${ClusterizationButton} ${this.running ? `about="${this.running.id}"` : ''} callback="ProcessOverview_setRunning" class="ms-auto"></${ClusterizationButton}>` 
-          : html`
+        ${this.activeTab === 'clusters'
+          ? html`<${ClusterizationButton} ${this.running ? `about="${this.running.id}"` : ''} callback="${Callback.getName(this.setRunning)}" class="ms-auto"></${ClusterizationButton}>`
+          : this.activeTab === 'processes'
+          ? html`
             <a href="#/ProcessQuickCreate" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
               <i class="bi bi-plus me-1"></i>
               <span about="v-bpa:AddProcess" property="rdfs:label"></span>
-            </a>
-          `
+            </a>`
+          : html`
+            <a href="#/ProcessDocumentCreate" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
+              <i class="bi bi-plus me-1"></i>
+              <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
+            </a>`
         }
       </div>
-      ${this.showClusters 
+      ${this.activeTab === 'clusters'
         ? html`<${ClusterList} ${this.completed ? `about="${this.completed.id}"` : ''}></${ClusterList}>`
-        : html`<${ProcessList}></${ProcessList}>`
+        : this.activeTab === 'processes' 
+        ? html`<${ProcessList}></${ProcessList}>`
+        : html`<${DocumentList}></${DocumentList}>`
       }
     `;
   }

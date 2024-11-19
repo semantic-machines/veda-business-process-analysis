@@ -184,3 +184,19 @@ v-bpa:ProposedProcess
   rdfs:label "Предлагаемый процесс"@ru ;
   rdfs:label "Proposed process"@en ;
 .
+
+v-bpa:ProcessDocuments
+  rdf:type rdfs:Resource ;
+  rdfs:label "Документы"@ru ;
+  rdfs:label "Documents"@en ;
+  rdfs:comment "Документы процесса"@ru ;
+  rdfs:comment "Process documents"@en ;
+.
+
+v-bpa:AddProcessDocument
+  rdf:type rdfs:Resource ;
+  rdfs:label "Добавить"@ru ;
+  rdfs:label "Add"@en ;
+  rdfs:comment "Добавить документ"@ru ;
+  rdfs:comment "Add document"@en ;
+.

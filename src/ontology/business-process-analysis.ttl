@@ -82,6 +82,8 @@ v-bpa:ProcessDocument
   rdfs:subClassOf v-s:UserThing ;
   rdfs:label "Документ процесса"@ru ;
   rdfs:label "Process document"@en ;
+  rdfs:comment "Документ"@ru ;
+  rdfs:comment "Document"@en ;
 .
 
 v-bpa:documentName
