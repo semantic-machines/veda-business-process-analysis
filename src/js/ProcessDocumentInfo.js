@@ -14,7 +14,7 @@ export default class ProcessDocumentInfo extends Component(HTMLElement) {
             <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>:&nbsp;<${Expression} about="${this.model.id}" expression="this['v-bpa:hasProcessDocument']?.length"></${Expression}>
           </a>`
         : html`
-          <a href="#process-document-add-modal" class="text-secondary" data-bs-toggle="modal" data-bs-target="#process-document-modal">
+          <a href="#process-document-add-modal" class="text-secondary" data-bs-toggle="modal" data-bs-target="#process-document-add-modal">
             <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
           </a>`
       }

@@ -1,10 +1,17 @@
-import {Component, html} from 'veda-client';
+import {Component, html, Model} from 'veda-client';
 import InputText from './controls/InputText.js';
 import Textarea from './controls/Textarea.js';
 import InputAudio from './controls/InputAudio.js';
 
 export default class DocumentEdit extends Component(HTMLElement) {
   static tag = 'bpa-document-edit';
+
+  added() {
+    if (!this.model) {
+      this.model = new Model;
+      this.model['rdf:type'] = 'v-bpa:ProcessDocument';
+    }
+  }
 
   async save() {
     await this.model.save();

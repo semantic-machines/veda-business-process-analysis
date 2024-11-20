@@ -105,7 +105,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
             </div>
             `
           : html`
-            <a href="#/ProcessDocumentCreate" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
+            <a href="#/DocumentEdit" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
               <i class="bi bi-plus me-1"></i>
               <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
             </a>`
