@@ -10,34 +10,32 @@ export default class ProcessDocumentInfo extends Component(HTMLElement) {
     return html`
       ${documentsCount
         ? html`
-            <a href="#process-document-modal" data-bs-toggle="modal" data-bs-target="#process-document-modal" class="text-secondary" style="cursor:pointer">
-              <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>:&nbsp;<${Expression} about="${this.model.id}" expression="this['v-bpa:hasProcessDocument']?.length"></${Expression}>
-            </a>
-            <div class="modal fade" id="process-document-modal">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-body">
-                    <${ProcessDocumentList} about="${this.model.id}"></${ProcessDocumentList}>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="modal fade" id="process-document-add-modal">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-body">
-                    <${ProcessDocumentAdd} about="${this.model.id}"></${ProcessDocumentAdd}>
-                  </div>
-                </div>
-              </div>
-            </div>            
-          `
+          <a href="#process-document-modal" data-bs-toggle="modal" data-bs-target="#process-document-modal" class="text-secondary" style="cursor:pointer">
+            <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>:&nbsp;<${Expression} about="${this.model.id}" expression="this['v-bpa:hasProcessDocument']?.length"></${Expression}>
+          </a>`
         : html`
-            <a class="text-secondary" data-bs-toggle="modal" data-bs-target="#process-document-add-modal">
-              <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
-            </a>
-          `
+          <a href="#process-document-add-modal" class="text-secondary" data-bs-toggle="modal" data-bs-target="#process-document-modal">
+            <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
+          </a>`
       }
+      <div class="modal fade" id="process-document-modal">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-body">
+              <${ProcessDocumentList} about="${this.model.id}"></${ProcessDocumentList}>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="process-document-add-modal">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-body">
+              <${ProcessDocumentAdd} about="${this.model.id}"></${ProcessDocumentAdd}>
+            </div>
+          </div>
+        </div>
+      </div>            
     `;
   }
 }

@@ -2,6 +2,7 @@
 import {Component, html, Model, genUri, decorator, timeout} from 'veda-client';
 import Textarea from './controls/Textarea.js';
 import InputAudio from './controls/InputAudio.js';
+import * as Bootstrap from 'bootstrap';
 
 export default class ProcessQuickCreate extends Component(HTMLElement) {
   static tag = 'bpa-process-quick-create';
