@@ -2,6 +2,7 @@
 
 use crate::common::{extract_process_json, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
 use crate::queue_processor::BusinessProcessAnalysisModule;
+use std::collections::HashSet;
 use std::io;
 use tokio::runtime::Runtime;
 use v_common::onto::individual::Individual;
@@ -43,7 +44,8 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
     info!("Process Name: {}", process_json["processName"]);
 
     // Подготавливаем параметры запроса и получаем маппинг свойств
-    let (parameters, property_mapping) = prepare_request_ai_parameters(module, "v-bpa:AnalyzeBusinessPrompt", process_json)?;
+    let (parameters, property_mapping) =
+        prepare_request_ai_parameters(module, "v-bpa:AnalyzeBusinessPrompt", process_json, Some(HashSet::from(["v-bpa:NoDocumentForJustification"])))?;
     debug!("Parameters prepared for OpenAI: {:?}", parameters);
 
     // Создаем новый рантайм для асинхронного выполнения

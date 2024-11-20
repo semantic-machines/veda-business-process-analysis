@@ -35,7 +35,7 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     let analysis_data = prepare_analysis_data(&raw_input, &mut target_type_def)?;
 
     // Создаем параметры запроса и получаем маппинг свойств
-    let (parameters, property_mapping) = prepare_request_ai_parameters(module, &prompt_id, analysis_data)?;
+    let (parameters, property_mapping) = prepare_request_ai_parameters(module, &prompt_id, analysis_data, None)?;
 
     // Отправляем запрос к AI
     info!("Sending request to AI for processing input: {}", raw_input);

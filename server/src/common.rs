@@ -5,6 +5,7 @@ use openai_dive::v1::resources::chat::{
     ChatCompletionParameters, ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder,
 };
 use serde_json::Value;
+use std::collections::HashSet;
 use std::time::Duration;
 use std::{io, thread, time};
 use v_common::onto::datatype::Lang;
@@ -131,6 +132,7 @@ pub fn prepare_request_ai_parameters(
     module: &mut BusinessProcessAnalysisModule,
     system_prompt_name: &str,
     analysis_data: Value,
+    excluded: Option<HashSet<&str>>,
 ) -> Result<(ChatCompletionParameters, PropertyMapping), Box<dyn std::error::Error>> {
     let mut prompt_individual = Individual::default();
     if module.backend.storage.get_individual(system_prompt_name, &mut prompt_individual) != ResultCode::Ok {
@@ -170,6 +172,11 @@ pub fn prepare_request_ai_parameters(
             match get_individuals_by_type(module, &range) {
                 Ok(instances) => {
                     for mut instance in instances {
+                        if let Some(ex) = &excluded {
+                            if ex.contains(instance.get_id()) {
+                                continue;
+                            }
+                        }
                         // Получаем метку на русском языке
                         if let Some(label) = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]) {
                             enum_values.push(label.clone());

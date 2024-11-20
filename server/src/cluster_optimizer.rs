@@ -48,7 +48,7 @@ pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, 
     let analysis_data = prepare_optimization_data(&processes_data)?;
 
     // Создаем параметры запроса и получаем маппинг свойств
-    let (parameters, property_mapping) = prepare_request_ai_parameters(module, "v-bpa:OptimizeProcessesPrompt", analysis_data)?;
+    let (parameters, property_mapping) = prepare_request_ai_parameters(module, "v-bpa:OptimizeProcessesPrompt", analysis_data, None)?;
 
     // Отправляем запрос к AI
     info!("Sending optimization request to AI for cluster {}", cluster_id);
