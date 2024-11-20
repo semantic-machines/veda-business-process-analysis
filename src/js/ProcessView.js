@@ -127,10 +127,10 @@ export default class ProcessView extends Component(HTMLElement) {
         </div>
       </div>
       <div class="d-flex justify-content-start gap-2 mt-3">
-        <button @click="edit" class="btn btn-primary">
+        <button @click="${(e) => this.edit(e)}" class="btn btn-primary">
           <span about="v-bpa:Edit" property="rdfs:label"></span>
         </button>
-        <button @click="remove" class="btn btn-link text-muted text-decoration-none">
+        <button @click="${(e) => this.remove(e)}" class="btn btn-link text-muted text-decoration-none">
           <span about="v-bpa:Remove" property="rdfs:label"></span>
         </button>
       </div>

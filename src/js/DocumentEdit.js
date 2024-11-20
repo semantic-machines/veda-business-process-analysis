@@ -40,10 +40,10 @@ export default class DocumentEdit extends Component(HTMLElement) {
         </div>
       </div>
       <div class="d-flex justify-content-start gap-2 mt-3">
-        <button @click="save" class="btn btn-success">
+        <button @click="${(e) => this.save(e)}" class="btn btn-success">
           <span about="v-bpa:Save" property="rdfs:label"></span>
         </button>
-        <button @click="cancel" class="btn btn-link text-muted text-decoration-none">
+        <button @click="${(e) => this.cancel(e)}" class="btn btn-link text-muted text-decoration-none">
           <span about="v-bpa:Cancel" property="rdfs:label"></span>
         </button>
       </div>

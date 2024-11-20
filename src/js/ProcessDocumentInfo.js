@@ -1,5 +1,6 @@
 import {Component, html, Model, Backend} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
+import Expression from './Expression.js';
 
 export default class ProcessDocumentInfo extends Component(HTMLElement) {
   static tag = 'bpa-process-document-info';
@@ -10,7 +11,7 @@ export default class ProcessDocumentInfo extends Component(HTMLElement) {
       ${documentsCount
         ? html`
             <a href="#process-document-modal" data-bs-toggle="modal" data-bs-target="#process-document-modal" class="text-secondary" style="cursor:pointer">
-              <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>: ${documentsCount}
+              <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>:&nbsp;<${Expression} about="${this.model.id}" expression="this['v-bpa:hasProcessDocument']?.length"></${Expression}>
             </a>
             <div class="modal fade" id="process-document-modal">
               <div class="modal-dialog modal-dialog-centered">
@@ -93,7 +94,6 @@ class ProcessDocumentAdd extends Component(HTMLElement) {
     event.preventDefault();
     const form = event.target;
     const selectedDocuments = Array.from(form.elements).filter(element => element.type === 'checkbox' && element.checked).map(element => element.value);
-    console.log(selectedDocuments);
     this.model['v-bpa:hasProcessDocument'] = selectedDocuments.map(id => new Model(id));
     await this.model.save();
   }
@@ -101,10 +101,10 @@ class ProcessDocumentAdd extends Component(HTMLElement) {
   async render() {
     return html`
       <div class="d-flex justify-content-between">
-        <h4 about="v-bpa:ChooseDocuments" property="rdfs:label"></h4>
+        <h4 about="v-bpa:ChooseDocuments" property="rdfs:comment"></h4>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="process-document-add-form" @submit="submit">
+      <form id="process-document-add-form" @submit="${(e) => this.submit(e)}">
         ${(await this.getDocuments())?.map(([id]) => html`
           <div class="form-check d-flex gap-2 align-items-center">
             <input class="form-check-input mt-0" type="checkbox" value="${id}" ${this.model.hasValue('v-bpa:hasProcessDocument', id) ? 'checked' : ''}>
@@ -122,7 +122,7 @@ class ProcessDocumentAdd extends Component(HTMLElement) {
           </div>
         `).join('')}
         <button type="submit" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#process-document-modal">
-          <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
+          <span about="v-bpa:ChooseDocuments" property="rdfs:label"></span>
         </button>
       </form>
     `;

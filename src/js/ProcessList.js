@@ -141,7 +141,7 @@ export default class ProcessList extends Component(HTMLElement) {
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                  <form @submit="applyFilters">
+                  <form @submit="${(e) => this.applyFilters(e)}">
                     <div class="mb-5">
                       <div class="mb-3">
                         <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
@@ -177,7 +177,7 @@ export default class ProcessList extends Component(HTMLElement) {
                       </div>
                     </div>
                     <button type="submit" class="btn btn-secondary me-2" data-bs-dismiss="modal"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
-                    <button type="reset" @click="resetFilters" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
+                    <button type="reset" @click="${(e) => this.resetFilters(e)}" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
                   </form>
                 </div>
               </div>

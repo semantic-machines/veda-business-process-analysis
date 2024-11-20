@@ -4,6 +4,7 @@ import DocumentList from './DocumentList.js';
 import ClusterList from './ClusterList.js';
 import ClusterizationButton from './ClusterizationButton.js';
 import Callback from './Callback.js';
+import ProcessQuickCreate from './ProcessQuickCreate.js';
 
 export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
@@ -67,19 +68,19 @@ export default class ProcessOverview extends Component(HTMLElement) {
       <div class="mb-2 ms-3 d-flex justify-content-between">
         <ul class="nav nav-underline">
           <li class="nav-item">
-            <button id="processes" @click="toggleView" class="nav-link ${this.activeTab === 'processes' ? 'active disabled' : 'text-secondary-emphasis'}">
+            <button id="processes" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'processes' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-2" about="v-bpa:ShowProcesses" property="rdfs:label"></span>
               <span class="align-top badge rounded-pill bg-secondary">${this.processesCount}</span>
             </button>
           </li>
           <li class="nav-item">
-            <button id="documents" @click="toggleView" class="nav-link ${this.activeTab === 'documents' ? 'active disabled' : 'text-secondary-emphasis'}">
+            <button id="documents" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'documents' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-2" about="v-bpa:ProcessDocuments" property="rdfs:label"></span>
               <span class="align-top badge rounded-pill bg-secondary">${this.documentsCount}</span>
             </button>
           </li>
           <li class="nav-item">
-            <button id="clusters" @click="toggleView" class="nav-link ${this.activeTab === 'clusters' ? 'active disabled' : 'text-secondary-emphasis'}">
+            <button id="clusters" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'clusters' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-2" about="v-bpa:ShowClusters" property="rdfs:label"></span>
               <span class="align-top badge rounded-pill bg-secondary">${this.completed?.['v-bpa:foundClusters']?.length ?? 0}</span>
             </button>
@@ -89,10 +90,20 @@ export default class ProcessOverview extends Component(HTMLElement) {
           ? html`<${ClusterizationButton} ${this.running ? `about="${this.running.id}"` : ''} callback="${Callback.getName(this.setRunning)}" class="ms-auto"></${ClusterizationButton}>`
           : this.activeTab === 'processes'
           ? html`
-            <a href="#/ProcessQuickCreate" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
+            <a href="#process-quick-create-modal" data-bs-toggle="modal" data-bs-target="#process-quick-create-modal" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
               <i class="bi bi-plus me-1"></i>
               <span about="v-bpa:AddProcess" property="rdfs:label"></span>
-            </a>`
+            </a>
+            <div class="modal fade" id="process-quick-create-modal">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-body">
+                    <${ProcessQuickCreate}></${ProcessQuickCreate}>
+                  </div>
+                </div>
+              </div>
+            </div>
+            `
           : html`
             <a href="#/ProcessDocumentCreate" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
               <i class="bi bi-plus me-1"></i>

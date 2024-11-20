@@ -203,6 +203,8 @@ v-bpa:AddProcessDocument
 
 v-bpa:ChooseDocuments
   rdf:type rdfs:Resource ;
-  rdfs:label "Выберите документы"@ru ;
-  rdfs:label "Choose documents"@en ;
+  rdfs:label "Выбрать"@ru ;
+  rdfs:label "Choose"@en ;
+  rdfs:comment "Выберите документы"@ru ;
+  rdfs:comment "Choose documents"@en ;
 .
