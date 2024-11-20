@@ -35,8 +35,8 @@ td:VacationRequestProcess
 # Процесс 2: Закупка канцтоваров
 td:OfficeSuppliesPurchaseProcess
   rdf:type v-bpa:BusinessProcess ;
-  rdfs:label "Закупка канцелярских товаров"@ru ;
-  rdfs:label "Office supplies purchase"@en ;
+  rdfs:label "Закупка канцелярских товаров (кратко)"@ru ;
+  rdfs:label "Office supplies purchase (short)"@en ;
   v-bpa:processDescription "Процесс заказа и получения канцелярских товаров для офиса"@ru ;
   v-bpa:processDescription "Process of ordering and receiving office supplies"@en ;
   v-bpa:processParticipant "Офис-менеджер, Бухгалтер"@ru ;
