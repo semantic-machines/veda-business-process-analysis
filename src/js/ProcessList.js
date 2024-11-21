@@ -28,22 +28,6 @@ class ProcessFilters extends Component(HTMLElement) {
     this.dispatchEvent(new CustomEvent('filters-changed', {detail: null}));
   }
 
-  renderFiltersCount() {
-    const button = this.querySelector('#filters-button');
-    const count = this.data ? Object.values(this.data).filter(value => value.some(v => v)).length || null : null;
-    button.lastElementChild.textContent = count ?? '';
-  }
-
-  post() {
-    this.querySelector('#filters').addEventListener('shown.bs.modal', () => {
-      this.querySelector('.btn-close')?.focus();
-    });
-  }
-
-  removed() {
-    Modal.getInstance(this.lastElementChild)?.hide();
-  }
-
   render() {
     return html`
       <button type="button" class="btn btn-link text-dark text-decoration-none" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
@@ -101,6 +85,22 @@ class ProcessFilters extends Component(HTMLElement) {
         </div>
       </div>
     `;
+  }
+
+  renderFiltersCount() {
+    const button = this.querySelector('#filters-button');
+    const count = this.data ? Object.values(this.data).filter(value => value.some(v => v)).length || null : null;
+    button.lastElementChild.textContent = count ?? '';
+  }
+
+  post() {
+    this.querySelector('#filters').addEventListener('shown.bs.modal', () => {
+      this.querySelector('.btn-close')?.focus();
+    });
+  }
+
+  removed() {
+    Modal.getInstance(this.lastElementChild)?.hide();
   }
 }
 
@@ -181,7 +181,7 @@ export default class ProcessList extends Component(HTMLElement) {
 
   post() {
     this.renderFilteredProcesses();
-    this.querySelector('bpa-process-filters').addEventListener('filters-changed', this.handleFiltersChange);
+    this.querySelector(`${ProcessFilters}`).addEventListener('filters-changed', this.handleFiltersChange);
   }
 
   render() {
