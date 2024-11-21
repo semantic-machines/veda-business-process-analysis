@@ -26,7 +26,7 @@ export default class DocumentEdit extends Component(HTMLElement) {
       location.hash = `#/DocumentView/${this.model.id}`;
     }
   }
-  
+
   render() {
     return html`
       <div class="sheet">
@@ -40,9 +40,9 @@ export default class DocumentEdit extends Component(HTMLElement) {
         </div>
         <div class="mb-3 position-relative">
           <label class="form-label fw-bold" about="v-bpa:documentContent" property="rdfs:label"></label>
-          <textarea class="form-control" is="${Textarea}" about="${this.model.id}" data-property="v-bpa:documentContent" rows="10"></textarea>
+          <textarea id="document-content" class="form-control" is="${Textarea}" about="${this.model.id}" data-property="v-bpa:documentContent" rows="10"></textarea>
           <div class="position-absolute bottom-0" style="right:0.75rem;">
-            <${InputAudio} about="${this.model.id}" data-property="v-bpa:documentContent"></${InputAudio}>
+            <${InputAudio} data-for="document-content"></${InputAudio}>
           </div>
         </div>
       </div>

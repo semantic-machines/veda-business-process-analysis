@@ -7,26 +7,10 @@ import {Modal} from 'bootstrap';
 export default class ProcessQuickCreateModal extends Component(HTMLElement) {
   static tag = 'bpa-process-quick-create-modal';
 
-  storeValue(e) {
-    sessionStorage.setItem('ProcessQuickCreate_rawInput', e.target.value);
-  }
-
-  restoreValue() {
-    const savedText = sessionStorage.getItem('ProcessQuickCreate_rawInput');
-    if (savedText) {
-      this.model['v-bpa:rawInput'] = [savedText];
-    }
-  }
-
-  clearValue() {
-    sessionStorage.removeItem('ProcessQuickCreate_rawInput');
-  }
-
   added() {
     this.model = new Model;
     this.model['rdf:type'] = 'v-bpa:GenericProcessingRequest';
     this.model['v-bpa:prompt'] = 'v-bpa:CreateBusinessProcessPrompt';
-    this.restoreValue();
   }
 
   create = async () => {
@@ -107,7 +91,6 @@ export default class ProcessQuickCreateModal extends Component(HTMLElement) {
   }
 
   cancel() {
-    this.clearValue();
     Modal.getInstance(this.firstElementChild)?.hide();
   }
 
@@ -143,12 +126,11 @@ export default class ProcessQuickCreateModal extends Component(HTMLElement) {
               </div>
               <p class="text-muted fw-bold" about="v-bpa:ProcessQuickCreate" property="rdfs:comment"></p>
               <div class="mb-3 position-relative">
-                <textarea class="form-control" placeholder="Введите текст с клавиатуры или воспользуйтесь микрофоном"
-                  is="${Textarea}" about="${this.model.id}" data-property="v-bpa:rawInput" rows="7"
-                  @input="${(e) => this.storeValue(e)}">
+                <textarea id="quick-create-raw-input" class="form-control" placeholder="Введите текст с клавиатуры или воспользуйтесь микрофоном"
+                  is="${Textarea}" about="${this.model.id}" data-property="v-bpa:rawInput" rows="7">
                 </textarea>
                 <div class="position-absolute bottom-0" style="right:0.75rem;">
-                  <${InputAudio} about="${this.model.id}" data-property="v-bpa:rawInput"></${InputAudio}>
+                  <${InputAudio} data-for="quick-create-raw-input"></${InputAudio}>
                 </div>
               </div>
               <div class="d-flex justify-content-between">

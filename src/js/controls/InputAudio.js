@@ -5,6 +5,8 @@ export default class InputAudio extends Component(HTMLElement) {
 
   property = this.dataset.property;
 
+  for = this.dataset.for;
+
   render () {
     return html`
       <div class="d-flex align-items-center">
@@ -24,19 +26,20 @@ export default class InputAudio extends Component(HTMLElement) {
   }
 
   post() {
+    const input = document.getElementById(this.for);
     const micButton = this.querySelector('.mic-button');
     const canvas = this.querySelector('.audio-visualization');
     const canvasCtx = canvas.getContext('2d');
     const cancelButton = this.querySelector('.cancel-button');
     const approveButton = this.querySelector('.approve-button');
     const recordingTimer = this.querySelector('.recording-timer');
-  
+
     let mediaRecorder;
     let audioChunks = [];
     let audioContext;
     let analyser;
     let startTime;
-    let timerInterval;    
+    let timerInterval;
 
     // Запрос доступа к микрофону
     const requestMicrophoneAccess = async () => {
@@ -146,10 +149,12 @@ export default class InputAudio extends Component(HTMLElement) {
         mediaRecorder.stop();
         mediaRecorder.stream.getTracks().forEach((track) => track.stop());
       });
-    }    
+    }
 
     micButton.onclick = decorator(
-      async () => {
+      async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         audioChunks = [];
         const stream = await requestMicrophoneAccess();
         mediaRecorder = new MediaRecorder(stream);
@@ -162,7 +167,7 @@ export default class InputAudio extends Component(HTMLElement) {
         };
 
         mediaRecorder.start();
-      }, 
+      },
       () => {
         hide(micButton);
         show(approveButton, cancelButton, recordingTimer, canvas);
@@ -175,20 +180,22 @@ export default class InputAudio extends Component(HTMLElement) {
         alert('Ошибка записи аудио: ' + error.message);
       },
     );
-  
+
     approveButton.onclick = decorator(
-      async () => {
+      async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (mediaRecorder && mediaRecorder.state === 'recording') {
           await stopRecording(); // Дождаться окончания записи
         }
-  
+
         stopIntensityVisualization();
         stopRecordingTimer();
-        
+
         try {
           await recognizeAudioFile(new Blob(audioChunks, {type: 'audio/ogg'}), (textChunk) => {
             const trimmed = textChunk.trim();
-            const currentValue = getFilteredValue(this.model, this.property);
+            const currentValue = input.value;
             let value;
             if (!currentValue) {
               value = trimmed;
@@ -197,7 +204,8 @@ export default class InputAudio extends Component(HTMLElement) {
             } else {
               value = currentValue + '\n' + trimmed;
             }
-            updateFilteredValue(this.model, this.property, value);
+            input.value = value;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
           });
         } catch (error) {
           console.error('Ошибка распознавания аудио:', error);
@@ -219,17 +227,19 @@ export default class InputAudio extends Component(HTMLElement) {
         micButton.disabled = false;
       },
     );
-  
+
     // Обработчик для кнопки отмены
     cancelButton.onclick = decorator(
-      async () => {
+      async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (mediaRecorder && mediaRecorder.state === 'recording') {
           await stopRecording(); // Дождаться окончания записи
         }
-    
+
         stopIntensityVisualization();
         stopRecordingTimer();
-    
+
         // Очистка массива аудио чанков
         audioChunks = [];
       },
