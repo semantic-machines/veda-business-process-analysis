@@ -1,4 +1,91 @@
 import {Component, html, Backend, Model} from 'veda-client';
+import {Modal} from 'bootstrap';
+
+class DocumentFilters extends Component(HTMLElement) {
+  static tag = 'bpa-document-filters';
+
+  data = {};
+
+  applyFilters(event) {
+    event.preventDefault();
+    const form = event.target.closest('form');
+    const formData = new FormData(form);
+    for (const key of formData.keys()) {
+      this.data[key] = formData.getAll(key);
+    }
+    console.log(JSON.stringify(this.data, null, 2));
+
+    this.renderFiltersCount();
+    this.dispatchEvent(new CustomEvent('filters-changed', {detail: this.data}));
+  }
+
+  resetFilters() {
+    this.data = {};
+    this.renderFiltersCount();
+    this.dispatchEvent(new CustomEvent('filters-changed', {detail: null}));
+  }
+
+  renderFiltersCount() {
+    const button = this.querySelector('#filters-button');
+    const count = this.data ? Object.values(this.data).filter(value => value.some(v => v)).length || null : null;
+    button.lastElementChild.textContent = count ?? '';
+  }
+
+  post() {
+    this.querySelector('#filters').addEventListener('shown.bs.modal', () => {
+      this.querySelector('.btn-close')?.focus();
+    });
+  }
+
+  removed() {
+    Modal.getInstance(this.lastElementChild)?.hide();
+  }
+
+  render() {
+    return html`
+      <button type="button" class="btn btn-link text-dark text-decoration-none" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
+        <i class="bi bi-chevron-down me-1"></i>
+        <span about="v-bpa:Filters" property="rdfs:label"></span>
+        <span class="badge rounded-pill bg-danger ms-1"></span>
+      </button>
+      <div class="modal fade" id="filters" data-bs-keyboard="true" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="staticBackdropLabel" about="v-bpa:Filters" property="rdfs:label"></h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form @submit="${(e) => this.applyFilters(e)}">
+                <div class="mb-5">
+                  <div class="mb-3">
+                    <label for="name" class="form-label" about="v-bpa:documentName" property="rdfs:label"></label>
+                    <input type="text" class="form-control" id="name" name="v-bpa:documentName">
+                  </div>
+                  <div class="mb-3">
+                    <label for="content" class="form-label" about="v-bpa:documentContent" property="rdfs:label"></label>
+                    <input type="text" class="form-control" id="content" name="v-bpa:documentContent">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label me-2" about="v-s:created" property="rdfs:label"></label>
+                    <div class="mb-3 d-flex align-items-center" id="created">
+                      <input type="date" placeholder="от" class="form-control me-2 w-50" name="v-s:created">
+                      <input type="date" placeholder="до" class="form-control w-50" name="v-s:created">
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-secondary me-2" data-bs-dismiss="modal"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
+                <button type="reset" @click="${(e) => this.resetFilters(e)}" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+customElements.define(DocumentFilters.tag, DocumentFilters);
 
 export default class DocumentList extends Component(HTMLElement) {
   static tag = 'bpa-document-list';
@@ -19,45 +106,38 @@ export default class DocumentList extends Component(HTMLElement) {
     location.hash = `#/DocumentView/${id}`;
   }
 
-  applyFilters(event) {
-    event.preventDefault();
-    const form = event.target.closest('form');
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    this.filtersData = data;
-
-    this.filtered = this.documents.filter(([id, name, content, created]) => {
-      // Фильтр по названию
-      if (data['v-bpa:documentName'] && !name.toLowerCase().includes(data['v-bpa:documentName'].toLowerCase())) {
-        return false;
-      }
-      // Фильтр по содержанию
-      if (data['v-bpa:documentContent'] &&
-          !content.toLowerCase().includes(data['v-bpa:documentContent'].toLowerCase())) {
-        return false;
-      }
-      // Фильтр по дате создания
-      created = new Date(created);
-      if (data.createdFrom) {
-        const from = new Date(data.createdFrom);
-        from.setHours(0, 0, 0, 0);
-        if (created < from) return false;
-      }
-      if (data.createdTo) {
-        const to = new Date(data.createdTo);
-        to.setHours(23, 59, 59, 999);
-        if (created > to) return false;
-      }
-      return true;
-    });
-
+  handleFiltersChange = (event) => {
+    this.filtersData = event.detail;
+    if (!this.filtersData) {
+      this.filtered = this.documents;
+    } else {
+      this.filtered = this.documents.filter(([id, name, content, created]) => {
+        // Фильтр по названию
+        if (this.filtersData['v-bpa:documentName'] && this.filtersData['v-bpa:documentName'][0] &&
+            !name.toLowerCase().includes(this.filtersData['v-bpa:documentName'][0].toLowerCase())) {
+          return false;
+        }
+        // Фильтр по содержанию
+        if (this.filtersData['v-bpa:documentContent'] && this.filtersData['v-bpa:documentContent'][0] &&
+            !content.toLowerCase().includes(this.filtersData['v-bpa:documentContent'][0].toLowerCase())) {
+          return false;
+        }
+        // Фильтр по дате создания
+        created = new Date(created);
+        if (this.filtersData['v-s:created'] && this.filtersData['v-s:created'][0]) {
+          const from = new Date(this.filtersData['v-s:created'][0]);
+          from.setHours(0, 0, 0, 0);
+          if (created < from) return false;
+        }
+        if (this.filtersData['v-s:created'] && this.filtersData['v-s:created'][1]) {
+          const to = new Date(this.filtersData['v-s:created'][1]);
+          to.setHours(23, 59, 59, 999);
+          if (created > to) return false;
+        }
+        return true;
+      });
+    }
     this.renderFilteredDocuments();
-    this.renderFiltersCount();
-  }
-
-  resetFilters() {
-    this.filtersData = null;
-    this.filtered = this.documents;
   }
 
   renderFilteredDocuments() {
@@ -72,18 +152,9 @@ export default class DocumentList extends Component(HTMLElement) {
     `;
   }
 
-  renderFiltersCount() {
-    const button = this.querySelector('#filters-button');
-    const count = this.filtersData ? Object.values(this.filtersData).filter(value => value).length || null : null;
-    button.lastElementChild.textContent = count ?? '';
-  }
-
   post() {
     this.renderFilteredDocuments();
-
-    this.querySelector('#filters').addEventListener('shown.bs.modal', () => {
-      this.querySelector('.btn-close')?.focus();
-    });
+    this.querySelector('bpa-document-filters').addEventListener('filters-changed', this.handleFiltersChange);
   }
 
   render() {
@@ -92,11 +163,7 @@ export default class DocumentList extends Component(HTMLElement) {
         <div class="d-flex align-items-center">
           <i class="bi bi-file-earmark-text ms-2 me-3 fs-1"></i>
           <h3 class="mb-1" about="v-bpa:ProcessDocuments" property="rdfs:label"></h3>
-          <button type="button" class="btn btn-link text-dark text-decoration-none ms-auto" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
-            <i class="bi bi-chevron-down me-1"></i>
-            <span about="v-bpa:Filters" property="rdfs:label"></span>
-            <span class="badge rounded-pill bg-danger ms-1"></span>
-          </button>
+          <${DocumentFilters} class="ms-auto"></${DocumentFilters}>
         </div>
         <div class="table-responsive">
           <style>
@@ -113,39 +180,6 @@ export default class DocumentList extends Component(HTMLElement) {
             </thead>
             <tbody id="filtered-documents"></tbody>
           </table>
-          <div class="modal fade" id="filters" data-bs-keyboard="true" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h1 class="modal-title fs-5" id="staticBackdropLabel" about="v-bpa:Filters" property="rdfs:label"></h1>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                  <form @submit="${(e) => this.applyFilters(e)}">
-                    <div class="mb-5">
-                      <div class="mb-3">
-                        <label for="name" class="form-label" about="v-bpa:documentName" property="rdfs:label"></label>
-                        <input type="text" class="form-control" id="name" name="v-bpa:documentName">
-                      </div>
-                      <div class="mb-3">
-                        <label for="content" class="form-label" about="v-bpa:documentContent" property="rdfs:label"></label>
-                        <input type="text" class="form-control" id="content" name="v-bpa:documentContent">
-                      </div>
-                      <div class="mb-3">
-                        <label class="form-label me-2" about="v-s:created" property="rdfs:label"></label>
-                        <div class="mb-3 d-flex align-items-center" id="created">
-                          <input type="date" placeholder="от" class="form-control me-2 w-50" name="createdFrom">
-                          <input type="date" placeholder="до" class="form-control w-50" name="createdTo">
-                        </div>
-                      </div>
-                    </div>
-                    <button type="submit" class="btn btn-secondary me-2" data-bs-dismiss="modal"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
-                    <button type="reset" @click="${(e) => this.resetFilters(e)}" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     `;
