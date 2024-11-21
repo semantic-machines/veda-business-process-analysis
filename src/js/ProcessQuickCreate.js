@@ -7,7 +7,8 @@ import {Modal} from 'bootstrap';
 export default class ProcessQuickCreateModal extends Component(HTMLElement) {
   static tag = 'bpa-process-quick-create-modal';
 
-  added() {
+  constructor() {
+    super();
     this.model = new Model;
     this.model['rdf:type'] = 'v-bpa:GenericProcessingRequest';
     this.model['v-bpa:prompt'] = 'v-bpa:CreateBusinessProcessPrompt';

@@ -9,9 +9,9 @@ class ProcessFilters extends Component(HTMLElement) {
 
   data = {};
 
-  applyFilters(event) {
-    event.preventDefault();
-    const form = event.target.closest('form');
+  applyFilters(e) {
+    e.preventDefault();
+    const form = e.target.closest('form');
     const formData = new FormData(form);
     for (const key of formData.keys()) {
       this.data[key] = formData.getAll(key);
