@@ -1,6 +1,7 @@
 import {Component, html, Model, Backend} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
 import Expression from './Expression.js';
+import {Modal} from 'bootstrap';
 
 export default class ProcessDocumentInfo extends Component(HTMLElement) {
   static tag = 'bpa-process-document-info';
@@ -14,6 +15,11 @@ export default class ProcessDocumentInfo extends Component(HTMLElement) {
       <${ProcessDocumentAddModal} about="${this.model.id}"></${ProcessDocumentAddModal}>
       <${ProcessDocumentPreviewModal} id="process-document-preview"></${ProcessDocumentPreviewModal}>
     `;
+  }
+
+  removed() {
+    const modals = this.querySelectorAll('.modal');
+    modals.forEach(modal => Modal.getInstance(modal)?.hide());
   }
 }
 customElements.define(ProcessDocumentInfo.tag, ProcessDocumentInfo);
