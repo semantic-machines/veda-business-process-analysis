@@ -1,6 +1,7 @@
 import {Component, html, Backend, Model} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
 import Literal from './Literal.js';
+import InputAudio from './controls/InputAudio.js';
 
 export default class ProcessList extends Component(HTMLElement) {
   static tag = 'bpa-process-list';
@@ -25,39 +26,33 @@ export default class ProcessList extends Component(HTMLElement) {
     event.preventDefault();
     const form = event.target.closest('form');
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
+    const data = {};
+    for (const key of formData.keys()) {
+      data[key] = formData.getAll(key);
+    }
+    console.log(JSON.stringify(data, null, 2));
     this.filtersData = data;
 
     this.filtered = this.processes.filter(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => {
       // Фильтр по названию
-      if (data['rdfs:label'] && !label.toLowerCase().includes(data['rdfs:label'].toLowerCase())) {
+      if (data['rdfs:label'] && data['rdfs:label'][0] && !label.toLowerCase().includes(data['rdfs:label'][0].toLowerCase())) {
         return false;
       }
       // Фильтр по релевантности
-      if (data['v-bpa:hasProcessJustification'] && relevance !== data['v-bpa:hasProcessJustification']) {
+      if (data['v-bpa:hasProcessJustification'] && data['v-bpa:hasProcessJustification'].length && !data['v-bpa:hasProcessJustification'].includes(relevance)) {
         return false;
       }
       // Фильтр по ответственному подразделению
-      if (data['v-bpa:responsibleDepartment'] &&
-          !responsibleDepartment.toLowerCase().includes(data['v-bpa:responsibleDepartment'].toLowerCase())) {
-        return false;
-      }
-      // Фильтр по количеству участников
-      const participantsCount = processParticipant && typeof processParticipant === 'string'
-        ? processParticipant.split(',').length
-        : 0;
-      if (data.participantsCountFrom && participantsCount < Number(data.participantsCountFrom)) {
-        return false;
-      }
-      if (data.participantsCountTo && participantsCount > Number(data.participantsCountTo)) {
+      if (data['v-bpa:responsibleDepartment'] && data['v-bpa:responsibleDepartment'][0] &&
+          !responsibleDepartment.toLowerCase().includes(data['v-bpa:responsibleDepartment'][0].toLowerCase())) {
         return false;
       }
       // Фильтр по трудозатратам
       const costs = laborCosts ?? 0;
-      if (data.laborCostsFrom && costs < Number(data.laborCostsFrom)) {
+      if (data['v-bpa:laborCosts'] && data['v-bpa:laborCosts'][0] && costs < Number(data['v-bpa:laborCosts'][0])) {
         return false;
       }
-      if (data.laborCostsTo && costs > Number(data.laborCostsTo)) {
+      if (data['v-bpa:laborCosts'] && data['v-bpa:laborCosts'][1] && costs > Number(data['v-bpa:laborCosts'][1])) {
         return false;
       }
       return true;
@@ -70,6 +65,8 @@ export default class ProcessList extends Component(HTMLElement) {
   resetFilters() {
     this.filtersData = null;
     this.filtered = this.processes;
+    this.renderFilteredProcesses();
+    this.renderFiltersCount();
   }
 
   renderFilteredProcesses() {
@@ -95,7 +92,7 @@ export default class ProcessList extends Component(HTMLElement) {
 
   renderFiltersCount() {
     const button = this.querySelector('#filters-button');
-    const count = this.filtersData ? Object.values(this.filtersData).filter(value => value).length || null : null;
+    const count = this.filtersData ? Object.values(this.filtersData).filter(value => value.some(v => v)).length || null : null;
     button.lastElementChild.textContent = count ?? '';
   }
 
@@ -153,8 +150,7 @@ export default class ProcessList extends Component(HTMLElement) {
                       </div>
                       <div class="mb-3">
                         <label for="justification" class="form-label" about="v-bpa:hasProcessJustification" property="rdfs:label"></label>
-                        <select class="form-select" id="justification" name="v-bpa:hasProcessJustification">
-                          <option value="">---</option>
+                        <select class="form-select" id="justification" name="v-bpa:hasProcessJustification" multiple>
                           <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label"></option>
                           <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label"></option>
                           <option value="v-bpa:PoorlyJustified" about="v-bpa:PoorlyJustified" property="rdfs:label"></option>
@@ -166,17 +162,17 @@ export default class ProcessList extends Component(HTMLElement) {
                         <input type="text" class="form-control" id="responsibleDepartment" name="v-bpa:responsibleDepartment">
                       </div>
                       <div class="mb-3">
-                        <label class="form-label me-2" about="v-bpa:processParticipant" property="rdfs:comment"></label>
-                        <div class="mb-3 d-flex align-items-center" id="participantsCount">
-                          <input type="number" placeholder="от" class="form-control me-2 w-25" name="participantsCountFrom">
-                          <input type="number" placeholder="до" class="form-control w-25" name="participantsCountTo">
-                        </div>
-                      </div>
-                      <div class="mb-3">
                         <label class="form-label" for="laborCosts" about="v-bpa:laborCosts" property="rdfs:label"></label>
                         <div class="mb-3 d-flex align-items-center" id="laborCosts">
-                          <input type="number" placeholder="от" class="form-control me-2 w-25" name="laborCostsFrom">
-                          <input type="number" placeholder="до" class="form-control w-25" name="laborCostsTo">
+                          <input type="number" placeholder="от" class="form-control me-2 w-25" name="v-bpa:laborCosts">
+                          <input type="number" placeholder="до" class="form-control w-25" name="v-bpa:laborCosts">
+                        </div>
+                      </div>
+                      <div class="mb-3 position-relative">
+                        <label for="process-filter-raw-input" class="form-label" about="v-bpa:rawInput" property="rdfs:label"></label>
+                        <textarea class="form-control" id="process-filter-raw-input" name="v-bpa:rawInput" rows="3"></textarea>
+                        <div class="position-absolute bottom-0" style="right:0.75rem;">
+                          <${InputAudio} data-for="process-filter-raw-input"></${InputAudio}>
                         </div>
                       </div>
                     </div>
