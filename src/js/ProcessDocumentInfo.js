@@ -34,9 +34,15 @@ class ProcessDocumentListModal extends Component(HTMLElement) {
     preview.setAttribute('back', 'process-document-list-modal');
   }
 
+  post() {
+    this.firstElementChild.addEventListener('shown.bs.modal', () => {
+      this.querySelector('.btn-close')?.focus();
+    });
+  }
+
   render() {
     return html`
-      <div class="modal fade" id="process-document-list-modal">
+      <div class="modal fade" id="process-document-list-modal" data-bs-keyboard="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-body">
@@ -101,9 +107,15 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
     preview.setAttribute('back', 'process-document-add-modal');
   }
 
+  post() {
+    this.firstElementChild.addEventListener('shown.bs.modal', () => {
+      this.querySelector('.btn-back')?.focus();
+    });
+  }
+
   async render() {
     return html`
-      <div class="modal fade" id="process-document-add-modal">
+      <div class="modal fade" id="process-document-add-modal" data-bs-keyboard="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-body">
@@ -131,7 +143,7 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
                   </div>
                 `).join('')}
                 <div class="d-flex justify-content-between mt-2">
-                  <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#process-document-list-modal">
+                  <button type="button" class="btn btn-light btn-back" data-bs-toggle="modal" data-bs-target="#process-document-list-modal">
                     <i class="bi bi-arrow-left me-1"></i>
                     <span about="v-bpa:Back" property="rdfs:label"></span>
                   </button>
@@ -173,14 +185,20 @@ class ProcessDocumentPreviewModal extends Component(HTMLElement) {
     container.replaceChildren(preview);
   }
 
+  post() {
+    this.firstElementChild.addEventListener('shown.bs.modal', () => {
+      this.querySelector('.btn-back')?.focus();
+    });
+  }
+
   render() {
     return html`
-      <div class="modal fade" id="process-document-preview-modal">
+      <div class="modal fade" id="process-document-preview-modal" data-bs-keyboard="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-body">
               <div id="process-document-preview-container"></div>
-              <button type="button" class="btn btn-light" data-bs-toggle="modal">
+              <button type="button" class="btn btn-light btn-back" data-bs-toggle="modal">
                 <i class="bi bi-arrow-left me-1"></i>
                 <span about="v-bpa:Back" property="rdfs:label"></span>
               </button>

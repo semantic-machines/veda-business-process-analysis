@@ -122,6 +122,12 @@ export default class ProcessQuickCreateModal extends Component(HTMLElement) {
     Modal.getInstance(this.firstElementChild)?.hide();
   }
 
+  post() {
+    this.firstElementChild.addEventListener('shown.bs.modal', () => {
+      this.querySelector('textarea')?.focus();
+    });
+  }
+
   render() {
     return html`
       <div class="modal fade" id="process-quick-create-modal" data-bs-keyboard="true">
