@@ -4,13 +4,13 @@ import DocumentList from './DocumentList.js';
 import ClusterList from './ClusterList.js';
 import ClusterizationButton from './ClusterizationButton.js';
 import Callback from './Callback.js';
-import ProcessQuickCreate from './ProcessQuickCreate.js';
+import ProcessQuickCreateModal from './ProcessQuickCreate.js';
 
 export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
 
   activeTab = localStorage.getItem('ProcessOverview_activeTab') || 'processes';
-  
+
   async added() {
     const params1 = new Model;
     params1['rdf:type'] = 'v-s:QueryParams';
@@ -94,15 +94,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
               <i class="bi bi-plus me-1"></i>
               <span about="v-bpa:AddProcess" property="rdfs:label"></span>
             </a>
-            <div class="modal fade" id="process-quick-create-modal">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-body">
-                    <${ProcessQuickCreate}></${ProcessQuickCreate}>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <${ProcessQuickCreateModal}></${ProcessQuickCreateModal}>
             `
           : html`
             <a href="#/DocumentEdit" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
@@ -113,7 +105,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
       </div>
       ${this.activeTab === 'clusters'
         ? html`<${ClusterList} ${this.completed ? `about="${this.completed.id}"` : ''}></${ClusterList}>`
-        : this.activeTab === 'processes' 
+        : this.activeTab === 'processes'
         ? html`<${ProcessList}></${ProcessList}>`
         : html`<${DocumentList}></${DocumentList}>`
       }

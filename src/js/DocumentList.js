@@ -32,7 +32,7 @@ export default class DocumentList extends Component(HTMLElement) {
         return false;
       }
       // Фильтр по содержанию
-      if (data['v-bpa:documentContent'] && 
+      if (data['v-bpa:documentContent'] &&
           !content.toLowerCase().includes(data['v-bpa:documentContent'].toLowerCase())) {
         return false;
       }
@@ -44,7 +44,7 @@ export default class DocumentList extends Component(HTMLElement) {
         if (created < from) return false;
       }
       if (data.createdTo) {
-        const to = new Date(data.createdTo); 
+        const to = new Date(data.createdTo);
         to.setHours(23, 59, 59, 999);
         if (created > to) return false;
       }
@@ -141,7 +141,7 @@ export default class DocumentList extends Component(HTMLElement) {
                 </div>
               </div>
             </div>
-          </div>        
+          </div>
         </div>
       </div>
     `;
