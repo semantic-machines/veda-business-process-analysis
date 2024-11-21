@@ -33,7 +33,7 @@ v-bpa:BusinessProcesses
   rdfs:label "Business processes"@en ;
 .
 
-v-bpa:ProcessClusters 
+v-bpa:ProcessClusters
   rdf:type rdfs:Resource ;
   rdfs:label "Кластеры процессов"@ru ;
   rdfs:label "Process clusters"@en ;
@@ -207,4 +207,10 @@ v-bpa:ChooseDocuments
   rdfs:label "Choose"@en ;
   rdfs:comment "Выберите документы"@ru ;
   rdfs:comment "Choose documents"@en ;
+.
+
+v-bpa:Back
+  rdf:type rdfs:Resource ;
+  rdfs:label "Назад"@ru ;
+  rdfs:label "Back"@en ;
 .
