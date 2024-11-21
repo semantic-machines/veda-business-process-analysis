@@ -8,6 +8,7 @@ use openai_dive::v1::api::Client;
 use serde::{Deserialize, Serialize};
 use v_common::ft_xapian::xapian_reader::XapianReader;
 use v_common::init_module_log;
+use v_common::module::info::ModuleInfo;
 use v_common::module::module_impl::{init_log, Module};
 use v_common::module::veda_backend::Backend;
 use v_common::storage::common::StorageMode;
@@ -65,6 +66,12 @@ fn main() -> std::io::Result<()> {
 
     let mut module = Module::new_with_name("business-process-analysis");
 
+    let module_info = ModuleInfo::new("./data", "business-process-analysis", true);
+    if module_info.is_err() {
+        error!("failed to start, err = {:?}", module_info.err());
+        return Ok(());
+    }
+
     let systicket = if let Ok(t) = backend.get_sys_ticket_id() {
         t
     } else {
@@ -78,6 +85,7 @@ fn main() -> std::io::Result<()> {
         xr,
         model: api_config.model,
         ticket: systicket,
+        module_info: module_info.unwrap(),
     };
 
     module.prepare_queue(&mut my_module);
