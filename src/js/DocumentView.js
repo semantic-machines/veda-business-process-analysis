@@ -11,13 +11,23 @@ export default class DocumentView extends Component(HTMLElement) {
 
   async remove() {
     if (confirm('Вы уверены?')) {
-      await this.model.remove();
-      location.hash = '#/ProcessOverview';
+      try {
+        await Promise.all(this.processes.map(async ([id]) => {
+          const process = await new Model(id).load();
+          process.removeValue('v-bpa:hasProcessDocument', this.model.id);
+          await process.save();
+        }));
+        await this.model.remove();
+        location.hash = '#/ProcessOverview';
+      } catch (error) {
+        console.error(error);
+        alert('Ошибка при удалении документа');
+      }
     }
   }
 
   async added() {
-    const params = new Model; 
+    const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:DocumentInProcess';
     params['v-bpa:hasProcessDocument'] = this.model.id;
@@ -39,45 +49,47 @@ export default class DocumentView extends Component(HTMLElement) {
         <p class="mb-0 text-muted" about="v-bpa:documentContent" property="rdfs:label"></p>
         <p property="v-bpa:documentContent"></p>
       </div>
-      
-      <div class="sheet">
-        <div class="table-responsive">
-          <style>
-            #processes-table tbody tr:last-child {
-              border-bottom: 1px solid transparent;
-            }
-          </style>
-          <table class="table table-hover mb-0" id="processes-table">
-            <thead>
-              <tr>
-                <th width="50%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
-                <th width="10%" class="text-secondary fw-normal" about="v-bpa:hasProcessJustification" property="rdfs:label"></th>
-                <th width="20%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
-                <th width="10%" class="text-secondary fw-normal" about="v-bpa:processParticipant" property="rdfs:comment"></th>
-                <th width="10%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${this.processes.map(([id, label, description, justification, responsibleDepartment, processParticipant, laborCosts]) => html`
-                <tr onclick="location.hash = '#/ProcessView/${id}'">
-                  <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
-                  <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
-                  <td class="align-middle">${responsibleDepartment}</td>
-                  <td class="align-middle">
-                    <i class="bi bi-people-fill me-1"></i>
-                    <strong>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</strong>
-                  </td>
-                  <td class="align-middle lh-sm">
-                    <strong>${laborCosts ?? 0}</strong><br>
-                    <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
-                  </td>
+
+      ${this.processes && this.processes.length > 0 ? html`
+        <div class="sheet">
+          <div class="table-responsive">
+            <style>
+              #processes-table tbody tr:last-child {
+                border-bottom: 1px solid transparent;
+              }
+            </style>
+            <table class="table table-hover mb-0" id="processes-table">
+              <thead>
+                <tr>
+                  <th width="50%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
+                  <th width="10%" class="text-secondary fw-normal" about="v-bpa:hasProcessJustification" property="rdfs:label"></th>
+                  <th width="20%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
+                  <th width="10%" class="text-secondary fw-normal" about="v-bpa:processParticipant" property="rdfs:comment"></th>
+                  <th width="10%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                ${this.processes.map(([id, label, description, justification, responsibleDepartment, processParticipant, laborCosts]) => html`
+                  <tr onclick="location.hash = '#/ProcessView/${id}'">
+                    <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
+                    <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
+                    <td class="align-middle">${responsibleDepartment}</td>
+                    <td class="align-middle">
+                      <i class="bi bi-people-fill me-1"></i>
+                      <strong>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</strong>
+                    </td>
+                    <td class="align-middle lh-sm">
+                      <strong>${laborCosts ?? 0}</strong><br>
+                      <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-      
+      ` : ''}
+
       <div class="d-flex justify-content-start gap-2 mt-3">
         <button @click="${(e) => this.edit(e)}" class="btn btn-primary">
           <span about="v-bpa:Edit" property="rdfs:label"></span>

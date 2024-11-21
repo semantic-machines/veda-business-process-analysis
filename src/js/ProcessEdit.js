@@ -1,4 +1,4 @@
-import {Component, html} from 'veda-client';
+import {Component, html, Model, Backend} from 'veda-client';
 import InputText from './controls/InputText.js';
 import InputInteger from './controls/InputInteger.js';
 import InputDecimal from './controls/InputDecimal.js';
@@ -21,7 +21,7 @@ export default class ProcessEdit extends Component(HTMLElement) {
       location.hash = `#/ProcessView/${this.model.id}`;
     }
   }
-  
+
   render() {
     return html`
       <div class="sheet">
@@ -74,7 +74,7 @@ export default class ProcessEdit extends Component(HTMLElement) {
         </div>
       </div>
       <div class="sheet">
-        <h4 about="v-bpa:ProcessDocument" property="rdfs:label"></h4>
+        <${ProcessDocumentAdd} about="${this.model.id}"></${ProcessDocumentAdd}>
       </div>
       <div class="d-flex justify-content-start gap-2 mt-3">
         <button @click="${(e) => this.save(e)}" class="btn btn-success">
@@ -87,5 +87,53 @@ export default class ProcessEdit extends Component(HTMLElement) {
       `;
   }
 }
-
 customElements.define(ProcessEdit.tag, ProcessEdit);
+
+class ProcessDocumentAdd extends Component(HTMLElement) {
+  static tag = 'bpa-process-document-add';
+
+  async getDocuments() {
+    const params = new Model;
+    params['rdf:type'] = 'v-s:QueryParams';
+    params['v-s:storedQuery'] = 'v-bpa:AllProcessDocuments';
+    params['v-s:resultFormat'] = 'rows';
+    const {rows: documents} = await Backend.stored_query(params);
+    return documents;
+  }
+
+  async submit(e) {
+    e.preventDefault();
+    const form = e.target.closest('form');
+    const selectedDocuments = Array.from(form.elements).filter(element => element.type === 'checkbox' && element.checked).map(element => element.value);
+    this.model['v-bpa:hasProcessDocument'] = selectedDocuments.map(id => new Model(id));
+  }
+
+  async render() {
+    return html`
+      <h4 about="v-bpa:ChooseDocuments" property="rdfs:comment"></h4>
+      <form id="process-document-add-form">
+        ${(await this.getDocuments())?.map(([id]) => html`
+          <div class="form-check d-flex gap-2 align-items-center">
+            <input class="form-check-input mt-0" type="checkbox" value="${id}"
+              ${this.model.hasValue('v-bpa:hasProcessDocument', id) ? 'checked' : ''}
+              @change="${(e) => this.submit(e)}">
+            <label class="form-check-label w-100">
+              <div class="card mb-1 bg-light border-light" about="${id}">
+                <div class="card-body p-2">
+                  <div class="card-title mb-0">
+                    <a class="text-dark text-decoration-none d-flex align-items-center" href="#/DocumentView/${id}">
+                      <i class="fs-4 bi bi-file-earmark-text me-2"></i>
+                      <span property="v-bpa:documentName"></span>
+                      <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString() }}</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </label>
+          </div>
+        `).join('')}
+      </form>
+    `;
+  }
+}
+customElements.define(ProcessDocumentAdd.tag, ProcessDocumentAdd);
