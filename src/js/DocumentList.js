@@ -80,6 +80,10 @@ export default class DocumentList extends Component(HTMLElement) {
 
   post() {
     this.renderFilteredDocuments();
+
+    this.querySelector('#filters').addEventListener('shown.bs.modal', () => {
+      this.querySelector('.btn-close')?.focus();
+    });
   }
 
   render() {
@@ -109,7 +113,7 @@ export default class DocumentList extends Component(HTMLElement) {
             </thead>
             <tbody id="filtered-documents"></tbody>
           </table>
-          <div class="modal" id="filters" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          <div class="modal fade" id="filters" data-bs-keyboard="true" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
                 <div class="modal-header">

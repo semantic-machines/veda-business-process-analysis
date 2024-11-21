@@ -134,10 +134,13 @@ export default class ProcessQuickCreateModal extends Component(HTMLElement) {
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-body">
-              <h3 class="mb-1">
-                <i class="bi bi-diagram-3 me-2"></i>
-                <span about="v-bpa:ProcessQuickCreate" property="rdfs:label"></span>
-              </h3>
+              <div class="d-flex justify-content-between">
+                <h3 class="mb-1">
+                  <i class="bi bi-diagram-3 me-2"></i>
+                  <span about="v-bpa:ProcessQuickCreate" property="rdfs:label"></span>
+                </h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
               <p class="text-muted fw-bold" about="v-bpa:ProcessQuickCreate" property="rdfs:comment"></p>
               <div class="mb-3 position-relative">
                 <textarea class="form-control" placeholder="Введите текст с клавиатуры или воспользуйтесь микрофоном"

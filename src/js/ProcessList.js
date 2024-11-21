@@ -38,13 +38,13 @@ export default class ProcessList extends Component(HTMLElement) {
         return false;
       }
       // Фильтр по ответственному подразделению
-      if (data['v-bpa:responsibleDepartment'] && 
+      if (data['v-bpa:responsibleDepartment'] &&
           !responsibleDepartment.toLowerCase().includes(data['v-bpa:responsibleDepartment'].toLowerCase())) {
         return false;
       }
       // Фильтр по количеству участников
-      const participantsCount = processParticipant && typeof processParticipant === 'string' 
-        ? processParticipant.split(',').length 
+      const participantsCount = processParticipant && typeof processParticipant === 'string'
+        ? processParticipant.split(',').length
         : 0;
       if (data.participantsCountFrom && participantsCount < Number(data.participantsCountFrom)) {
         return false;
@@ -101,6 +101,10 @@ export default class ProcessList extends Component(HTMLElement) {
 
   post() {
     this.renderFilteredProcesses();
+
+    this.querySelector('#filters').addEventListener('shown.bs.modal', () => {
+      this.querySelector('.btn-close')?.focus();
+    });
   }
 
   render() {
@@ -133,7 +137,7 @@ export default class ProcessList extends Component(HTMLElement) {
             </thead>
             <tbody id="filtered-processes"></tbody>
           </table>
-          <div class="modal" id="filters" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+          <div class="modal fade" id="filters" data-bs-keyboard="true" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
                 <div class="modal-header">
@@ -182,7 +186,7 @@ export default class ProcessList extends Component(HTMLElement) {
                 </div>
               </div>
             </div>
-          </div>        
+          </div>
         </div>
       </div>
     `;
