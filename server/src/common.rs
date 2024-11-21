@@ -144,102 +144,8 @@ pub fn prepare_request_ai_parameters(
     let properties = prompt_individual.get_literals("v-bpa:properties").unwrap_or_default();
     info!("@A1 properties={:?}", properties);
 
-    // Словарь для хранения соответствия короткое имя -> полное имя
-    let mut property_mapping = PropertyMapping::new();
-
     // Собираем определения свойств
-    let mut properties_defs = Vec::new();
-
-    for full_prop in properties {
-        let mut prop_individual = Individual::default();
-        if module.backend.storage.get_individual(&full_prop, &mut prop_individual) != ResultCode::Ok {
-            continue;
-        }
-        prop_individual.parse_all();
-
-        let range = prop_individual.get_first_literal("rdfs:range").unwrap_or_default();
-        let description = prop_individual.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]).unwrap_or_else(|| full_prop.clone());
-
-        let short_name = full_prop.split(':').last().unwrap_or(&*full_prop).to_string();
-        property_mapping.insert(short_name.clone(), full_prop.clone());
-
-        let property_def = if !range.starts_with("xsd:") {
-            info!("@A2 Processing class range: {} for property {}", range, full_prop);
-
-            // Получаем все экземпляры этого класса
-            let mut enum_values = Vec::new();
-
-            match get_individuals_by_type(module, &range) {
-                Ok(instances) => {
-                    for mut instance in instances {
-                        if let Some(ex) = &excluded {
-                            if ex.contains(instance.get_id()) {
-                                continue;
-                            }
-                        }
-                        // Получаем метку на русском языке
-                        if let Some(label) = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]) {
-                            enum_values.push(label.clone());
-                            // Сохраняем маппинг метка -> URI для этого значения
-                            property_mapping.insert(format!("{}_{}", short_name, label), instance.get_id().to_string());
-                        }
-                    }
-
-                    info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
-
-                    if enum_values.len() > 0 {
-                        serde_json::json!({
-                            short_name: {
-                                "type": "string",
-                                "description": description,
-                                "enum": enum_values
-                            }
-                        })
-                    } else {
-                        serde_json::json!({
-                            short_name: {
-                                "type": "string",
-                                "description": description,
-                            }
-                        })
-                    }
-                },
-                Err(e) => {
-                    error!("Failed to get instances of type {}: {:?}", range, e);
-                    // Если не удалось получить экземпляры, обрабатываем как обычное строковое поле
-                    serde_json::json!({
-                        short_name: {
-                            "type": "string",
-                            "description": description
-                        }
-                    })
-                },
-            }
-        } else {
-            // Обрабатываем обычные xsd:* типы
-            let json_type = match range.as_str() {
-                "xsd:string" => "string",
-                "xsd:integer" => "integer",
-                "xsd:decimal" => "number",
-                _ => "string",
-            };
-
-            serde_json::json!({
-                short_name: {
-                    "type": json_type,
-                    "description": description
-                }
-            })
-        };
-
-        properties_defs.push(property_def);
-    }
-
-    // Собираем все свойства в один объект
-    let mut properties_obj = serde_json::Map::new();
-    for prop_def in properties_defs {
-        properties_obj.extend(prop_def.as_object().unwrap().clone());
-    }
+    let (properties_obj, property_mapping) = collect_define_from_schema(module, properties, excluded);
 
     // Собираем имена свойств для списка required
     let required: Vec<String> = property_mapping
@@ -412,4 +318,106 @@ pub fn set_to_individual_from_ai_response(
 pub fn format_time(seconds: i64) -> String {
     let duration = Duration::from_secs(seconds.unsigned_abs() as u64);
     format_duration(duration).to_string()
+}
+
+fn collect_define_from_schema(
+    module: &mut BusinessProcessAnalysisModule,
+    properties: Vec<String>,
+    excluded: Option<HashSet<&str>>,
+) -> (serde_json::Map<String, Value>, PropertyMapping) {
+    let mut properties_defs = Vec::new();
+    let mut property_mapping = PropertyMapping::new();
+
+    for full_prop in properties {
+        let mut prop_individual = Individual::default();
+        if module.backend.storage.get_individual(&full_prop, &mut prop_individual) != ResultCode::Ok {
+            continue;
+        }
+        prop_individual.parse_all();
+
+        let range = prop_individual.get_first_literal("rdfs:range").unwrap_or_default();
+        let description = prop_individual.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]).unwrap_or_else(|| full_prop.clone());
+
+        let short_name = full_prop.split(':').last().unwrap_or(&*full_prop).to_string();
+        property_mapping.insert(short_name.clone(), full_prop.clone());
+
+        let property_def = if !range.starts_with("xsd:") {
+            info!("@A2 Processing class range: {} for property {}", range, full_prop);
+
+            // Получаем все экземпляры этого класса
+            let mut enum_values = Vec::new();
+
+            match get_individuals_by_type(module, &range) {
+                Ok(instances) => {
+                    for mut instance in instances {
+                        if let Some(ex) = &excluded {
+                            if ex.contains(instance.get_id()) {
+                                continue;
+                            }
+                        }
+                        // Получаем метку на русском языке
+                        if let Some(label) = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]) {
+                            enum_values.push(label.clone());
+                            // Сохраняем маппинг метка -> URI для этого значения
+                            property_mapping.insert(format!("{}_{}", short_name, label), instance.get_id().to_string());
+                        }
+                    }
+
+                    info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
+
+                    if enum_values.len() > 0 {
+                        serde_json::json!({
+                            short_name: {
+                                "type": "string",
+                                "description": description,
+                                "enum": enum_values
+                            }
+                        })
+                    } else {
+                        serde_json::json!({
+                            short_name: {
+                                "type": "string",
+                                "description": description,
+                            }
+                        })
+                    }
+                },
+                Err(e) => {
+                    error!("Failed to get instances of type {}: {:?}", range, e);
+                    // Если не удалось получить экземпляры, обрабатываем как обычное строковое поле
+                    serde_json::json!({
+                        short_name: {
+                            "type": "string",
+                            "description": description
+                        }
+                    })
+                },
+            }
+        } else {
+            // Обрабатываем обычные xsd:* типы
+            let json_type = match range.as_str() {
+                "xsd:string" => "string",
+                "xsd:integer" => "integer",
+                "xsd:decimal" => "number",
+                _ => "string",
+            };
+
+            serde_json::json!({
+                short_name: {
+                    "type": json_type,
+                    "description": description
+                }
+            })
+        };
+
+        properties_defs.push(property_def);
+    }
+
+    // Собираем все свойства в один объект
+    let mut properties_obj = serde_json::Map::new();
+    for prop_def in properties_defs {
+        properties_obj.extend(prop_def.as_object().unwrap().clone());
+    }
+
+    (properties_obj, property_mapping)
 }
