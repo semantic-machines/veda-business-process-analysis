@@ -41,7 +41,6 @@ export default class ProcessDocumentInfo extends Component(HTMLElement) {
     `;
   }
 }
-
 customElements.define(ProcessDocumentInfo.tag, ProcessDocumentInfo);
 
 class ProcessDocumentList extends Component(HTMLElement) {
@@ -67,8 +66,8 @@ class ProcessDocumentList extends Component(HTMLElement) {
         <div class="card mb-3 bg-light border-light">
           <div class="card-body p-2">
             <div class="card-title mb-0">
-              <a class="text-secondary d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" @click="${(e) => this.parent.previewDocument(e, this.model)}">
-                <i class="fs-4 bi bi-file-earmark-text text-secondary me-2"></i>
+              <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" @click="${(e) => this.parent.previewDocument(e, this.model)}">
+                <i class="fs-4 bi bi-file-earmark-text me-2"></i>
                 <span property="v-bpa:documentName"></span>
                 <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString() }}</span>
               </a>
@@ -78,15 +77,12 @@ class ProcessDocumentList extends Component(HTMLElement) {
       </div>
       <div class="text-end">
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#process-document-add-modal">
-          <i class="bi bi-check me-1"></i>
-          <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
+          <span about="v-bpa:ChooseDocuments" property="rdfs:label"></span>
         </button>
       </div>
     `;
   }
 }
-
-
 customElements.define(ProcessDocumentList.tag, ProcessDocumentList);
 
 class ProcessDocumentAdd extends Component(HTMLElement) {
@@ -130,7 +126,7 @@ class ProcessDocumentAdd extends Component(HTMLElement) {
               <div class="card mb-1 bg-light border-light" about="${id}">
                 <div class="card-body p-2">
                   <div class="card-title mb-0">
-                    <a class="text-secondary d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" style="cursor:pointer" @click="${(e) => this.parent.previewDocument(e, this.model)}">
+                    <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" style="cursor:pointer" @click="${(e) => this.parent.previewDocument(e, this.model)}">
                       <i class="fs-4 bi bi-file-earmark-text me-2"></i>
                       <span property="v-bpa:documentName"></span>
                       <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString() }}</span>
@@ -154,7 +150,6 @@ class ProcessDocumentAdd extends Component(HTMLElement) {
     `;
   }
 }
-
 customElements.define(ProcessDocumentAdd.tag, ProcessDocumentAdd);
 
 class DocumentPreview extends Component(HTMLElement) {
@@ -191,5 +186,4 @@ class DocumentPreview extends Component(HTMLElement) {
     `;
   }
 }
-
 customElements.define(DocumentPreview.tag, DocumentPreview);
