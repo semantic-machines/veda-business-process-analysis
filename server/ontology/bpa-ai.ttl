@@ -23,7 +23,6 @@ v-bpa:promptText
 .
 
 # Класс для обработки произвольных запросов
-
 v-bpa:GenericProcessingRequest
   rdf:type owl:Class ;
   rdfs:subClassOf v-s:UserThing ;
@@ -36,6 +35,23 @@ v-bpa:GenericProcessingResult
   rdfs:subClassOf v-s:UserThing ;
   rdfs:label "Результат обработки"@ru ;
   rdfs:label "Result"@en ;
+.
+
+# Класс для входных данных запроса
+v-bpa:GenericProcessingInput
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Входные данные для обработки"@ru ;
+  rdfs:label "Processing Input"@en ;
+.
+
+# Свойства для GenericProcessingRequest
+v-bpa:hasInput
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Входные данные"@ru ;
+  rdfs:label "Input"@en ;
+  rdfs:domain v-bpa:GenericProcessingRequest ;
+  rdfs:range v-bpa:GenericProcessingInput ;
 .
 
 v-bpa:targetType
