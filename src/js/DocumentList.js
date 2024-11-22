@@ -138,7 +138,7 @@ class DocumentFilterForm extends Component(HTMLElement) {
             </div>
           </div>
           <div class="mb-3 position-relative">
-            <input type="text" class="form-control" id="document-filter-raw-input" name="v-bpa:rawInput" @change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}">
+            <textarea class="form-control" rows="3" id="document-filter-raw-input" name="v-bpa:rawInput" @change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}"></textarea>
             <div class="position-absolute" style="bottom: 0.125rem; right: 0.5rem;">
               <${InputAudio} data-for="document-filter-raw-input" id="document-filter-raw-input-audio"></${InputAudio}>
               <div class="d-none spinner-grow spinner-grow-sm" id="document-filter-raw-input-spinner"></div>
