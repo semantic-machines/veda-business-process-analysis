@@ -12,9 +12,19 @@ class ProcessFilterForm extends Component(HTMLElement) {
   updateDataFromForm() {
     this.data = {};
     const formData = new FormData(this.firstElementChild);
-    for (const key of formData.keys()) {
-      this.data[key] = formData.getAll(key);
+    const formKeys = [
+      'rdfs:label',
+      'v-bpa:hasProcessJustification',
+      'v-bpa:responsibleDepartment',
+      'v-bpa:laborCosts',
+      'v-bpa:rawInput'
+    ];
+
+    for (const key of formKeys) {
+      const values = formData.getAll(key);
+      this.data[key] = values.length ? values : [''];
     }
+    console.log(this.data);
   }
 
   submit(e) {
@@ -27,8 +37,8 @@ class ProcessFilterForm extends Component(HTMLElement) {
     this.dispatchEvent(new CustomEvent('reset'));
   }
 
-  async handleRawInput(e) {
-    this.updateDataFromForm(e);
+  async handleRawInput() {
+    this.updateDataFromForm();
 
     if (!this.data['v-bpa:rawInput'].length) return;
 
@@ -59,21 +69,21 @@ class ProcessFilterForm extends Component(HTMLElement) {
     await this.waitForRequestResult(request);
   }
 
-  waitForRequestResult = async (request) => {
+  waitForRequestResult = (request) => {
     return Promise.race([
       this.handleRequestResult(request),
       this.createTimeout()
     ]);
   }
 
-  handleRequestResult = async (request) => {
+  handleRequestResult = (request) => {
     return new Promise((resolve, reject) => {
       const handleReset = async () => {
         if (!request.hasValue('v-bpa:structuredOutput')) return;
 
         try {
           this.data = JSON.parse(request['v-bpa:structuredOutput']);
-          this.update();
+          await this.update();
           resolve();
         } catch (error) {
           reject(error);
