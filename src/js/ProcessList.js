@@ -283,23 +283,29 @@ export default class ProcessList extends Component(HTMLElement) {
 
   renderFilteredProcesses() {
     const container = this.querySelector('#filtered-processes');
-    container.innerHTML = `
-      ${this.filtered.map(([id, label, description, justification, responsibleDepartment, processParticipant, laborCosts]) => html`
-        <tr onclick="location.hash = '#/ProcessView/${id}'">
-          <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
-          <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
-          <td class="align-middle">${responsibleDepartment}</td>
-          <td class="align-middle">
-            <i class="bi bi-people-fill me-1"></i>
-            <strong>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</strong>
-          </td>
-          <td class="align-middle lh-sm">
-            <strong>${laborCosts ?? 0}</strong><br>
-            <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
-          </td>
-        </tr>
-      `).join('')}
-    `;
+    const fragment = document.createDocumentFragment();
+
+    this.filtered.forEach(([id, label, description, justification, responsibleDepartment, processParticipant, laborCosts]) => {
+      const row = document.createElement('tr');
+      row.onclick = () => location.hash = `#/ProcessView/${id}`;
+      row.innerHTML = `
+        <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
+        <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
+        <td class="align-middle">${responsibleDepartment}</td>
+        <td class="align-middle">
+          <i class="bi bi-people-fill me-1"></i>
+          <strong>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</strong>
+        </td>
+        <td class="align-middle lh-sm">
+          <strong>${laborCosts ?? 0}</strong><br>
+          <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
+        </td>
+      `;
+      fragment.appendChild(row);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(fragment);
   }
 
   post() {

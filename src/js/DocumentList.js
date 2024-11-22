@@ -272,14 +272,18 @@ export default class DocumentList extends Component(HTMLElement) {
 
   renderFilteredDocuments() {
     const container = this.querySelector('#filtered-documents');
-    container.innerHTML = `
-      ${this.filtered.map(([id, name, content, created]) => html`
+    const fragment = document.createDocumentFragment();
+    this.filtered.forEach(([id, name, content, created]) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
         <tr onclick="location.hash = '#/DocumentView/${id}'">
           <td class="align-middle"><h5 class="mb-0">${name}</h5><p class="text-muted mb-0">${content && content.length > 120 ? content.slice(0, 120) + '...' : content}</p></td>
           <td class="align-middle text-end">${new Date(created).toLocaleDateString()}</td>
-        </tr>
-      `).join('')}
-    `;
+      `;
+      fragment.appendChild(row);
+    });
+    container.innerHTML = '';
+    container.appendChild(fragment);
   }
 
   post() {
