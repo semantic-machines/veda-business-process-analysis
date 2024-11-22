@@ -292,11 +292,11 @@ export default class ProcessList extends Component(HTMLElement) {
         <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
         <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
         <td class="align-middle">${responsibleDepartment}</td>
-        <td class="align-middle">
+        <td class="align-middle text-end">
           <i class="bi bi-people-fill me-1"></i>
           <strong>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</strong>
         </td>
-        <td class="align-middle lh-sm">
+        <td class="align-middle text-end lh-sm">
           <strong>${laborCosts ?? 0}</strong><br>
           <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
         </td>
@@ -333,8 +333,8 @@ export default class ProcessList extends Component(HTMLElement) {
                 <th width="50%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
                 <th width="10%" class="text-secondary fw-normal" about="v-bpa:hasProcessJustification" property="rdfs:label"></th>
                 <th width="20%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
-                <th width="10%" class="text-secondary fw-normal" about="v-bpa:processParticipant" property="rdfs:comment"></th>
-                <th width="10%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
+                <th width="10%" class="text-secondary fw-normal text-end" about="v-bpa:processParticipant" property="rdfs:comment"></th>
+                <th width="10%" class="text-secondary fw-normal text-end"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
               </tr>
             </thead>
             <tbody id="filtered-processes"></tbody>
