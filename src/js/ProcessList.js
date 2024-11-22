@@ -9,6 +9,14 @@ class ProcessFilterForm extends Component(HTMLElement) {
 
   data = {};
 
+  added() {
+    const savedData = sessionStorage.getItem('ProcessFilterForm_data');
+    if (savedData) {
+      this.data = JSON.parse(savedData);
+      this.dispatchEvent(new CustomEvent('apply', {detail: this.data}));
+    }
+  }
+
   updateDataFromForm() {
     this.data = {};
     const formData = new FormData(this.firstElementChild);
@@ -29,10 +37,14 @@ class ProcessFilterForm extends Component(HTMLElement) {
   submit(e) {
     e.preventDefault();
     this.updateDataFromForm();
+    sessionStorage.setItem('ProcessFilterForm_data', JSON.stringify(this.data));
     this.dispatchEvent(new CustomEvent('apply', {detail: this.data}));
   }
 
   reset() {
+    sessionStorage.removeItem('ProcessFilterForm_data');
+    this.data = {};
+    this.update();
     this.dispatchEvent(new CustomEvent('reset'));
   }
 
@@ -111,7 +123,7 @@ class ProcessFilterForm extends Component(HTMLElement) {
 
   render() {
     return html`
-      <form @submit="${(e) => this.submit(e)}">
+      <form @submit="${(e) => this.submit(e)}" @reset="${() => this.reset()}">
         <div class="mb-5">
           <div class="mb-3">
             <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
@@ -146,7 +158,7 @@ class ProcessFilterForm extends Component(HTMLElement) {
           </div>
         </div>
         <button type="submit" class="btn btn-secondary me-2"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
-        <button type="reset" @click="${(e) => this.reset(e)}" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
+        <button type="reset" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
       </form>
     `;
   }
