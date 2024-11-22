@@ -1,10 +1,35 @@
+/// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
+/// и заданного типа целевого индивида.
 use crate::common::{prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use serde_json::Value;
 use tokio::runtime::Runtime;
+use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
+//use crate::types::SYSTEM_PREDICATE;
+
+/// Подготавливает данные для анализа на основе пользовательского ввода,
+/// определения целевого типа и промпта
+fn prepare_analysis_data(raw_input: &str, target_type_def: &mut Individual, input_data: Option<Value>) -> Result<Value, Box<dyn std::error::Error>> {
+    let mut data = serde_json::json!({
+        "input": raw_input,
+        "targetType": {
+            "id": target_type_def.get_id(),
+            "label": target_type_def.get_first_literal("rdfs:label")
+        }
+    });
+
+    // Если есть дополнительные входные данные, добавляем их
+    if let Some(input) = input_data {
+        if let Some(obj) = data.as_object_mut() {
+            obj.insert("inputData".to_string(), input);
+        }
+    }
+
+    Ok(data)
+}
 
 /// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
 /// и заданного типа целевого индивида.
@@ -21,9 +46,9 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     if module.backend.storage.get_individual(&prompt_id, &mut prompt_individual) != ResultCode::Ok {
         return Err(format!("Failed to load prompt: {}", prompt_id).into());
     }
+
     // Получаем тип целевого индивида
     let target_type = prompt_individual.get_first_literal("v-bpa:targetType").ok_or("No target type specified")?;
-
     // Загружаем определение целевого типа из онтологии
     let mut target_type_def = Individual::default();
     if module.backend.storage.get_individual(&target_type, &mut target_type_def) != ResultCode::Ok {
@@ -31,16 +56,29 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     }
     target_type_def.parse_all();
 
+    // Обрабатываем входные данные, если они есть
+    let structured_input = if let Some(structured_input) = request.get_first_literal("v-bpa:structuredInput") {
+        info!("Processing additional input data: {}", structured_input);
+        Some(serde_json::from_str(&structured_input)?)
+    } else {
+        None
+    };
+
+    let is_structured_input = structured_input.is_some();
+
+    info!("@B structured_input={:?}", structured_input);
     // Подготавливаем данные для анализа
-    let analysis_data = prepare_analysis_data(&raw_input, &mut target_type_def)?;
+    let analysis_data = prepare_analysis_data(&raw_input, &mut target_type_def, structured_input)?;
 
     // Создаем параметры запроса и получаем маппинг свойств
-    let (parameters, property_mapping) = prepare_request_ai_parameters(module, &prompt_id, analysis_data, None)?;
+    let (req_to_ai, property_mapping) = prepare_request_ai_parameters(module, &prompt_id, analysis_data, None)?;
+
+    info!("@E = req_to_ai={:?}", req_to_ai);
 
     // Отправляем запрос к AI
     info!("Sending request to AI for processing input: {}", raw_input);
     let rt = Runtime::new()?;
-    let ai_response = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
+    let ai_response = rt.block_on(async { send_request_to_ai(module, req_to_ai).await })?;
 
     // Создаем новый индивид целевого типа для сохранения результата
     let result_id = format!("d:generic_result_{}", uuid::Uuid::new_v4());
@@ -49,11 +87,14 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     result_individual.set_uri("rdf:type", "v-bpa:GenericProcessingResult");
     result_individual.set_uri("v-bpa:targetType", &target_type);
 
-    // Сохраняем оригинальный текст
-    //result_individual.set_string("v-bpa:originalInput", &raw_input, Lang::none());
-
-    // Сохраняем результат анализа AI, включая очищенный текст
-    set_to_individual_from_ai_response(module, &mut result_individual, &ai_response, &property_mapping)?;
+    if is_structured_input {
+        if let Some(j) = ai_response.get("result") {
+            request.set_string("v-bpa:structuredOutput", &j.to_string(), Lang::none());
+        }
+    } else {
+        // Сохраняем результат анализа AI, включая очищенный текст
+        set_to_individual_from_ai_response(module, &mut result_individual, &ai_response, &property_mapping)?;
+    }
 
     // Сохраняем обновленный индивид
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut result_individual) {
@@ -72,16 +113,4 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
 
     info!("Successfully processed generic request {} and created result {}", request.get_id(), result_id);
     Ok(())
-}
-
-/// Подготавливает данные для анализа на основе пользовательского ввода,
-/// определения целевого типа и промпта
-fn prepare_analysis_data(raw_input: &str, target_type_def: &mut Individual) -> Result<Value, Box<dyn std::error::Error>> {
-    Ok(serde_json::json!({
-        "input": raw_input,
-        "targetType": {
-            "id": target_type_def.get_id(),
-            "label": target_type_def.get_first_literal("rdfs:label")
-        }
-    }))
 }

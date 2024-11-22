@@ -244,8 +244,8 @@ pub fn set_to_individual_from_ai_response(
     property_mapping: &PropertyMapping,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Получаем вложенный объект optimized_process
-    let response_values = if let Some(optimized_process) = ai_response.get("result") {
-        if let Some(obj) = optimized_process.as_object() {
+    let response_values = if let Some(res) = ai_response.get("result") {
+        if let Some(obj) = res.as_object() {
             obj
         } else {
             error!("optimized_process is not an object");
@@ -255,6 +255,8 @@ pub fn set_to_individual_from_ai_response(
         error!("No optimized_process object found in AI response");
         return Err("Missing optimized_process object".into());
     };
+
+    info!("@D response_values={:?}", response_values);
 
     for (short_name, value) in response_values {
         if let Some(full_prop) = property_mapping.get(short_name) {
@@ -320,7 +322,7 @@ pub fn format_time(seconds: i64) -> String {
     format_duration(duration).to_string()
 }
 
-fn collect_define_from_schema(
+pub fn collect_define_from_schema(
     module: &mut BusinessProcessAnalysisModule,
     properties: Vec<String>,
     excluded: Option<HashSet<&str>>,
@@ -335,6 +337,7 @@ fn collect_define_from_schema(
         }
         prop_individual.parse_all();
 
+        let is_functional_property = prop_individual.any_exists("rdf:type", &["owl:FunctionalProperty"]);
         let range = prop_individual.get_first_literal("rdfs:range").unwrap_or_default();
         let description = prop_individual.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]).unwrap_or_else(|| full_prop.clone());
 
@@ -344,58 +347,62 @@ fn collect_define_from_schema(
         let property_def = if !range.starts_with("xsd:") {
             info!("@A2 Processing class range: {} for property {}", range, full_prop);
 
-            // Получаем все экземпляры этого класса
-            let mut enum_values = Vec::new();
-
             match get_individuals_by_type(module, &range) {
-                Ok(instances) => {
-                    for mut instance in instances {
-                        if let Some(ex) = &excluded {
-                            if ex.contains(instance.get_id()) {
-                                continue;
+                Ok(mut instances) => {
+                    let enum_values = instances
+                        .iter_mut()
+                        .filter(|instance| {
+                            if let Some(ex) = &excluded {
+                                !ex.contains(instance.get_id())
+                            } else {
+                                true
                             }
-                        }
-                        // Получаем метку на русском языке
-                        if let Some(label) = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]) {
-                            enum_values.push(label.clone());
-                            // Сохраняем маппинг метка -> URI для этого значения
-                            property_mapping.insert(format!("{}_{}", short_name, label), instance.get_id().to_string());
-                        }
-                    }
+                        })
+                        .filter_map(|instance| {
+                            let label = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]);
+                            if let Some(label) = &label {
+                                property_mapping.insert(format!("{}_{}", short_name, label), instance.get_id().to_string());
+                            }
+                            label
+                        })
+                        .collect::<Vec<_>>();
 
                     info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
 
-                    if enum_values.len() > 0 {
+                    if !enum_values.is_empty() {
                         serde_json::json!({
                             short_name: {
-                                "type": "string",
-                                "description": description,
-                                "enum": enum_values
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": enum_values
+                                },
+                                "description": description
                             }
                         })
                     } else {
                         serde_json::json!({
                             short_name: {
-                                "type": "string",
-                                "description": description,
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": description
                             }
                         })
                     }
                 },
                 Err(e) => {
                     error!("Failed to get instances of type {}: {:?}", range, e);
-                    // Если не удалось получить экземпляры, обрабатываем как обычное строковое поле
                     serde_json::json!({
                         short_name: {
-                            "type": "string",
+                            "type": "array",
+                            "items": {"type": "string"},
                             "description": description
                         }
                     })
                 },
             }
         } else {
-            // Обрабатываем обычные xsd:* типы
-            let json_type = match range.as_str() {
+            let item_type = match range.as_str() {
                 "xsd:string" => "string",
                 "xsd:integer" => "integer",
                 "xsd:decimal" => "number",
@@ -404,7 +411,8 @@ fn collect_define_from_schema(
 
             serde_json::json!({
                 short_name: {
-                    "type": json_type,
+                    "type": "array",
+                    "items": {"type": item_type},
                     "description": description
                 }
             })
