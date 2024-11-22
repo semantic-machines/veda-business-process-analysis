@@ -12,17 +12,17 @@ class ProcessFilterForm extends Component(HTMLElement) {
   updateDataFromForm() {
     this.data = {};
     const formData = new FormData(this.firstElementChild);
-    const formKeys = [
-      'rdfs:label',
-      'v-bpa:hasProcessJustification',
-      'v-bpa:responsibleDepartment',
-      'v-bpa:laborCosts',
-      'v-bpa:rawInput'
-    ];
+    const formKeys = {
+      'rdfs:label': String,
+      'v-bpa:hasProcessJustification': Array,
+      'v-bpa:responsibleDepartment': String,
+      'v-bpa:laborCosts': Array,
+      'v-bpa:rawInput': String
+    }
 
-    for (const key of formKeys) {
+    for (const [key, type] of Object.entries(formKeys)) {
       const values = formData.getAll(key);
-      this.data[key] = values.length ? values : [''];
+      this.data[key] = type === Array ? values : values.filter(Boolean);
     }
   }
 
@@ -52,17 +52,12 @@ class ProcessFilterForm extends Component(HTMLElement) {
   }
 
   createRequest = async () => {
-    const structuredInput = {};
-    for (const [key, value] of Object.entries(this.data)) {
-      if (key === 'v-bpa:rawInput') continue;
-      if (value.length) structuredInput[key] = value;
-    }
-
     const request = new Model;
     request['rdf:type'] = 'v-bpa:GenericProcessingRequest';
     request['v-bpa:prompt'] = 'v-bpa:ModifySearchFiltersPrompt';
-    request['v-bpa:rawInput'] = this.data['v-bpa:rawInput'];
-    request['v-bpa:structuredInput'] = JSON.stringify(structuredInput);
+    request['v-bpa:rawInput'] = [...this.data['v-bpa:rawInput']];
+    delete this.data['v-bpa:rawInput'];
+    request['v-bpa:structuredInput'] = JSON.stringify(this.data);
     request.subscribe();
     await request.save();
     await this.waitForRequestResult(request);
