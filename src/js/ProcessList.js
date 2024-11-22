@@ -81,7 +81,7 @@ class ProcessFilterForm extends Component(HTMLElement) {
         if (!request.hasValue('v-bpa:structuredOutput')) return;
 
         try {
-          this.data = JSON.parse(request['v-bpa:structuredOutput']);
+          this.data = JSON.parse(request['v-bpa:structuredOutput'][0]);
           await this.update();
           resolve();
         } catch (error) {
