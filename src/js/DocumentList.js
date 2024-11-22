@@ -13,8 +13,6 @@ class DocumentFilters extends Component(HTMLElement) {
     for (const key of formData.keys()) {
       this.data[key] = formData.getAll(key);
     }
-    console.log(JSON.stringify(this.data, null, 2));
-
     this.renderFiltersCount();
     this.dispatchEvent(new CustomEvent('filters-changed', {detail: this.data}));
   }

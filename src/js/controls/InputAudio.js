@@ -206,6 +206,7 @@ export default class InputAudio extends Component(HTMLElement) {
             }
             input.value = value;
             input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
           });
         } catch (error) {
           console.error('Ошибка распознавания аудио:', error);

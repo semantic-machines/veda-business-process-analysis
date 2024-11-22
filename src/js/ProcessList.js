@@ -1,28 +1,168 @@
-import {Component, html, Backend, Model} from 'veda-client';
+import {Component, html, Backend, Model, timeout} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
 import Literal from './Literal.js';
 import InputAudio from './controls/InputAudio.js';
 import {Modal} from 'bootstrap';
+
+class ProcessFilterForm extends Component(HTMLElement) {
+  static tag = 'bpa-process-filter-form';
+
+  data = {};
+
+  updateDataFromForm() {
+    this.data = {};
+    const formData = new FormData(this.firstElementChild);
+    for (const key of formData.keys()) {
+      this.data[key] = formData.getAll(key);
+    }
+  }
+
+  submit(e) {
+    e.preventDefault();
+    this.updateDataFromForm();
+    this.dispatchEvent(new CustomEvent('apply', {detail: this.data}));
+  }
+
+  reset() {
+    this.dispatchEvent(new CustomEvent('reset'));
+  }
+
+  async handleRawInput(e) {
+    this.updateDataFromForm(e);
+
+    if (!this.data['v-bpa:rawInput'].length) return;
+
+    try {
+      this.showSpinner(true);
+      await this.createRequest();
+    } catch (error) {
+      this.handleError(error);
+    } finally {
+      this.showSpinner(false);
+    }
+  }
+
+  createRequest = async () => {
+    const structuredInput = {};
+    for (const [key, value] of Object.entries(this.data)) {
+      if (key === 'v-bpa:rawInput') continue;
+      if (value.length) structuredInput[key] = value;
+    }
+
+    const request = new Model;
+    request['rdf:type'] = 'v-bpa:GenericProcessingRequest';
+    request['v-bpa:prompt'] = 'v-bpa:ModifySearchFiltersPrompt';
+    request['v-bpa:rawInput'] = this.data['v-bpa:rawInput'];
+    request['v-bpa:structuredInput'] = JSON.stringify(structuredInput);
+    request.subscribe();
+    await request.save();
+    await this.waitForRequestResult(request);
+  }
+
+  waitForRequestResult = async (request) => {
+    return Promise.race([
+      this.handleRequestResult(request),
+      this.createTimeout()
+    ]);
+  }
+
+  handleRequestResult = async (request) => {
+    return new Promise((resolve, reject) => {
+      const handleReset = async () => {
+        if (!request.hasValue('v-bpa:structuredOutput')) return;
+
+        try {
+          this.data = JSON.parse(request['v-bpa:structuredOutput']);
+          this.update();
+          resolve();
+        } catch (error) {
+          reject(error);
+        } finally {
+          request.off('afterreset', handleReset);
+          request.unsubscribe();
+        }
+      }
+
+      request.on('afterreset', handleReset);
+    });
+  }
+
+  handleError = (error) => {
+    alert(`Ошибка голосового заполнения формы: ${error.message}`);
+    console.error('Ошибка голосового заполнения формы', error);
+  }
+
+  createTimeout = () => {
+    return timeout(30000).then(() => {
+      throw new Error('Превышено время ожидания обработки голосового ввода');
+    });
+  }
+
+  showSpinner(show) {
+    const inputAudio = this.querySelector(`${InputAudio}`);
+    inputAudio.classList.toggle('d-none', show);
+    const spinner = this.querySelector('#process-filter-raw-input-spinner');
+    spinner.classList.toggle('d-none', !show);
+  }
+
+  render() {
+    return html`
+      <form @submit="${(e) => this.submit(e)}">
+        <div class="mb-5">
+          <div class="mb-3">
+            <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
+            <input type="text" class="form-control" id="label" name="rdfs:label" value="${this.data['rdfs:label']?.[0] || ''}">
+          </div>
+          <div class="mb-3">
+            <label for="justification" class="form-label" about="v-bpa:hasProcessJustification" property="rdfs:label"></label>
+            <select class="form-select" id="justification" name="v-bpa:hasProcessJustification" multiple>
+              <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:CompletelyJustified') ? 'selected' : ''}></option>
+              <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:PartlyJustified') ? 'selected' : ''}></option>
+              <option value="v-bpa:PoorlyJustified" about="v-bpa:PoorlyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:PoorlyJustified') ? 'selected' : ''}></option>
+              <option value="v-bpa:NoDocumentForJustification" about="v-bpa:NoDocumentForJustification" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:NoDocumentForJustification') ? 'selected' : ''}></option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="responsibleDepartment" class="form-label" about="v-bpa:responsibleDepartment" property="rdfs:comment"></label>
+            <input type="text" class="form-control" id="responsibleDepartment" name="v-bpa:responsibleDepartment" value="${this.data['v-bpa:responsibleDepartment']?.[0] || ''}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="laborCosts" about="v-bpa:laborCosts" property="rdfs:label"></label>
+            <div class="mb-3 d-flex align-items-center" id="laborCosts">
+              <input type="number" placeholder="от" class="form-control me-2 w-25" name="v-bpa:laborCosts" value="${this.data['v-bpa:laborCosts']?.[0] || ''}">
+              <input type="number" placeholder="до" class="form-control w-25" name="v-bpa:laborCosts" value="${this.data['v-bpa:laborCosts']?.[1] || ''}">
+            </div>
+          </div>
+          <div class="mb-3 position-relative">
+            <input type="text" class="form-control" id="process-filter-raw-input" name="v-bpa:rawInput" @change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}">
+            <div class="position-absolute" style="bottom: 0.125rem; right: 0.5rem;">
+              <${InputAudio} data-for="process-filter-raw-input" id="process-filter-raw-input-audio"></${InputAudio}>
+              <div class="d-none spinner-grow spinner-grow-sm" id="process-filter-raw-input-spinner"></div>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-secondary me-2"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
+        <button type="reset" @click="${(e) => this.reset(e)}" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
+      </form>
+    `;
+  }
+}
+
+customElements.define(ProcessFilterForm.tag, ProcessFilterForm);
 
 class ProcessFilters extends Component(HTMLElement) {
   static tag = 'bpa-process-filters';
 
   data = {};
 
-  applyFilters(e) {
-    e.preventDefault();
-    const form = e.target.closest('form');
-    const formData = new FormData(form);
-    for (const key of formData.keys()) {
-      this.data[key] = formData.getAll(key);
-    }
-    console.log(JSON.stringify(this.data, null, 2));
-
+  handleApplyFilters(data) {
+    this.data = data;
     this.renderFiltersCount();
     this.dispatchEvent(new CustomEvent('filters-changed', {detail: this.data}));
+    Modal.getInstance(this.lastElementChild)?.hide();
   }
 
-  resetFilters() {
+  handleResetFilters() {
     this.data = {};
     this.renderFiltersCount();
     this.dispatchEvent(new CustomEvent('filters-changed', {detail: null}));
@@ -43,43 +183,10 @@ class ProcessFilters extends Component(HTMLElement) {
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <form @submit="${(e) => this.applyFilters(e)}">
-                <div class="mb-5">
-                  <div class="mb-3">
-                    <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
-                    <input type="text" class="form-control" id="label" name="rdfs:label">
-                  </div>
-                  <div class="mb-3">
-                    <label for="justification" class="form-label" about="v-bpa:hasProcessJustification" property="rdfs:label"></label>
-                    <select class="form-select" id="justification" name="v-bpa:hasProcessJustification" multiple>
-                      <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label"></option>
-                      <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label"></option>
-                      <option value="v-bpa:PoorlyJustified" about="v-bpa:PoorlyJustified" property="rdfs:label"></option>
-                      <option value="v-bpa:NoDocumentForJustification" about="v-bpa:NoDocumentForJustification" property="rdfs:label"></option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label for="responsibleDepartment" class="form-label" about="v-bpa:responsibleDepartment" property="rdfs:comment"></label>
-                    <input type="text" class="form-control" id="responsibleDepartment" name="v-bpa:responsibleDepartment">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label" for="laborCosts" about="v-bpa:laborCosts" property="rdfs:label"></label>
-                    <div class="mb-3 d-flex align-items-center" id="laborCosts">
-                      <input type="number" placeholder="от" class="form-control me-2 w-25" name="v-bpa:laborCosts">
-                      <input type="number" placeholder="до" class="form-control w-25" name="v-bpa:laborCosts">
-                    </div>
-                  </div>
-                  <div class="mb-3 position-relative">
-                    <label for="process-filter-raw-input" class="form-label" about="v-bpa:rawInput" property="rdfs:label"></label>
-                    <textarea class="form-control" id="process-filter-raw-input" name="v-bpa:rawInput" rows="3"></textarea>
-                    <div class="position-absolute bottom-0" style="right:0.75rem;">
-                      <${InputAudio} data-for="process-filter-raw-input"></${InputAudio}>
-                    </div>
-                  </div>
-                </div>
-                <button type="submit" class="btn btn-secondary me-2" data-bs-dismiss="modal"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
-                <button type="reset" @click="${(e) => this.resetFilters(e)}" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
-              </form>
+              <${ProcessFilterForm}
+                @apply="${(e) => this.handleApplyFilters(e.detail)}"
+                @reset="${() => this.handleResetFilters()}"
+              ></${ProcessFilterForm}>
             </div>
           </div>
         </div>
