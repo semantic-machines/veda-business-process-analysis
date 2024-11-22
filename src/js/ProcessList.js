@@ -24,7 +24,6 @@ class ProcessFilterForm extends Component(HTMLElement) {
       const values = formData.getAll(key);
       this.data[key] = values.length ? values : [''];
     }
-    console.log(this.data);
   }
 
   submit(e) {
