@@ -103,7 +103,7 @@ v-bpa:documentContent
 .
 
 v-bpa:justificationReason
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Причина обоснования"@ru ;
   rdfs:label "Justification Reason"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
