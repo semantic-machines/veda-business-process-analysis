@@ -1,5 +1,5 @@
 use crate::queue_processor::BusinessProcessAnalysisModule;
-use crate::types::{AIResponseValues, PropertyMapping};
+use crate::types::{AIResponseValues, PropertyMapping, PropertySchema};
 use humantime::format_duration;
 use openai_dive::v1::resources::chat::{
     ChatCompletionParameters, ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder,
@@ -127,25 +127,36 @@ pub fn get_individuals_uris_by_query(module: &mut BusinessProcessAnalysisModule,
     Ok(res.result)
 }
 
-/// Подготавливает параметры запроса для оптимизации на основе промпта из онтологии
-pub fn prepare_request_ai_parameters(
+pub fn load_schema(
     module: &mut BusinessProcessAnalysisModule,
-    system_prompt_name: &str,
-    analysis_data: Value,
+    system_prompt_id: &str,
     excluded: Option<HashSet<&str>>,
-) -> Result<(ChatCompletionParameters, PropertyMapping), Box<dyn std::error::Error>> {
+    property_mapping: &mut PropertyMapping,
+) -> Result<PropertySchema, Box<dyn std::error::Error>> {
     let mut prompt_individual = Individual::default();
-    if module.backend.storage.get_individual(system_prompt_name, &mut prompt_individual) != ResultCode::Ok {
-        return Err("Failed to load optimization prompt".into());
+    if module.backend.storage.get_individual(system_prompt_id, &mut prompt_individual) != ResultCode::Ok {
+        return Err("Failed to load prompt".into());
     }
-    prompt_individual.parse_all();
-
-    let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
     let properties = prompt_individual.get_literals("v-bpa:properties").unwrap_or_default();
     info!("@A1 properties={:?}", properties);
 
     // Собираем определения свойств
-    let (properties_obj, property_mapping) = collect_define_from_schema(module, properties, excluded);
+    Ok(collect_define_from_schema(module, properties, excluded, property_mapping))
+}
+
+/// Подготавливает параметры запроса для оптимизации на основе промпта из онтологии
+pub fn prepare_request_ai_parameters(
+    module: &mut BusinessProcessAnalysisModule,
+    system_prompt_id: &str,
+    analysis_data: Value,
+    properties_schema: PropertySchema,
+    property_mapping: &mut PropertyMapping,
+) -> Result<ChatCompletionParameters, Box<dyn std::error::Error>> {
+    let mut prompt_individual = Individual::default();
+    if module.backend.storage.get_individual(system_prompt_id, &mut prompt_individual) != ResultCode::Ok {
+        return Err("Failed to load prompt".into());
+    }
+    let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
 
     // Собираем имена свойств для списка required
     let required: Vec<String> = property_mapping
@@ -162,7 +173,7 @@ pub fn prepare_request_ai_parameters(
             "result": {
                 "type": "object",
                 "additionalProperties": false,
-                "properties": properties_obj,
+                "properties": properties_schema,
                 "required": required
             }
         },
@@ -187,7 +198,7 @@ pub fn prepare_request_ai_parameters(
         .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("process_optimization").schema(schema).strict(true).build()?))
         .build()?;
 
-    Ok((parameters, property_mapping))
+    Ok(parameters)
 }
 
 /// Отправляет запрос к AI и обрабатывает ответ
@@ -326,9 +337,9 @@ pub fn collect_define_from_schema(
     module: &mut BusinessProcessAnalysisModule,
     properties: Vec<String>,
     excluded: Option<HashSet<&str>>,
-) -> (serde_json::Map<String, Value>, PropertyMapping) {
+    property_mapping: &mut PropertyMapping,
+) -> PropertySchema {
     let mut properties_defs = Vec::new();
-    let mut property_mapping = PropertyMapping::new();
 
     for full_prop in properties {
         let mut prop_individual = Individual::default();
@@ -370,13 +381,51 @@ pub fn collect_define_from_schema(
                     info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
 
                     if !enum_values.is_empty() {
+                        if is_functional_property {
+                            serde_json::json!({
+                                short_name: {
+                                    "type": "string",
+                                    "enum": enum_values,
+                                    "description": description
+                                }
+                            })
+                        } else {
+                            serde_json::json!({
+                                short_name: {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "enum": enum_values
+                                    },
+                                    "description": description
+                                }
+                            })
+                        }
+                    } else {
+                        if is_functional_property {
+                            serde_json::json!({
+                                short_name: {
+                                    "type": "string",
+                                    "description": description
+                                }
+                            })
+                        } else {
+                            serde_json::json!({
+                                short_name: {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": description
+                                }
+                            })
+                        }
+                    }
+                },
+                Err(e) => {
+                    error!("Failed to get instances of type {}: {:?}", range, e);
+                    if is_functional_property {
                         serde_json::json!({
                             short_name: {
-                                "type": "array",
-                                "items": {
-                                    "type": "string",
-                                    "enum": enum_values
-                                },
+                                "type": "string",
                                 "description": description
                             }
                         })
@@ -390,16 +439,6 @@ pub fn collect_define_from_schema(
                         })
                     }
                 },
-                Err(e) => {
-                    error!("Failed to get instances of type {}: {:?}", range, e);
-                    serde_json::json!({
-                        short_name: {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": description
-                        }
-                    })
-                },
             }
         } else {
             let item_type = match range.as_str() {
@@ -409,23 +448,164 @@ pub fn collect_define_from_schema(
                 _ => "string",
             };
 
-            serde_json::json!({
-                short_name: {
-                    "type": "array",
-                    "items": {"type": item_type},
-                    "description": description
-                }
-            })
+            if is_functional_property {
+                serde_json::json!({
+                    short_name: {
+                        "type": item_type,
+                        "description": description
+                    }
+                })
+            } else {
+                serde_json::json!({
+                    short_name: {
+                        "type": "array",
+                        "items": {"type": item_type},
+                        "description": description
+                    }
+                })
+            }
         };
 
         properties_defs.push(property_def);
     }
 
     // Собираем все свойства в один объект
-    let mut properties_obj = serde_json::Map::new();
+    let mut properties_obj = PropertySchema::new();
     for prop_def in properties_defs {
         properties_obj.extend(prop_def.as_object().unwrap().clone());
     }
 
-    (properties_obj, property_mapping)
+    properties_obj
+}
+
+////////////////
+/// Преобразует полные URI в человекочитаемые значения
+fn transform_uri_to_display_value(uri: &str, property_mapping: &PropertyMapping) -> Option<String> {
+    info!("Transforming URI to display value: {}", uri);
+    for (key, value) in property_mapping {
+        if value == uri {
+            if let Some((_prefix, display_value)) = key.split_once('_') {
+                info!("Found display value: {} for URI: {}", display_value, uri);
+                return Some(display_value.to_string());
+            }
+        }
+    }
+    info!("No display value found for URI: {}", uri);
+    None
+}
+
+/// Преобразует человекочитаемое значение обратно в URI
+fn transform_display_value_to_uri(predicate: &str, display_value: &str, property_mapping: &PropertyMapping) -> Option<String> {
+    let enum_key = format!("{}_{}", predicate, display_value);
+    info!("Looking up URI for key: {}", enum_key);
+    if let Some(uri) = property_mapping.get(&enum_key) {
+        info!("Found URI: {} for display value: {}", uri, display_value);
+        Some(uri.clone())
+    } else {
+        info!("No URI found for display value: {} (key: {})", display_value, enum_key);
+        None
+    }
+}
+
+/// Преобразует полные URI предикатов в короткие имена и их значения в человекочитаемый формат
+pub fn convert_full_to_short_predicates(input: &Value, property_mapping: &mut PropertyMapping) -> Result<Value, Box<dyn std::error::Error>> {
+    match input {
+        Value::Object(map) => {
+            let mut new_map = serde_json::Map::new();
+            for (full_predicate, value) in map {
+                let short_predicate = shorten_predicate_name(full_predicate, property_mapping);
+
+                // Преобразуем значение
+                let transformed_value = match value {
+                    Value::Array(arr) => {
+                        let transformed_arr: Vec<Value> = arr
+                            .iter()
+                            .map(|v| {
+                                if let Value::String(uri) = v {
+                                    if let Some(display_value) = transform_uri_to_display_value(uri, property_mapping) {
+                                        Value::String(display_value)
+                                    } else {
+                                        v.clone()
+                                    }
+                                } else {
+                                    v.clone()
+                                }
+                            })
+                            .collect();
+                        Value::Array(transformed_arr)
+                    },
+                    Value::String(uri) => {
+                        if let Some(display_value) = transform_uri_to_display_value(uri, property_mapping) {
+                            Value::String(display_value)
+                        } else {
+                            value.clone()
+                        }
+                    },
+                    _ => value.clone(),
+                };
+
+                new_map.insert(short_predicate, transformed_value);
+            }
+            Ok(Value::Object(new_map))
+        },
+        _ => Err("Expected object for input".into()),
+    }
+}
+
+/// Преобразует короткие имена предикатов в полные URI и их значения обратно в URI
+pub fn convert_short_to_full_predicates(input: &Value, property_mapping: &PropertyMapping) -> Result<Value, Box<dyn std::error::Error>> {
+    match input {
+        Value::Object(map) => {
+            let mut new_map = serde_json::Map::new();
+            for (short_predicate, value) in map {
+                let full_predicate = if let Some(full_name) = property_mapping.get(short_predicate) {
+                    full_name.clone()
+                } else {
+                    short_predicate.clone()
+                };
+
+                // Преобразуем значение
+                let transformed_value = match value {
+                    Value::Array(arr) => {
+                        let transformed_arr: Vec<Value> = arr
+                            .iter()
+                            .map(|v| {
+                                if let Value::String(display_value) = v {
+                                    if let Some(uri) = transform_display_value_to_uri(short_predicate, display_value, property_mapping) {
+                                        Value::String(uri)
+                                    } else {
+                                        v.clone()
+                                    }
+                                } else {
+                                    v.clone()
+                                }
+                            })
+                            .collect();
+                        Value::Array(transformed_arr)
+                    },
+                    Value::String(display_value) => {
+                        if let Some(uri) = transform_display_value_to_uri(short_predicate, display_value, property_mapping) {
+                            Value::String(uri)
+                        } else {
+                            value.clone()
+                        }
+                    },
+                    _ => value.clone(),
+                };
+
+                new_map.insert(full_predicate, transformed_value);
+            }
+            Ok(Value::Object(new_map))
+        },
+        _ => Err("Expected object for input".into()),
+    }
+}
+
+/// Преобразует полное URI предиката в короткое имя
+fn shorten_predicate_name(full_name: &str, property_mapping: &mut PropertyMapping) -> String {
+    let short_name = full_name.split(':').last().unwrap_or(full_name).to_string();
+    if !property_mapping.contains_key(&short_name) {
+        property_mapping.insert(short_name.clone(), full_name.to_string());
+    }
+    short_name
 }

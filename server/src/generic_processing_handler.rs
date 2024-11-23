@@ -1,7 +1,11 @@
 /// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
 /// и заданного типа целевого индивида.
-use crate::common::{prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
+use crate::common::{
+    convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, send_request_to_ai,
+    set_to_individual_from_ai_response,
+};
 use crate::queue_processor::BusinessProcessAnalysisModule;
+use crate::types::PropertyMapping;
 use serde_json::Value;
 use tokio::runtime::Runtime;
 use v_common::onto::datatype::Lang;
@@ -56,10 +60,15 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     }
     target_type_def.parse_all();
 
+    let mut property_mapping = PropertyMapping::new();
+    let property_schema = load_schema(module, &prompt_id, None, &mut property_mapping)?;
+
     // Обрабатываем входные данные, если они есть
-    let structured_input = if let Some(structured_input) = request.get_first_literal("v-bpa:structuredInput") {
-        info!("Processing additional input data: {}", structured_input);
-        Some(serde_json::from_str(&structured_input)?)
+    let structured_input = if let Some(input_str) = request.get_first_literal("v-bpa:structuredInput") {
+        info!("Processing additional input data: {}", input_str);
+        let parsed_input: Value = serde_json::from_str(&input_str)?;
+        let transformed_input = convert_full_to_short_predicates(&parsed_input, &mut property_mapping)?;
+        Some(transformed_input)
     } else {
         None
     };
@@ -71,7 +80,7 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     let analysis_data = prepare_analysis_data(&raw_input, &mut target_type_def, structured_input)?;
 
     // Создаем параметры запроса и получаем маппинг свойств
-    let (req_to_ai, property_mapping) = prepare_request_ai_parameters(module, &prompt_id, analysis_data, None)?;
+    let req_to_ai = prepare_request_ai_parameters(module, &prompt_id, analysis_data, property_schema, &mut property_mapping)?;
 
     info!("@E = req_to_ai={:?}", req_to_ai);
 
@@ -80,30 +89,37 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     let rt = Runtime::new()?;
     let ai_response = rt.block_on(async { send_request_to_ai(module, req_to_ai).await })?;
 
-    // Создаем новый индивид целевого типа для сохранения результата
-    let result_id = format!("d:generic_result_{}", uuid::Uuid::new_v4());
-    let mut result_individual = Individual::default();
-    result_individual.set_id(&result_id);
-    result_individual.set_uri("rdf:type", "v-bpa:GenericProcessingResult");
-    result_individual.set_uri("v-bpa:targetType", &target_type);
+    info!("@G ai_response={:?}", ai_response);
 
     if is_structured_input {
-        if let Some(j) = ai_response.get("result") {
-            request.set_string("v-bpa:structuredOutput", &j.to_string(), Lang::none());
+        if is_structured_input {
+            if let Some(result) = ai_response.get("result") {
+                // Преобразуем короткие имена и человекочитаемые значения обратно в URI
+                let mapped_result = convert_short_to_full_predicates(result, &property_mapping)?;
+                request.set_string("v-bpa:structuredOutput", &mapped_result.to_string(), Lang::none());
+            }
         }
     } else {
+        // Создаем новый индивид целевого типа для сохранения результата
+        let result_id = format!("d:generic_result_{}", uuid::Uuid::new_v4());
+        let mut result_individual = Individual::default();
+        result_individual.set_id(&result_id);
+        result_individual.set_uri("rdf:type", "v-bpa:GenericProcessingResult");
+        result_individual.set_uri("v-bpa:targetType", &target_type);
+
         // Сохраняем результат анализа AI, включая очищенный текст
         set_to_individual_from_ai_response(module, &mut result_individual, &ai_response, &property_mapping)?;
+
+        // Сохраняем обновленный индивид
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut result_individual) {
+            error!("Failed to update individual {}: {:?}", result_individual.get_id(), e);
+            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
+        }
+
+        // Обновляем исходный запрос, добавляя ссылку на созданный результат
+        request.set_uri("v-bpa:hasResult", &result_id);
     }
 
-    // Сохраняем обновленный индивид
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut result_individual) {
-        error!("Failed to update individual {}: {:?}", result_individual.get_id(), e);
-        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
-    }
-
-    // Обновляем исходный запрос, добавляя ссылку на созданный результат
-    request.set_uri("v-bpa:hasResult", &result_id);
     request.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
 
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
@@ -111,6 +127,6 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request, err={:?}", e))));
     }
 
-    info!("Successfully processed generic request {} and created result {}", request.get_id(), result_id);
+    info!("Successfully processed generic request {} ", request.get_id());
     Ok(())
 }
