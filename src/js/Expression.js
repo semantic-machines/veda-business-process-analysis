@@ -1,4 +1,4 @@
-import {Component} from 'veda-client';
+import {Component, safe} from 'veda-client';
 
 export default class Expression extends Component(HTMLElement) {
   static tag = 'bpa-expression';
@@ -6,7 +6,7 @@ export default class Expression extends Component(HTMLElement) {
   expression = this.getAttribute('expression');
 
   render () {
-    return new Function('return ' + this.expression).call(this.model ?? null);
+    return safe(new Function('return ' + this.expression).call(this.model ?? null));
   }
 
   up = () => {
@@ -19,7 +19,7 @@ export default class Expression extends Component(HTMLElement) {
 
   removed () {
     this.model?.off('modified', this.up);
-  }  
+  }
 }
 
 customElements.define(Expression.tag, Expression);

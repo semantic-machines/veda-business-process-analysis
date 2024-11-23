@@ -1,4 +1,4 @@
-import {Model, Component, Router as VedaRouter} from 'veda-client';
+import {Model, Component, Router as VedaRouter, safe} from 'veda-client';
 import NotFound from './NotFound.js';
 import Error from './Error.js';
 
@@ -38,7 +38,7 @@ export default class Router extends Component(HTMLElement) {
         return this.handleNotFound(error);
       }
       component = document.createElement(`${component.default}`);
-      component.model = new Model(id);
+      component.model = new Model(safe(id));
       this.replaceChildren(component);
     });
 

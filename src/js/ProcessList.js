@@ -1,4 +1,4 @@
-import {Component, html, Backend, Model, timeout} from 'veda-client';
+import {Component, html, safe, Backend, Model, timeout} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
 import Literal from './Literal.js';
 import InputAudio from './controls/InputAudio.js';
@@ -285,7 +285,8 @@ export default class ProcessList extends Component(HTMLElement) {
     const container = this.querySelector('#filtered-processes');
     const fragment = document.createDocumentFragment();
 
-    this.filtered.forEach(([id, label, description, justification, responsibleDepartment, processParticipant, laborCosts]) => {
+    this.filtered.forEach(([...values]) => {
+      const [id, label, description, justification, responsibleDepartment, processParticipant, laborCosts] = values.map(safe);
       const row = document.createElement('tr');
       row.onclick = () => location.hash = `#/ProcessView/${id}`;
       row.innerHTML = `

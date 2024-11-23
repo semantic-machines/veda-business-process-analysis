@@ -1,4 +1,4 @@
-import {Component, html, Backend, Model, timeout} from 'veda-client';
+import {Component, html} from 'veda-client';
 import Literal from './Literal.js';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator';
 
@@ -9,19 +9,19 @@ export default class ClusterList extends Component(HTMLElement) {
     this.addEventListener('click', (e) => {
       const toggleBtn = e.target.closest('.toggle-processes');
       if (!toggleBtn) return;
-      
+
       e.stopPropagation();
       e.preventDefault();
-      
+
       [...toggleBtn.children].forEach(el => el.classList.toggle('d-none'));
       const id = toggleBtn.dataset.for;
       const processes = toggleBtn.parentNode.parentNode.querySelector(`[data-id="${id}"]`);
       processes.classList.toggle('d-none');
-      
+
       const isExpanded = !processes.classList.contains('d-none');
       localStorage.setItem(`ClusterList_expanded_${id}`, isExpanded);
     }, true);
-    
+
     this.addEventListener('click', (e) => {
       const processRow = e.target.closest('.process-row');
       const about = processRow?.getAttribute('about');

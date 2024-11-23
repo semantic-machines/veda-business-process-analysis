@@ -1,4 +1,4 @@
-import {Component, html, Model, Backend} from 'veda-client';
+import {Component, html, safe, Model, Backend} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
 import Expression from './Expression.js';
 import {Modal} from 'bootstrap';

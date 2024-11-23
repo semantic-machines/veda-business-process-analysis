@@ -1,4 +1,4 @@
-import {Model, Backend, Component, html} from 'veda-client';
+import {Model, Backend, Component, html, safe} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
 import Literal from './Literal.js';
 
@@ -69,21 +69,24 @@ export default class DocumentView extends Component(HTMLElement) {
                 </tr>
               </thead>
               <tbody>
-                ${this.processes.map(([id, label, description, justification, responsibleDepartment, processParticipant, laborCosts]) => html`
-                  <tr onclick="location.hash = '#/ProcessView/${id}'">
-                    <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
-                    <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
-                    <td class="align-middle">${responsibleDepartment}</td>
-                    <td class="align-middle">
-                      <i class="bi bi-people-fill me-1"></i>
-                      <strong>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</strong>
-                    </td>
-                    <td class="align-middle lh-sm">
-                      <strong>${laborCosts ?? 0}</strong><br>
-                      <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
-                    </td>
-                  </tr>
-                `).join('')}
+                ${this.processes.map(([...row]) => {
+                  const [id, label, description, justification, responsibleDepartment, processParticipant, laborCosts] = row.map(safe);
+                  return html`
+                    <tr onclick="location.hash = '#/ProcessView/${id}'">
+                      <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
+                      <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
+                      <td class="align-middle">${responsibleDepartment}</td>
+                      <td class="align-middle">
+                        <i class="bi bi-people-fill me-1"></i>
+                        <strong>${processParticipant && typeof processParticipant === 'string' ? processParticipant.split(',').length : 0}</strong>
+                      </td>
+                      <td class="align-middle lh-sm">
+                        <strong>${laborCosts ?? 0}</strong><br>
+                        <small><${Literal} class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></${Literal}></small>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
               </tbody>
             </table>
           </div>
