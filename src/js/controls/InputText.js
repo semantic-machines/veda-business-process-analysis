@@ -27,7 +27,7 @@ export default class InputText extends Component(HTMLInputElement) {
       }
       this.model[this.property] = newValues;
     };
-        
+
     this.modifiedHandler = () => {
       const newValue = getFilteredValue(this.model, this.property);
       if (this.value !== newValue) {
@@ -38,7 +38,7 @@ export default class InputText extends Component(HTMLInputElement) {
 
     this.model.on(this.property, this.modifiedHandler);
   }
-  
+
   remove() {
     this.model.off(this.property, this.modifiedHandler);
   }

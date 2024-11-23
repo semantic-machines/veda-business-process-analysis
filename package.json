@@ -6,8 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "node build.mjs",
-    "b": "node build.mjs",
-    "watch": "node watch.mjs"
+    "b": "pnpm build",
+    "watch": "node watch.mjs",
+    "w": "pnpm watch"
   },
   "repository": {
     "type": "git",

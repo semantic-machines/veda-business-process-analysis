@@ -1,4 +1,4 @@
-import {Component, html, Backend, Model, timeout} from 'veda-client';
+import {Component, html, safe, Backend, Model, timeout} from 'veda-client';
 import {Modal} from 'bootstrap';
 import InputAudio from './controls/InputAudio.js';
 
@@ -274,11 +274,12 @@ export default class DocumentList extends Component(HTMLElement) {
     const container = this.querySelector('#filtered-documents');
     const fragment = document.createDocumentFragment();
     this.filtered.forEach(([id, name, content, created]) => {
+      [id, name, content, created] = [id, name, content, created].map(safe);
       const row = document.createElement('tr');
+      row.onclick = () => location.hash = `#/DocumentView/${id}`;
       row.innerHTML = `
-        <tr onclick="location.hash = '#/DocumentView/${id}'">
-          <td class="align-middle"><h5 class="mb-0">${name}</h5><p class="text-muted mb-0">${content && content.length > 120 ? content.slice(0, 120) + '...' : content}</p></td>
-          <td class="align-middle text-end">${new Date(created).toLocaleDateString()}</td>
+        <td class="align-middle"><h5 class="mb-0">${name}</h5><p class="text-muted mb-0">${content && content.length > 120 ? content.slice(0, 120) + '...' : content}</p></td>
+        <td class="align-middle text-end">${new Date(created).toLocaleDateString()}</td>
       `;
       fragment.appendChild(row);
     });

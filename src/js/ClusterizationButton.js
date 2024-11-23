@@ -1,4 +1,4 @@
-import {Component, html, Model} from 'veda-client';
+import {Component, html, safe, Model} from 'veda-client';
 import Literal from './Literal';
 import Callback from './Callback.js';
 
@@ -25,7 +25,7 @@ export default class ClusterizationButton extends Component(HTMLElement) {
   render() {
     return html`
       <button class="btn btn-link text-dark text-decoration-none" @click="${(e) => this.updateClusters(e)}" ${this.model ? 'disabled' : ''}>
-        ${this.model 
+        ${this.model
           ? `<${Attempt} about=${this.model.id}></${Attempt}>`
           : `<i class="bi bi-arrow-repeat me-2"></i><span about="v-bpa:UpdateClusters" property="rdfs:label"></span>`
         }
@@ -44,15 +44,15 @@ class Attempt extends Component(HTMLElement) {
   added() {
     this.model.on('modified', this.handler);
   }
-  
+
   removed() {
     this.model.off('modified', this.handler);
   }
 
   render() {
-    const state = this.model?.['v-bpa:hasExecutionState']?.[0].id;
-    const progress = this.model?.['v-bpa:clusterizationProgress']?.[0] ?? 0;
-    const secondsLeft = this.model?.['v-bpa:estimatedTime']?.[0];
+    const state = safe(this.model?.['v-bpa:hasExecutionState']?.[0].id);
+    const progress = safe(this.model?.['v-bpa:clusterizationProgress']?.[0] ?? 0);
+    const secondsLeft = safe(this.model?.['v-bpa:estimatedTime']?.[0]);
 
     let timeString = '';
     if (secondsLeft) {
@@ -63,7 +63,7 @@ class Attempt extends Component(HTMLElement) {
     }
 
     return html`
-      ${state === 'v-bpa:ExecutionCompleted' 
+      ${state === 'v-bpa:ExecutionCompleted'
         ? `<i class="bi bi-check-circle-fill text-success me-2"></i>
            <${Literal} about="${state}" property="rdfs:label" class="me-1"></${Literal}>`
         : `

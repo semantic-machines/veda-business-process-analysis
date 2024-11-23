@@ -1,9 +1,9 @@
-import {Component, html, Model} from 'veda-client';
+import {Component, safe} from 'veda-client';
 
 function getLiteralValue (model, property) {
   const currentLang = document.documentElement.lang.toUpperCase();
   const regex = /\^\^[a-z]{2}$/i;
-  return model.hasValue(property) 
+  return model.hasValue(property)
     ? model[property]
         ?.filter(str => !regex.test(str) || str.toString().toUpperCase().endsWith(`^^${currentLang}`))
         .map(str => str.toString().split(regex)[0])
@@ -19,7 +19,7 @@ export default class Literal extends Component(HTMLElement) {
   maxChars = Number(this.getAttribute('max-chars')) || Infinity;
 
   render () {
-    const value = getLiteralValue(this.model, this.property);
+    const value = safe(getLiteralValue(this.model, this.property));
     const truncated = value.slice(0, this.maxChars);
     return value.length > this.maxChars ? `${truncated}...` : truncated;
   }
@@ -34,7 +34,7 @@ export default class Literal extends Component(HTMLElement) {
 
   removed () {
     this.model.off(this.property, this.up);
-  }  
+  }
 }
 
 customElements.define(Literal.tag, Literal);

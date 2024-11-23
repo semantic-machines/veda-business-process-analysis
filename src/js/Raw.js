@@ -1,4 +1,4 @@
-import {Component, html} from 'veda-client';
+import {Component, html, safe} from 'veda-client';
 
 export default class Raw extends Component(HTMLElement) {
   static tag = 'bpa-raw';
@@ -15,8 +15,10 @@ export default class Raw extends Component(HTMLElement) {
   async toggleEdit() {
     this.editing = !this.editing;
     await this.update();
-    const textarea = this.querySelector('textarea');
-    textarea.focus();
+    if (this.editing) {
+      const textarea = this.querySelector('textarea');
+      textarea.focus();
+    }
   }
 
   async saveChanges() {
@@ -83,8 +85,8 @@ export default class Raw extends Component(HTMLElement) {
       ` : html`
         <div class="mb-2 ms-3 d-flex justify-content-between">
           <div class="nav nav-underline" role="group">
-            <button type="button" 
-              class="nav-link ${this.format === 'ttl' ? 'active disabled' : 'text-secondary'}" 
+            <button type="button"
+              class="nav-link ${this.format === 'ttl' ? 'active disabled' : 'text-secondary'}"
               @click="${(e) => this.toggleFormat(e)}">
               TTL
             </button>
@@ -106,17 +108,17 @@ export default class Raw extends Component(HTMLElement) {
       `}
     `;
   }
-  
+
   post() {
     if (this.editing) {
       this.querySelector('textarea').value = toJSON(this.model);
     } else {
-      this.querySelector('code').innerHTML = this.format === 'ttl' ? 
+      this.querySelector('code').innerHTML = this.format === 'ttl' ?
         `${toTurtle(this.model)}` :
         `${toJSON(this.model)}`;
     }
   }
-  
+
   added() {
     this.model.on('modified', this.modifiedHandler);
   }
@@ -137,10 +139,10 @@ const handleMouseMove = (e) => {
   if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
     e.preventDefault();
     e.stopPropagation();
-    
+
     document.querySelectorAll('[about]').forEach(el => {
       el.style.outline = '';
-      el.removeAttribute('title'); 
+      el.removeAttribute('title');
     });
 
     const target = e.target.closest('[about]');
@@ -154,7 +156,7 @@ const handleMouseMove = (e) => {
 
 const handleClick = (e) => {
   if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
-    e.preventDefault(); 
+    e.preventDefault();
     const target = e.target.closest('[about]');
     if (target) {
       location.hash = `#/Raw/${target.getAttribute('about')}`;
@@ -176,22 +178,19 @@ document.addEventListener('click', handleClick, true);
 document.addEventListener('keyup', handleKeyUp);
 
 function toJSON(model) {
-  return JSON.stringify(model, null, 2)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return safe(JSON.stringify(model, null, 2))
 }
 
 function toTurtle(model) {
   return Object.entries(model).map(([predicate, objects]) => {
-    if (predicate === 'id') return `<b>${objects}</b>`;
+    if (predicate === 'id') return `<b>${safe(objects)}</b>`;
     return objects.map(obj => {
       if (typeof obj === 'object' && obj.id) {
-        return `  <a class="link-secondary" href="#/Raw/${predicate}">${predicate}</a> <a class="link" href="#/Raw/${obj.id}">${obj.id}</a> ;`;
+        return `  <a class="link-secondary" href="#/Raw/${safe(predicate)}">${safe(predicate)}</a> <a class="link" href="#/Raw/${safe(obj.id)}">${safe(obj.id)}</a> ;`;
         } else if (typeof obj === 'string') {
-          return `  <a class="link-secondary" href="#/Raw/${predicate}">${predicate}</a> "${obj}" ;`; 
+          return `  <a class="link-secondary" href="#/Raw/${safe(predicate)}">${safe(predicate)}</a> "${safe(obj)}" ;`;
         } else {
-          return `  <a class="link-secondary" href="#/Raw/${predicate}">${predicate}</a> ${obj} ;`;
+          return `  <a class="link-secondary" href="#/Raw/${safe(predicate)}">${safe(predicate)}</a> ${safe(obj)} ;`;
         }
       }).join('\n');
     }).filter(Boolean).join('\n');
