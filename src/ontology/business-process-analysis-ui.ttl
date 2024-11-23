@@ -137,7 +137,7 @@ v-bpa:Create
 
 v-bpa:Cancel
   rdf:type rdfs:Resource ;
-  rdfs:label "Отменить"@ru ;
+  rdfs:label "Отмена"@ru ;
   rdfs:label "Cancel"@en ;
 .
 

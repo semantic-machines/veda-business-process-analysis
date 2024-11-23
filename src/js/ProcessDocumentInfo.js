@@ -66,7 +66,10 @@ class ProcessDocumentListModal extends Component(HTMLElement) {
                   </div>
                 </div>
               </div>
-              <div class="text-end">
+              <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                  <span about="v-bpa:Cancel" property="rdfs:label"></span>
+                </button>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#process-document-add-modal">
                   <span about="v-bpa:ChooseDocuments" property="rdfs:label"></span>
                 </button>
