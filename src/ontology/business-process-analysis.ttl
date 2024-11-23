@@ -174,7 +174,7 @@ v-bpa:hasProcess
 .
 
 v-bpa:clusterReason
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Причина формирования кластера"@ru ;
   rdfs:label "Reason for cluster formation"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
@@ -182,7 +182,7 @@ v-bpa:clusterReason
 .
 
 v-bpa:clusterSimilarities
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Общие черты процессов"@ru ;
   rdfs:label "Common properties of processes"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
@@ -190,7 +190,7 @@ v-bpa:clusterSimilarities
 .
 
 v-bpa:clusterDifferences
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Различия процессов"@ru ;
   rdfs:label "Differences of processes"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
@@ -198,7 +198,7 @@ v-bpa:clusterDifferences
 .
 
 v-bpa:proposedClusterName
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Предлагаемое название кластера"@ru ;
   rdfs:label "Proposed cluster name"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
@@ -206,7 +206,7 @@ v-bpa:proposedClusterName
 .
 
 v-bpa:proposedClusterDescription
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Предлагаемое описание кластера"@ru ;
   rdfs:label "Proposed cluster description"@en ;
   rdfs:domain v-bpa:ProcessCluster ;

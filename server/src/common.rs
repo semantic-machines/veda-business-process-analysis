@@ -138,10 +138,14 @@ pub fn load_schema(
         return Err("Failed to load prompt".into());
     }
     let properties = prompt_individual.get_literals("v-bpa:properties").unwrap_or_default();
-    info!("@A1 properties={:?}", properties);
+    info!("@A0 properties={:?}", properties);
 
     // Собираем определения свойств
-    Ok(collect_define_from_schema(module, properties, excluded, property_mapping))
+    let schema = collect_define_from_schema(module, properties, excluded, property_mapping);
+
+    info!("@A1 schema={:?}", schema);
+
+    Ok(schema)
 }
 
 /// Подготавливает параметры запроса для оптимизации на основе промпта из онтологии
@@ -259,19 +263,19 @@ pub fn set_to_individual_from_ai_response(
         if let Some(obj) = res.as_object() {
             obj
         } else {
-            error!("optimized_process is not an object");
-            return Err("optimized_process is not an object".into());
+            error!("result is not an object");
+            return Err("result is not an object".into());
         }
     } else {
-        error!("No optimized_process object found in AI response");
-        return Err("Missing optimized_process object".into());
+        error!("No result object found in AI response");
+        return Err("Missing result object".into());
     };
 
     info!("@D response_values={:?}", response_values);
 
     for (short_name, value) in response_values {
         if let Some(full_prop) = property_mapping.get(short_name) {
-            // Загружаем определение свойства из онтологии
+            // Загружаем определение свойства
             let mut prop_individual = Individual::default();
             if module.backend.storage.get_individual(full_prop, &mut prop_individual) != ResultCode::Ok {
                 warn!("Failed to load property definition for {}", full_prop);
@@ -281,33 +285,67 @@ pub fn set_to_individual_from_ai_response(
 
             let range = prop_individual.get_first_literal("rdfs:range").unwrap_or_default();
 
+            // Очищаем предыдущие значения свойства
+            individual.remove(full_prop);
+
             if !range.starts_with("xsd:") {
-                // Обрабатываем значения-ссылки на экземпляры классов (enum)
-                if let Some(str_val) = value.as_str() {
+                // Обработка значений-ссылок
+                if let Some(arr) = value.as_array() {
+                    for val in arr {
+                        if let Some(str_val) = val.as_str() {
+                            let enum_key = format!("{}_{}", short_name, str_val);
+                            if let Some(uri) = property_mapping.get(&enum_key) {
+                                info!("Adding enum value {} -> {} for property {}", str_val, uri, full_prop);
+                                individual.add_uri(full_prop, uri);
+                            } else {
+                                info!("Adding value {} for property {}", str_val, full_prop);
+                                individual.add_string(full_prop, str_val, Lang::none());
+                            }
+                        }
+                    }
+                } else if let Some(str_val) = value.as_str() {
                     let enum_key = format!("{}_{}", short_name, str_val);
                     if let Some(uri) = property_mapping.get(&enum_key) {
                         info!("Setting enum value {} -> {} for property {}", str_val, uri, full_prop);
                         individual.set_uri(full_prop, uri);
                     } else {
-                        info!("Setting value {} -> {} for property {}", enum_key, str_val, full_prop);
-                        individual.set_string(full_prop, &str_val, Lang::none());
+                        info!("Setting value {} for property {}", str_val, full_prop);
+                        individual.set_string(full_prop, str_val, Lang::none());
                     }
                 }
             } else {
-                // Обрабатываем xsd:* типы
+                // Обработка xsd:* типов
                 match range.as_str() {
                     "xsd:string" => {
-                        if let Some(str_val) = value.as_str() {
+                        if let Some(arr) = value.as_array() {
+                            for val in arr {
+                                if let Some(str_val) = val.as_str() {
+                                    individual.add_string(full_prop, str_val, Lang::none());
+                                }
+                            }
+                        } else if let Some(str_val) = value.as_str() {
                             individual.set_string(full_prop, str_val, Lang::none());
                         }
                     },
                     "xsd:integer" => {
-                        if let Some(num_val) = value.as_i64() {
+                        if let Some(arr) = value.as_array() {
+                            for val in arr {
+                                if let Some(num_val) = val.as_i64() {
+                                    individual.add_integer(full_prop, num_val);
+                                }
+                            }
+                        } else if let Some(num_val) = value.as_i64() {
                             individual.set_integer(full_prop, num_val);
                         }
                     },
                     "xsd:decimal" => {
-                        if let Some(num_val) = value.as_f64() {
+                        if let Some(arr) = value.as_array() {
+                            for val in arr {
+                                if let Some(num_val) = val.as_f64() {
+                                    individual.add_decimal_from_f64(full_prop, num_val);
+                                }
+                            }
+                        } else if let Some(num_val) = value.as_f64() {
                             individual.add_decimal_from_f64(full_prop, num_val);
                         }
                     },
