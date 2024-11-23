@@ -191,6 +191,10 @@ pub fn prepare_request_ai_parameters(
         .model(module.model.clone())
         .messages(vec![
             ChatMessage::System {
+                content: ChatMessageContent::Text("You must respond only in Russian language. Use only Russian for all text fields.".to_string()),
+                name: None,
+            },
+            ChatMessage::System {
                 content: ChatMessageContent::Text(prompt_text),
                 name: None,
             },
