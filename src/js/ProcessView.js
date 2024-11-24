@@ -1,4 +1,4 @@
-import {Model, Backend, Component, html} from 'veda-client';
+import {Model, Backend, Component, html, safe} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator';
 import ProcessDocumentInfo from './ProcessDocumentInfo';
 
@@ -17,7 +17,7 @@ export default class ProcessView extends Component(HTMLElement) {
   }
 
   async added() {
-    const params = new Model; 
+    const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:ProcessInLastAttemptClusters';
     params['v-bpa:hasProcess'] = this.model.id;
@@ -100,10 +100,10 @@ export default class ProcessView extends Component(HTMLElement) {
                 </div>
               </div>
             </div>
-            
-            ${this.cluster 
+
+            ${this.cluster
               ? html`
-              <a href="#/ClusterView/${this.cluster}" class="text-decoration-none d-block text-dark" about="${this.cluster}">  
+              <a href="#/ClusterView/${this.cluster}" class="text-decoration-none d-block text-dark" about="${this.cluster}">
                 <div class="card border-0 bg-secondary bg-opacity-10 mt-4">
                   <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center gap-2">
@@ -120,7 +120,7 @@ export default class ProcessView extends Component(HTMLElement) {
                     </div>
                   </div>
                 </div>
-              </a>` 
+              </a>`
               : ''
             }
           </div>

@@ -26,8 +26,8 @@ export default class ClusterizationButton extends Component(HTMLElement) {
     return html`
       <button class="btn btn-link text-dark text-decoration-none" @click="${(e) => this.updateClusters(e)}" ${this.model ? 'disabled' : ''}>
         ${this.model
-          ? `<${Attempt} about=${this.model.id}></${Attempt}>`
-          : `<i class="bi bi-arrow-repeat me-2"></i><span about="v-bpa:UpdateClusters" property="rdfs:label"></span>`
+          ? html`<${Attempt} about="${this.model.id}"></${Attempt}>`
+          : html`<i class="bi bi-arrow-repeat me-2"></i><span about="v-bpa:UpdateClusters" property="rdfs:label"></span>`
         }
       </button>
     `;
@@ -64,13 +64,13 @@ class Attempt extends Component(HTMLElement) {
 
     return html`
       ${state === 'v-bpa:ExecutionCompleted'
-        ? `<i class="bi bi-check-circle-fill text-success me-2"></i>
+        ? html`<i class="bi bi-check-circle-fill text-success me-2"></i>
            <${Literal} about="${state}" property="rdfs:label" class="me-1"></${Literal}>`
-        : `
+        : html`
           <div class="spinner-grow spinner-grow-sm me-2" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
-          ${state ? `<${Literal} about="${state}" property="rdfs:label"></${Literal}>:` : ''}
+          ${state ? html`<${Literal} about="${state}" property="rdfs:label"></${Literal}>:` : ''}
           <span class="ms-1">${progress}%</span>${timeString}
           `
       }

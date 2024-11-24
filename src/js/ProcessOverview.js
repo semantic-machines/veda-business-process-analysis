@@ -104,7 +104,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
         }
       </div>
       ${this.activeTab === 'clusters'
-        ? html`<${ClusterList} ${this.completed ? `about="${this.completed.id}"` : ''}></${ClusterList}>`
+        ? html`<${ClusterList} ${this.completed ? html`about="${this.completed.id}"` : ''}></${ClusterList}>`
         : this.activeTab === 'processes'
         ? html`<${ProcessList}></${ProcessList}>`
         : html`<${DocumentList}></${DocumentList}>`

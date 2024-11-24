@@ -273,8 +273,8 @@ export default class DocumentList extends Component(HTMLElement) {
   renderFilteredDocuments() {
     const container = this.querySelector('#filtered-documents');
     const fragment = document.createDocumentFragment();
-    this.filtered.forEach(([id, name, content, created]) => {
-      [id, name, content, created] = [id, name, content, created].map(safe);
+    this.filtered.forEach(([...values]) => {
+      [id, name, content, created] = safe(values);
       const row = document.createElement('tr');
       row.onclick = () => location.hash = `#/DocumentView/${id}`;
       row.innerHTML = `
