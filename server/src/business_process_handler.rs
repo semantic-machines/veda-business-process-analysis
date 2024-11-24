@@ -1,7 +1,8 @@
 // business_process_handler.rs
 
-use crate::common::{extract_process_json, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
+use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
 use crate::queue_processor::BusinessProcessAnalysisModule;
+use crate::types::PropertyMapping;
 use std::collections::HashSet;
 use std::io;
 use tokio::runtime::Runtime;
@@ -43,9 +44,11 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
 
     info!("Process Name: {}", process_json["processName"]);
 
+    let mut property_mapping = PropertyMapping::new();
+    let property_schema = load_schema(module, "v-bpa:AnalyzeBusinessPrompt", Some(HashSet::from(["v-bpa:NoDocumentForJustification"])), &mut property_mapping)?;
+
     // Подготавливаем параметры запроса и получаем маппинг свойств
-    let (parameters, property_mapping) =
-        prepare_request_ai_parameters(module, "v-bpa:AnalyzeBusinessPrompt", process_json, Some(HashSet::from(["v-bpa:NoDocumentForJustification"])))?;
+    let parameters = prepare_request_ai_parameters(module, "v-bpa:AnalyzeBusinessPrompt", process_json, property_schema, &mut property_mapping)?;
     debug!("Parameters prepared for OpenAI: {:?}", parameters);
 
     // Создаем новый рантайм для асинхронного выполнения
@@ -55,7 +58,7 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
     let ai_response = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
 
     // Сохраняем результат в индивиде с учетом маппинга свойств
-    set_to_individual_from_ai_response(module, bp_obj, &ai_response, &property_mapping)?;
+    set_to_individual_from_ai_response(module, bp_obj, &ai_response, &mut property_mapping)?;
 
     // Сохраняем обновленный индивид в хранилище
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, bp_obj) {

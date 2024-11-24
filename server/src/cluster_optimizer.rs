@@ -1,5 +1,6 @@
-use crate::common::{extract_process_json, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
+use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
 use crate::queue_processor::BusinessProcessAnalysisModule;
+use crate::types::PropertyMapping;
 use serde_json;
 use tokio::runtime::Runtime;
 use v_common::onto::individual::Individual;
@@ -48,7 +49,10 @@ pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, 
     let analysis_data = prepare_optimization_data(&processes_data)?;
 
     // Создаем параметры запроса и получаем маппинг свойств
-    let (parameters, property_mapping) = prepare_request_ai_parameters(module, "v-bpa:OptimizeProcessesPrompt", analysis_data, None)?;
+    let mut property_mapping = PropertyMapping::new();
+    let property_schema = load_schema(module, "v-bpa:OptimizeProcessesPrompt", None, &mut property_mapping)?;
+
+    let parameters = prepare_request_ai_parameters(module, "v-bpa:OptimizeProcessesPrompt", analysis_data, property_schema, &mut property_mapping)?;
 
     // Отправляем запрос к AI
     info!("Sending optimization request to AI for cluster {}", cluster_id);
