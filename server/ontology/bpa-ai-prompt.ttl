@@ -96,7 +96,7 @@ v-bpa:CreateBusinessProcessPrompt
    - Ответственный департамент: Название ответственного подразделения
    - Затраченные трудовые ресурсы: Время на выполнение процесса (количество затраченных человеко-часов на одно повторение)
    - Частота: Количество повторений в год
-   - Участники процесса: Список ответственных должностей
+   - Участники процесса: Список ответственных должностей (через запятую)
 """@ru ;
   v-bpa:properties rdfs:label, v-bpa:processDescription, v-bpa:responsibleDepartment, v-bpa:laborCosts, v-bpa:processFrequency, v-bpa:processParticipant;
   v-bpa:targetType v-bpa:BusinessProcess;
