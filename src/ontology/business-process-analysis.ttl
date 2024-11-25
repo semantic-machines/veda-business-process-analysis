@@ -214,7 +214,7 @@ v-bpa:proposedClusterDescription
 .
 
 v-bpa:proposedDepartment
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Предлагаемый департамент"@ru ;
   rdfs:label "Proposed department"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
@@ -222,7 +222,7 @@ v-bpa:proposedDepartment
 .
 
 v-bpa:proposedFrequency
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Предлагаемая частота выполнения"@ru ;
   rdfs:label "Proposed execution frequency"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
@@ -230,7 +230,7 @@ v-bpa:proposedFrequency
 .
 
 v-bpa:proposedParticipants
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Предлагаемые участники"@ru ;
   rdfs:label "Proposed participants"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
@@ -238,7 +238,7 @@ v-bpa:proposedParticipants
 .
 
 v-bpa:estimatedLaborCost
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Ожидаемые трудозатраты"@ru ;
   rdfs:label "Estimated labor cost"@en ;
   rdfs:domain v-bpa:ProcessCluster ;
