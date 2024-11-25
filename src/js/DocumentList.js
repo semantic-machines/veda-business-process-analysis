@@ -121,30 +121,28 @@ class DocumentFilterForm extends Component(HTMLElement) {
   render() {
     return html`
       <form @submit="${(e) => this.submit(e)}" @reset="${() => this.reset()}">
-        <div class="mb-5">
-          <div class="mb-3">
-            <label for="name" class="form-label" about="v-bpa:documentName" property="rdfs:label"></label>
-            <input type="text" class="form-control" id="name" name="v-bpa:documentName" value="${this.data['v-bpa:documentName']?.[0] || ''}">
-          </div>
-          <div class="mb-3">
-            <label for="content" class="form-label" about="v-bpa:documentContent" property="rdfs:label"></label>
-            <input type="text" class="form-control" id="content" name="v-bpa:documentContent" value="${this.data['v-bpa:documentContent']?.[0] || ''}">
-          </div>
-          <div class="mb-3">
-            <label class="form-label me-2" about="v-s:created" property="rdfs:label"></label>
-            <div class="mb-3 d-flex align-items-center" id="created">
-              <input type="date" placeholder="от" class="form-control me-2 w-50" name="v-s:created" value="${this.data['v-s:created']?.[0] || ''}">
-              <input type="date" placeholder="до" class="form-control w-50" name="v-s:created" value="${this.data['v-s:created']?.[1] || ''}">
-            </div>
-          </div>
-          <div class="mb-3 position-relative">
-            <textarea class="form-control" rows="3" id="document-filter-raw-input" name="v-bpa:rawInput" @change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}"></textarea>
-            <div class="position-absolute" style="bottom: 0.125rem; right: 0.5rem;">
-              <${InputAudio} data-for="document-filter-raw-input" id="document-filter-raw-input-audio"></${InputAudio}>
-              <div class="d-none spinner-grow spinner-grow-sm" id="document-filter-raw-input-spinner"></div>
-            </div>
+        <div class="mb-3">
+          <label for="name" class="form-label" about="v-bpa:documentName" property="rdfs:label"></label>
+          <input type="text" class="form-control" id="name" name="v-bpa:documentName" value="${this.data['v-bpa:documentName']?.[0] || ''}">
+        </div>
+        <div class="mb-3">
+          <label for="content" class="form-label" about="v-bpa:documentContent" property="rdfs:label"></label>
+          <input type="text" class="form-control" id="content" name="v-bpa:documentContent" value="${this.data['v-bpa:documentContent']?.[0] || ''}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label me-2" about="v-s:created" property="rdfs:label"></label>
+          <div class="mb-3 d-flex align-items-center" id="created">
+            <input type="date" placeholder="от" class="form-control me-2 w-50" name="v-s:created" value="${this.data['v-s:created']?.[0] || ''}">
+            <input type="date" placeholder="до" class="form-control w-50" name="v-s:created" value="${this.data['v-s:created']?.[1] || ''}">
           </div>
         </div>
+        <!--div class="mb-3 position-relative">
+          <textarea class="form-control" rows="3" id="document-filter-raw-input" name="v-bpa:rawInput" @change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}"></textarea>
+          <div class="position-absolute" style="bottom: 0.125rem; right: 0.5rem;">
+            <${InputAudio} data-for="document-filter-raw-input" id="document-filter-raw-input-audio"></${InputAudio}>
+            <div class="d-none spinner-grow spinner-grow-sm" id="document-filter-raw-input-spinner"></div>
+          </div>
+        </div-->
         <button type="submit" class="btn btn-secondary me-2"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
         <button type="reset" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
       </form>
