@@ -87,7 +87,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
           </li>
         </ul>
         ${this.activeTab === 'clusters'
-          ? html`<${ClusterizationButton} ${this.running ? `about="${this.running.id}"` : ''} callback="${Callback.getName(this.setRunning)}" class="ms-auto"></${ClusterizationButton}>`
+          ? html`<${ClusterizationButton} ${this.running ? html`about="${this.running.id}"` : ''} callback="${Callback.getName(this.setRunning)}" class="ms-auto"></${ClusterizationButton}>`
           : this.activeTab === 'processes'
           ? html`
             <a href="#process-quick-create-modal" data-bs-toggle="modal" data-bs-target="#process-quick-create-modal" class="btn btn-link text-dark text-decoration-none ms-auto me-3">

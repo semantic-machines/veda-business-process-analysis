@@ -56,10 +56,9 @@ class Attempt extends Component(HTMLElement) {
 
     let timeString = '';
     if (secondsLeft) {
-      timeString = ', осталось<i class="bi bi-clock-history mx-1"></i>';
       const minutes = Math.floor(secondsLeft / 60);
       const seconds = secondsLeft % 60;
-      timeString += `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      timeString += `${minutes}:${seconds.toString().padStart(2, '0')} осталось`;
     }
 
     return html`
@@ -71,8 +70,11 @@ class Attempt extends Component(HTMLElement) {
             <span class="visually-hidden">Loading...</span>
           </div>
           ${state ? html`<${Literal} about="${state}" property="rdfs:label"></${Literal}>:` : ''}
-          <span class="ms-1">${progress}%</span>${timeString}
-          `
+          <span class="ms-1">${progress}%</span>
+          ${timeString
+            ? html`<i class="bi bi-clock-history mx-1"></i><span>${timeString}</span>`
+            : ''
+          }`
       }
     `;
   }
