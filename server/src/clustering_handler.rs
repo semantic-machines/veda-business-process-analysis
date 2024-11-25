@@ -24,6 +24,7 @@ struct ComparisonState {
     x: usize,
     y: usize,
     last_metrics_calc: i64, // Timestamp последнего вычисления метрик
+    last_progress: i64,
 }
 
 /// Обновляет временные метки для отслеживания активности процесса кластеризации
@@ -142,6 +143,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
                             x: 0,
                             y: 1,
                             last_metrics_calc: chrono::Utc::now().timestamp(),
+                            last_progress: 0,
                         });
                     },
                     Err(e) => handle_error(module, clustering_attempt, e)?,
@@ -180,6 +182,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
                         x: indices[0],
                         y: indices[1],
                         last_metrics_calc: chrono::Utc::now().timestamp(),
+                        last_progress: 0,
                     });
                 }
 
@@ -240,9 +243,7 @@ pub fn analyze_process_clusters(module: &mut BusinessProcessAnalysisModule, clus
     Ok(())
 }
 
-/// Вычисляет прогресс кластеризации и оставшееся время
-fn calculate_clustering_metrics(clustering_attempt: &mut Individual, state: &ComparisonState, total_processes: usize) -> Result<(i64, i64), Box<dyn std::error::Error>> {
-    // Вычисляем общее количество пар для сравнения
+fn calculate_progress(state: &ComparisonState, total_processes: usize) -> i64 {
     let total_pairs = (total_processes * (total_processes - 1)) / 2;
 
     // Вычисляем количество уже сравненных пар
@@ -253,7 +254,19 @@ fn calculate_clustering_metrics(clustering_attempt: &mut Individual, state: &Com
     completed_pairs += state.y - state.x - 1;
 
     // Вычисляем прогресс в процентах
-    let progress = ((completed_pairs as f64 / total_pairs as f64) * 100.0) as i64;
+    ((completed_pairs as f64 / total_pairs as f64) * 100.0) as i64
+}
+/// Вычисляет прогресс кластеризации и оставшееся время
+fn calculate_clustering_metrics(clustering_attempt: &mut Individual, state: &ComparisonState, total_processes: usize) -> Result<i64, Box<dyn std::error::Error>> {
+    // Вычисляем общее количество пар для сравнения
+    let total_pairs = (total_processes * (total_processes - 1)) / 2;
+
+    // Вычисляем количество уже сравненных пар
+    let mut completed_pairs = 0;
+    for x in 0..state.x {
+        completed_pairs += total_processes - (x + 1);
+    }
+    completed_pairs += state.y - state.x - 1;
 
     // Получаем время начала
     let start_time = clustering_attempt.get_first_datetime("v-bpa:startDate").ok_or("Start date not found")?;
@@ -265,7 +278,7 @@ fn calculate_clustering_metrics(clustering_attempt: &mut Individual, state: &Com
     let avg_time_per_comparison = if completed_pairs > 0 {
         elapsed_time as f64 / completed_pairs as f64
     } else {
-        5.0 // Начальная оценка - 5 секунд на сравнение
+        1.0 // Начальная оценка (секунд на сравнение)
     };
 
     let remaining_pairs = total_pairs - completed_pairs;
@@ -280,7 +293,7 @@ fn calculate_clustering_metrics(clustering_attempt: &mut Individual, state: &Com
         format_time(estimated_time)
     );
 
-    Ok((progress, estimated_time))
+    Ok(estimated_time)
 }
 
 /// Инициализирует процесс кластеризации
@@ -311,7 +324,7 @@ fn initialize_clustering(module: &mut BusinessProcessAnalysisModule, clustering_
 
     // Инициализируем начальные значения прогресса и времени
     clustering_attempt.set_integer("v-bpa:clusterizationProgress", 0);
-    clustering_attempt.set_integer("v-bpa:estimatedTime", ((process_len * (process_len - 1)) / 2 * 5) as i64);
+    clustering_attempt.set_integer("v-bpa:estimatedTime", ((process_len * (process_len - 1)) / 2 * 1) as i64);
 
     clustering_common::update_individual(module, clustering_attempt, IndvOp::Put)?;
     info!("Successfully initialized clustering attempt {} with {} processes", clustering_attempt.get_id(), process_len);
@@ -372,19 +385,19 @@ fn compare_next_pair(
 
     // Вычисляем метрики если прошло больше 3 секунд или другие условия
     let current_time = chrono::Utc::now().timestamp();
-    if (current_time - state.last_metrics_calc) >= 3 || is_similar || state.x != old_x {
-        let (progress, estimated_time) = calculate_clustering_metrics(clustering_attempt, state, processes.len())?;
-
-        state.last_metrics_calc = current_time; // Обновляем время последнего вычисления
+    let progress = calculate_progress(state, processes.len());
+    if (current_time - state.last_metrics_calc) >= 1 || is_similar || state.x != old_x || (state.x == 0 && state.y == 2) || state.last_progress != progress {
+        let estimated_time = calculate_clustering_metrics(clustering_attempt, state, processes.len())?;
 
         // Сохраняем метрики в базу только если нашли похожие процессы или изменился x
-        if is_similar || state.x != old_x {
-            clustering_attempt.set_string("v-bpa:currentPairIndex", &format!("{},{}", state.x, state.y), Lang::none());
-            clustering_attempt.set_integer("v-bpa:clusterizationProgress", progress);
-            clustering_attempt.set_integer("v-bpa:estimatedTime", estimated_time);
+        clustering_attempt.set_string("v-bpa:currentPairIndex", &format!("{},{}", state.x, state.y), Lang::none());
+        clustering_attempt.set_integer("v-bpa:clusterizationProgress", progress);
+        clustering_attempt.set_integer("v-bpa:estimatedTime", estimated_time);
 
-            clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
-        }
+        clustering_common::update_individual(module, clustering_attempt, IndvOp::SetIn)?;
+
+        state.last_metrics_calc = current_time; // Обновляем время последнего вычисления
+        state.last_progress = progress;
     }
 
     Ok(ComparisonResult::Continue)
