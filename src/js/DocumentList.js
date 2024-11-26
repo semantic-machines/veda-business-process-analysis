@@ -19,9 +19,9 @@ class DocumentFilterForm extends Component(HTMLElement) {
     this.data = {};
     const formData = new FormData(this.firstElementChild);
     const formKeys = {
-      'v-bpa:documentName': String,
-      'v-bpa:documentContent': String,
-      'v-s:created': Array,
+      'v-bpa:documentName_filter': String,
+      'v-bpa:documentContent_filter': String,
+      'v-s:created_filter': Array,
       'v-bpa:rawInput': String
     }
 
@@ -123,17 +123,17 @@ class DocumentFilterForm extends Component(HTMLElement) {
       <form @submit="${(e) => this.submit(e)}" @reset="${() => this.reset()}">
         <div class="mb-3">
           <label for="name" class="form-label" about="v-bpa:documentName" property="rdfs:label"></label>
-          <input type="text" class="form-control" id="name" name="v-bpa:documentName" value="${this.data['v-bpa:documentName']?.[0] || ''}">
+          <input type="text" class="form-control" id="name" name="v-bpa:documentName_filter" value="${this.data['v-bpa:documentName']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label for="content" class="form-label" about="v-bpa:documentContent" property="rdfs:label"></label>
-          <input type="text" class="form-control" id="content" name="v-bpa:documentContent" value="${this.data['v-bpa:documentContent']?.[0] || ''}">
+          <input type="text" class="form-control" id="content" name="v-bpa:documentContent_filter" value="${this.data['v-bpa:documentContent']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label class="form-label me-2" about="v-s:created" property="rdfs:label"></label>
           <div class="mb-3 d-flex align-items-center" id="created">
-            <input type="date" placeholder="от" class="form-control me-2 w-50" name="v-s:created" value="${this.data['v-s:created']?.[0] || ''}">
-            <input type="date" placeholder="до" class="form-control w-50" name="v-s:created" value="${this.data['v-s:created']?.[1] || ''}">
+            <input type="date" placeholder="от" class="form-control me-2 w-50" name="v-s:created_filter" value="${this.data['v-s:created']?.[0] || ''}">
+            <input type="date" placeholder="до" class="form-control w-50" name="v-s:created_filter" value="${this.data['v-s:created']?.[1] || ''}">
           </div>
         </div>
         <!--div class="mb-3 position-relative">
@@ -241,24 +241,24 @@ export default class DocumentList extends Component(HTMLElement) {
     } else {
       this.filtered = this.documents.filter(([id, name, content, created]) => {
         // Фильтр по названию
-        if (this.filtersData['v-bpa:documentName'] && this.filtersData['v-bpa:documentName'][0] &&
-            !name.toLowerCase().includes(this.filtersData['v-bpa:documentName'][0].toLowerCase())) {
+        if (this.filtersData['v-bpa:documentName_filter'] && this.filtersData['v-bpa:documentName_filter'][0] &&
+            !name.toLowerCase().includes(this.filtersData['v-bpa:documentName_filter'][0].toLowerCase())) {
           return false;
         }
         // Фильтр по содержанию
-        if (this.filtersData['v-bpa:documentContent'] && this.filtersData['v-bpa:documentContent'][0] &&
-            !content.toLowerCase().includes(this.filtersData['v-bpa:documentContent'][0].toLowerCase())) {
+        if (this.filtersData['v-bpa:documentContent_filter'] && this.filtersData['v-bpa:documentContent_filter'][0] &&
+            !content.toLowerCase().includes(this.filtersData['v-bpa:documentContent_filter'][0].toLowerCase())) {
           return false;
         }
         // Фильтр по дате создания
         created = new Date(created);
-        if (this.filtersData['v-s:created'] && this.filtersData['v-s:created'][0]) {
-          const from = new Date(this.filtersData['v-s:created'][0]);
+        if (this.filtersData['v-s:created_filter'] && this.filtersData['v-s:created_filter'][0]) {
+          const from = new Date(this.filtersData['v-s:created_filter'][0]);
           from.setHours(0, 0, 0, 0);
           if (created < from) return false;
         }
-        if (this.filtersData['v-s:created'] && this.filtersData['v-s:created'][1]) {
-          const to = new Date(this.filtersData['v-s:created'][1]);
+        if (this.filtersData['v-s:created_filter'] && this.filtersData['v-s:created_filter'][1]) {
+          const to = new Date(this.filtersData['v-s:created_filter'][1]);
           to.setHours(23, 59, 59, 999);
           if (created > to) return false;
         }

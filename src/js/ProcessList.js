@@ -21,10 +21,10 @@ class ProcessFilterForm extends Component(HTMLElement) {
     this.data = {};
     const formData = new FormData(this.firstElementChild);
     const formKeys = {
-      'rdfs:label': String,
-      'v-bpa:hasProcessJustification': Array,
-      'v-bpa:responsibleDepartment': String,
-      'v-bpa:laborCosts': Array,
+      'rdfs:label_filter': String,
+      'v-bpa:hasProcessJustification_filter': Array,
+      'v-bpa:responsibleDepartment_filter': String,
+      'v-bpa:laborCosts_filter': Array,
       'v-bpa:rawInput': String
     }
 
@@ -130,7 +130,7 @@ class ProcessFilterForm extends Component(HTMLElement) {
         </div>
         <div class="mb-3">
           <label for="justification" class="form-label" about="v-bpa:hasProcessJustification" property="rdfs:label"></label>
-          <select class="form-select" id="justification" name="v-bpa:hasProcessJustification" multiple>
+          <select class="form-select" id="justification" name="v-bpa:hasProcessJustification_filter" multiple>
             <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:CompletelyJustified') ? 'selected' : ''}></option>
             <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:PartlyJustified') ? 'selected' : ''}></option>
             <option value="v-bpa:PoorlyJustified" about="v-bpa:PoorlyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:PoorlyJustified') ? 'selected' : ''}></option>
@@ -139,13 +139,13 @@ class ProcessFilterForm extends Component(HTMLElement) {
         </div>
         <div class="mb-3">
           <label for="responsibleDepartment" class="form-label" about="v-bpa:responsibleDepartment" property="rdfs:comment"></label>
-          <input type="text" class="form-control" id="responsibleDepartment" name="v-bpa:responsibleDepartment" value="${this.data['v-bpa:responsibleDepartment']?.[0] || ''}">
+          <input type="text" class="form-control" id="responsibleDepartment" name="v-bpa:responsibleDepartment_filter" value="${this.data['v-bpa:responsibleDepartment']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label class="form-label" for="laborCosts" about="v-bpa:laborCosts" property="rdfs:label"></label>
           <div class="mb-3 d-flex align-items-center" id="laborCosts">
-            <input type="number" placeholder="от" class="form-control me-2 w-25" name="v-bpa:laborCosts" value="${this.data['v-bpa:laborCosts']?.[0] || ''}">
-            <input type="number" placeholder="до" class="form-control w-25" name="v-bpa:laborCosts" value="${this.data['v-bpa:laborCosts']?.[1] || ''}">
+            <input type="number" placeholder="от" class="form-control me-2 w-25" name="v-bpa:laborCosts_filter" value="${this.data['v-bpa:laborCosts']?.[0] || ''}">
+            <input type="number" placeholder="до" class="form-control w-25" name="v-bpa:laborCosts_filter" value="${this.data['v-bpa:laborCosts']?.[1] || ''}">
           </div>
         </div>
         <div class="d-flex justify-content-between">
@@ -258,24 +258,24 @@ export default class ProcessList extends Component(HTMLElement) {
     } else {
       this.filtered = this.processes.filter(([id, label, description, relevance, responsibleDepartment, processParticipant, laborCosts]) => {
         // Фильтр по названию
-        if (this.filtersData['rdfs:label'] && this.filtersData['rdfs:label'][0] && !label.toLowerCase().includes(this.filtersData['rdfs:label'][0].toLowerCase())) {
+        if (this.filtersData['rdfs:label_filter'] && this.filtersData['rdfs:label_filter'][0] && !label.toLowerCase().includes(this.filtersData['rdfs:label_filter'][0].toLowerCase())) {
           return false;
         }
         // Фильтр по релевантности
-        if (this.filtersData['v-bpa:hasProcessJustification'] && this.filtersData['v-bpa:hasProcessJustification'].length && !this.filtersData['v-bpa:hasProcessJustification'].includes(relevance)) {
+        if (this.filtersData['v-bpa:hasProcessJustification_filter'] && this.filtersData['v-bpa:hasProcessJustification_filter'].length && !this.filtersData['v-bpa:hasProcessJustification_filter'].includes(relevance)) {
           return false;
         }
         // Фильтр по ответственному подразделению
-        if (this.filtersData['v-bpa:responsibleDepartment'] && this.filtersData['v-bpa:responsibleDepartment'][0] &&
-            !responsibleDepartment.toLowerCase().includes(this.filtersData['v-bpa:responsibleDepartment'][0].toLowerCase())) {
+        if (this.filtersData['v-bpa:responsibleDepartment_filter'] && this.filtersData['v-bpa:responsibleDepartment_filter'][0] &&
+            !responsibleDepartment.toLowerCase().includes(this.filtersData['v-bpa:responsibleDepartment_filter'][0].toLowerCase())) {
           return false;
         }
         // Фильтр по трудозатратам
         const costs = laborCosts ?? 0;
-        if (this.filtersData['v-bpa:laborCosts'] && this.filtersData['v-bpa:laborCosts'][0] && costs < Number(this.filtersData['v-bpa:laborCosts'][0])) {
+        if (this.filtersData['v-bpa:laborCosts_filter'] && this.filtersData['v-bpa:laborCosts_filter'][0] && costs < Number(this.filtersData['v-bpa:laborCosts_filter'][0])) {
           return false;
         }
-        if (this.filtersData['v-bpa:laborCosts'] && this.filtersData['v-bpa:laborCosts'][1] && costs > Number(this.filtersData['v-bpa:laborCosts'][1])) {
+        if (this.filtersData['v-bpa:laborCosts_filter'] && this.filtersData['v-bpa:laborCosts_filter'][1] && costs > Number(this.filtersData['v-bpa:laborCosts_filter'][1])) {
           return false;
         }
         return true;
