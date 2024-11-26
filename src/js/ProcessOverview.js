@@ -17,9 +17,11 @@ export default class ProcessOverview extends Component(HTMLElement) {
     params1['v-s:storedQuery'] = 'v-bpa:OverallCounts';
     params1['v-s:resultFormat'] = 'cols';
     try {
-      const {processes: [processesCount], documents: [documentsCount]} = await Backend.stored_query(params1);
+      const {processes: [processesCount], documents: [documentsCount], processes_poorly_justified: [processesPoorlyJustifiedCount], processes_no_document: [processesNoDocumentCount]} = await Backend.stored_query(params1);
       this.processesCount = processesCount;
       this.documentsCount = documentsCount;
+      this.processesPoorlyJustifiedCount = processesPoorlyJustifiedCount;
+      this.processesNoDocumentCount = processesNoDocumentCount;
     } catch (e) {
       console.error('Error querying overall counts', e);
     }
@@ -65,24 +67,29 @@ export default class ProcessOverview extends Component(HTMLElement) {
 
   render() {
     return html`
-      <div class="mb-2 ms-3 d-flex justify-content-between">
+      <div class="mb-3 ms-3 d-flex justify-content-between">
         <ul class="nav nav-underline">
           <li class="nav-item">
             <button id="processes" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'processes' ? 'active disabled' : 'text-secondary-emphasis'}">
-              <span class="me-2" about="v-bpa:ShowProcesses" property="rdfs:label"></span>
-              <span class="align-top badge rounded-pill bg-secondary">${this.processesCount}</span>
+              <span class="me-1" about="v-bpa:ShowProcesses" property="rdfs:label"></span>
+              ${this.processesPoorlyJustifiedCount
+                ? html`<span class="align-top badge bg-danger">${this.processesPoorlyJustifiedCount}</span>`
+                : this.processesNoDocumentCount
+                ? html`<span class="align-top badge bg-secondary">${this.processesNoDocumentCount}</span>`
+                : ''
+              }
             </button>
           </li>
           <li class="nav-item">
             <button id="documents" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'documents' ? 'active disabled' : 'text-secondary-emphasis'}">
-              <span class="me-2" about="v-bpa:ProcessDocuments" property="rdfs:label"></span>
-              <span class="align-top badge rounded-pill bg-secondary">${this.documentsCount}</span>
+              <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>
+              <!--span class="align-top badge bg-secondary">${this.documentsCount}</span-->
             </button>
           </li>
           <li class="nav-item">
             <button id="clusters" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'clusters' ? 'active disabled' : 'text-secondary-emphasis'}">
-              <span class="me-2" about="v-bpa:ShowClusters" property="rdfs:label"></span>
-              <span class="align-top badge rounded-pill bg-secondary">${this.completed?.['v-bpa:foundClusters']?.length ?? 0}</span>
+              <span class="me-1" about="v-bpa:ShowClusters" property="rdfs:label"></span>
+              <span class="align-top badge bg-warning text-dark">${this.completed?.['v-bpa:foundClusters']?.length ?? 0}</span>
             </button>
           </li>
         </ul>
@@ -106,7 +113,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
       ${this.activeTab === 'clusters'
         ? html`<${ClusterList} ${this.completed ? html`about="${this.completed.id}"` : ''}></${ClusterList}>`
         : this.activeTab === 'processes'
-        ? html`<${ProcessList}></${ProcessList}>`
+        ? html`<${ProcessList} poorly-justified="${this.processesPoorlyJustifiedCount}" no-document="${this.processesNoDocumentCount}"></${ProcessList}>`
         : html`<${DocumentList}></${DocumentList}>`
       }
     `;

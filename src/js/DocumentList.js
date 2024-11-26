@@ -181,7 +181,7 @@ class DocumentFilters extends Component(HTMLElement) {
       <button type="button" class="btn btn-link text-dark text-decoration-none" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
         <i class="bi bi-chevron-down me-1"></i>
         <span about="v-bpa:Filters" property="rdfs:label"></span>
-        <span class="badge rounded-pill bg-danger ms-1"></span>
+        <span class="badge bg-info ms-1"></span>
       </button>
       <div class="modal fade" id="filters" data-bs-keyboard="true" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -277,7 +277,7 @@ export default class DocumentList extends Component(HTMLElement) {
       row.onclick = () => location.hash = `#/DocumentView/${id}`;
       row.innerHTML = `
         <td class="align-middle"><h5 class="mb-0">${name}</h5><p class="text-muted mb-0">${content && content.length > 120 ? content.slice(0, 120) + '...' : content}</p></td>
-        <td class="align-middle text-end">${new Date(created).toLocaleDateString()}</td>
+        <td class="align-middle text-end">${new Date(created).toLocaleDateString('ru-RU')}</td>
       `;
       fragment.appendChild(row);
     });
@@ -300,11 +300,14 @@ export default class DocumentList extends Component(HTMLElement) {
         </div>
         <div class="table-responsive">
           <style>
-            #processes-table tbody tr:last-child {
+            #documents-table tbody tr:last-child {
               border-bottom: 1px solid transparent;
             }
+            #documents-table tr {
+              cursor: pointer;
+            }
           </style>
-          <table class="table table-hover mb-0" id="processes-table">
+          <table class="table table-hover mb-0" id="documents-table">
             <thead>
               <tr>
                 <th width="100%" class="text-secondary fw-normal" about="v-bpa:documentName" property="rdfs:label"></th>

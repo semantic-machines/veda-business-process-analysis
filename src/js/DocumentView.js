@@ -47,7 +47,9 @@ export default class DocumentView extends Component(HTMLElement) {
           </h3>
         </div>
         <p class="mb-0 text-muted" about="v-bpa:documentContent" property="rdfs:label"></p>
-        <p property="v-bpa:documentContent"></p>
+        <p class="mb-3" property="v-bpa:documentContent"></p>
+        <p class="mb-0 text-muted" about="v-s:created" property="rdfs:label"></p>
+        <p class="mb-0">${new Date(this.model['v-s:created']?.[0]).toLocaleDateString('ru-RU')}</p>
       </div>
 
       ${this.processes && this.processes.length > 0 ? html`
@@ -56,6 +58,9 @@ export default class DocumentView extends Component(HTMLElement) {
             <style>
               #processes-table tbody tr:last-child {
                 border-bottom: 1px solid transparent;
+              }
+              #processes-table tr {
+                cursor: pointer;
               }
             </style>
             <table class="table table-hover mb-0" id="processes-table">

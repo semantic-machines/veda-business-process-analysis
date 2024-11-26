@@ -189,7 +189,7 @@ class ProcessFilters extends Component(HTMLElement) {
       <button type="button" class="btn btn-link text-dark text-decoration-none" data-bs-toggle="modal" data-bs-target="#filters" id="filters-button">
         <i class="bi bi-chevron-down me-1"></i>
         <span about="v-bpa:Filters" property="rdfs:label"></span>
-        <span class="badge rounded-pill bg-danger ms-1"></span>
+        <span class="badge bg-info ms-1"></span>
       </button>
       <div class="modal fade" id="filters" data-bs-keyboard="true" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -231,6 +231,9 @@ customElements.define(ProcessFilters.tag, ProcessFilters);
 
 export default class ProcessList extends Component(HTMLElement) {
   static tag = 'bpa-process-list';
+
+  poorlyJustified = Number(this.getAttribute('poorly-justified') || 0);
+  noDocument = Number(this.getAttribute('no-document') || 0);
 
   async added() {
     const params = new Model;
@@ -319,13 +322,22 @@ export default class ProcessList extends Component(HTMLElement) {
       <div class="sheet">
         <div class="d-flex align-items-center">
           <i class="bi bi-diagram-3 ms-2 me-3 fs-1"></i>
-          <h3 class="mb-1" about="v-bpa:BusinessProcesses" property="rdfs:label"></h3>
+          <h3 class="mb-1 me-5" about="v-bpa:BusinessProcesses" property="rdfs:label"></h3>
+          ${this.poorlyJustified
+            ? html`<strong class="text-danger me-2" about="v-bpa:PoorlyJustified" property="rdfs:comment"></strong><span class="badge bg-danger">${this.poorlyJustified}</span>`
+            : this.noDocument
+            ? html`<strong class="text-secondary me-2" about="v-bpa:NoDocumentForJustification" property="rdfs:comment"></strong><span class="badge bg-secondary">${this.noDocument}</span>`
+            : ''
+          }
           <${ProcessFilters} class="ms-auto"></${ProcessFilters}>
         </div>
         <div class="table-responsive">
           <style>
             #processes-table tbody tr:last-child {
               border-bottom: 1px solid transparent;
+            }
+            #processes-table tr {
+              cursor: pointer;
             }
           </style>
           <table class="table table-hover mb-0" id="processes-table">

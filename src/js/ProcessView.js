@@ -39,7 +39,7 @@ export default class ProcessView extends Component(HTMLElement) {
                 <i class="bi bi-diagram-3 me-2"></i>
                 <span class="me-3" property="rdfs:label"></span>
               </h3>
-              <span class="me-2 align-middle" rel="v-bpa:hasProcessJustification">
+              <span class="me-3 align-middle" rel="v-bpa:hasProcessJustification">
                 <${ProcessJustificationIndicator} about="{{this.model.id}}" property="rdfs:comment"></${ProcessJustificationIndicator}>
               </span>
               <${ProcessDocumentInfo} about="{{this.model.id}}"></${ProcessDocumentInfo}>
@@ -52,6 +52,9 @@ export default class ProcessView extends Component(HTMLElement) {
               <style>
                 #ProcessViewAccordion .accordion-button:after {
                   margin-left: 0.5em;
+                }
+                #ProcessViewAccordion .accordion-item {
+                  border-color: #aaa;
                 }
               </style>
               <div class="accordion-item" style="padding:1rem 1.25rem;>
@@ -104,7 +107,7 @@ export default class ProcessView extends Component(HTMLElement) {
             ${this.cluster
               ? html`
               <a href="#/ClusterView/${this.cluster}" class="text-decoration-none d-block text-dark" about="${this.cluster}">
-                <div class="card border-0 bg-secondary bg-opacity-10 mt-4">
+                <div class="card border-0 bg-secondary bg-opacity-10 mt-3">
                   <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center gap-2">
                       <div>

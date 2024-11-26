@@ -43,22 +43,34 @@ v-bpa:OverallCounts
   v-s:resultFormat "cols" ;
   v-s:authorizationLevel "query" ;
   v-s:queryString """
-    SELECT 
+    SELECT
       (
-        SELECT 
+        SELECT
           count(id) as count
         FROM veda_tt."v-bpa:BusinessProcess" FINAL
       ) as processes,
       (
-        SELECT 
+        SELECT
           count(id) as count
         FROM veda_tt."v-bpa:ProcessCluster" FINAL
       ) as clusters,
       (
-        SELECT 
+        SELECT
           count(id) as count
         FROM veda_tt."v-bpa:ProcessDocument" FINAL
-      ) as documents;
+      ) as documents,
+      (
+        SELECT
+          count(id) as count
+        FROM veda_tt."v-bpa:BusinessProcess" FINAL
+        WHERE v_bpa_hasProcessJustification_str[1] = 'v-bpa:PoorlyJustified'
+      ) as processes_poorly_justified,
+      (
+        SELECT
+          count(id) as count
+        FROM veda_tt."v-bpa:BusinessProcess" FINAL
+        WHERE v_bpa_hasProcessJustification_str[1] = 'v-bpa:NoDocumentForJustification'
+      ) as processes_no_document;
   """ ;
 .
 
@@ -71,7 +83,7 @@ v-bpa:AllProcessClusters
   v-s:resultFormat "rows" ;
   v-s:authorizationLevel "query" ;
   v-s:queryString """
-    SELECT 
+    SELECT
       c.id,
       sum(p.v_bpa_processFrequency_int[1] * p.v_bpa_laborCosts_dec[1]) as total_time,
       count(p.id) as clustered
@@ -91,7 +103,7 @@ v-bpa:ProcessInClusters
   v-s:resultFormat "cols" ;
   v-s:authorizationLevel "query" ;
   v-s:queryString """
-    SELECT 
+    SELECT
       c.id as id
     FROM veda_tt."v-bpa:ProcessCluster" c FINAL
     ARRAY JOIN v_bpa_hasProcess_str as process_id
@@ -109,11 +121,11 @@ v-bpa:ProcessInLastAttemptClusters
   v-s:resultFormat "cols" ;
   v-s:authorizationLevel "query" ;
   v-s:queryString """
-    SELECT 
+    SELECT
       c.id as id
     FROM veda_tt."v-bpa:ProcessCluster" c FINAL
     ARRAY JOIN v_bpa_hasProcess_str as process_id
-    WHERE 
+    WHERE
       process_id = '{v-bpa:hasProcess}'
       AND c.id IN (
         SELECT arrayJoin(clusters) as id
@@ -136,7 +148,7 @@ v-bpa:CurrentClusterizationAttempts
   v-s:resultFormat "cols" ;
   v-s:authorizationLevel "query" ;
   v-s:queryString """
-    SELECT 
+    SELECT
       c.id as id
     FROM veda_tt."v-bpa:ClusterizationAttempt" c FINAL
 """ ;
@@ -161,7 +173,7 @@ v-bpa:CompletedAndRunningClusterizationAttempts
       (
         SELECT id
         FROM veda_tt."v-bpa:ClusterizationAttempt" FINAL
-        WHERE v_bpa_hasExecutionState_str = ['v-bpa:ExecutionInProgress'] 
+        WHERE v_bpa_hasExecutionState_str = ['v-bpa:ExecutionInProgress']
         ORDER BY v_bpa_startDate_date DESC
         LIMIT 1
       ) AS running;
@@ -176,7 +188,7 @@ v-bpa:AllProcessDocuments
   v-s:resultFormat "rows" ;
   v-s:authorizationLevel "query" ;
   v-s:queryString """
-    SELECT 
+    SELECT
       id,
       arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_documentName_str)) as "v-bpa:documentName",
       arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_documentContent_str)) as "v-bpa:documentContent",
@@ -194,7 +206,7 @@ v-bpa:DocumentInProcess
   v-s:resultFormat "cols" ;
   v-s:authorizationLevel "query" ;
   v-s:queryString """
-    SELECT 
+    SELECT
       p.id as id,
       arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), p.rdfs_label_str)) as "rdfs:label",
       arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), p.v_bpa_processDescription_str)) as "v-bpa:processDescription",

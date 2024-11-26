@@ -60,7 +60,7 @@ class ProcessDocumentListModal extends Component(HTMLElement) {
                       <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" @click="${(e) => this.parent.previewDocument(e, this.model)}">
                         <i class="fs-4 bi bi-file-earmark-text me-2"></i>
                         <span property="v-bpa:documentName"></span>
-                        <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString() }}</span>
+                        <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString('ru-RU') }}</span>
                       </a>
                     </div>
                   </div>
@@ -71,7 +71,7 @@ class ProcessDocumentListModal extends Component(HTMLElement) {
                   <span about="v-bpa:Cancel" property="rdfs:label"></span>
                 </button>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#process-document-add-modal">
-                  <span about="v-bpa:ChooseDocuments" property="rdfs:label"></span>
+                  <span about="v-bpa:ChangeDocuments" property="rdfs:label"></span>
                 </button>
               </div>
             </div>
@@ -129,7 +129,7 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
               <form id="process-document-add-form" @submit="${(e) => this.submit(e)}">
                 ${(await this.getDocuments())?.map(([id]) => html`
                   <div class="form-check d-flex gap-2 align-items-center">
-                    <input class="form-check-input mt-0" type="checkbox" value="${id}" ${this.model.hasValue('v-bpa:hasProcessDocument', id) ? 'checked' : ''}>
+                    <input class="form-check-input mt-0" type="checkbox" value="${id}" ${this.model.hasValue('v-bpa:hasProcessDocument', id) ? 'checked' : ''} style="cursor:pointer">
                     <label class="form-check-label w-100">
                       <div class="card mb-1 bg-light border-light" about="${id}">
                         <div class="card-body p-2">
@@ -137,7 +137,7 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
                             <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" style="cursor:pointer" @click="${(e) => this.parent.previewDocument(e, this.model)}">
                               <i class="fs-4 bi bi-file-earmark-text me-2"></i>
                               <span property="v-bpa:documentName"></span>
-                              <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString() }}</span>
+                              <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString('ru-RU') }}</span>
                             </a>
                           </div>
                         </div>

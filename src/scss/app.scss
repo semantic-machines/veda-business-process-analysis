@@ -15,10 +15,10 @@ $container-max-widths: (
 /******************************* Fonts ********************************/
 @font-face {
   font-family: 'calibri';
-  src: url('../fonts/calibri.woff2') format('woff2'),
+  src: url('../fonts/calibri.ttf') format('truetype'),
+       url('../fonts/calibri.woff2') format('woff2'),
        url('../fonts/calibri.woff') format('woff'),
-       url('../fonts/calibri.otf') format('opentype'),
-       url('../fonts/calibri.ttf') format('truetype');
+       url('../fonts/calibri.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
 }
@@ -63,7 +63,6 @@ h6 {
 }
 
 .sheet {
-  border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background-color: #fff;

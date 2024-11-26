@@ -124,7 +124,7 @@ class ProcessDocumentAdd extends Component(HTMLElement) {
                     <a class="text-dark text-decoration-none d-flex align-items-center" href="#/DocumentView/${id}">
                       <i class="fs-4 bi bi-file-earmark-text me-2"></i>
                       <span property="v-bpa:documentName"></span>
-                      <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString() }}</span>
+                      <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString('ru-RU') }}</span>
                     </a>
                   </div>
                 </div>

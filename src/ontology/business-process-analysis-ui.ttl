@@ -209,6 +209,14 @@ v-bpa:ChooseDocuments
   rdfs:comment "Choose documents"@en ;
 .
 
+v-bpa:ChangeDocuments
+  rdf:type rdfs:Resource ;
+  rdfs:label "Изменить"@ru ;
+  rdfs:label "Change"@en ;
+  rdfs:comment "Изменить документы"@ru ;
+  rdfs:comment "Change documents"@en ;
+.
+
 v-bpa:Back
   rdf:type rdfs:Resource ;
   rdfs:label "Назад"@ru ;

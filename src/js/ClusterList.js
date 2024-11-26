@@ -39,8 +39,14 @@ export default class ClusterList extends Component(HTMLElement) {
     let isExpanded;
     return html`
       <style>
-        #processes-table tbody tr:last-child {
+        ${ClusterList} #processes-table tbody tr:last-child {
           border-bottom: 1px solid transparent;
+        }
+        ${ClusterList} tr {
+          cursor: pointer;
+        }
+        ${ClusterList} tr.expanded-processes:hover > td {
+          box-shadow: none;
         }
       </style>
       <div class="sheet">
@@ -62,10 +68,10 @@ export default class ClusterList extends Component(HTMLElement) {
               ${this.model?.['v-bpa:foundClusters']?.map((cluster) => html`
                 ${(isExpanded = localStorage.getItem(`ClusterList_expanded_${cluster.id}`) === 'true', '')}
                 <tr about="${cluster.id}" class="border-top cluster-row">
-                  <td class="text-center toggle-processes" style="cursor:pointer;" data-for="${cluster.id}">
+                  <td class="text-center toggle-processes" data-for="${cluster.id}">
                     <i class="bi bi-chevron-up text-secondary ${isExpanded ? '' : 'd-none'}"></i>
                     <span class="${isExpanded ? 'd-none' : ''}">
-                      <span class="badge bg-success-subtle text-dark rounded-pill">{{this.model['v-bpa:hasProcess']?.length}}</span>
+                      <span class="badge bg-success-subtle text-dark">{{this.model['v-bpa:hasProcess']?.length}}</span>
                       <i class="bi bi-chevron-down text-secondary"></i>
                     </span>
                   </td>
@@ -84,37 +90,37 @@ export default class ClusterList extends Component(HTMLElement) {
                     <${Literal} about="${cluster.id}" property="v-bpa:clusterDifferences" max-chars="70"></${Literal}>
                   </td>
                 </tr>
-                <tr about="${cluster.id}" class="${isExpanded ? '' : 'd-none'}" data-id="${cluster.id}" style="background-color: white!important;">
+                <tr about="${cluster.id}" class="expanded-processes ${isExpanded ? '' : 'd-none'}" data-id="${cluster.id}">
                   <td></td>
                   <td colspan="3" class="p-0">
                     <div class="table-responsive">
                       <table class="table mb-0 table-hover table-light table-borderless" id="processes-table">
-                        <!--thead>
-                          <tr>
-                            <th width="50%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
-                            <th width="10%" class="text-secondary fw-normal" about="v-bpa:hasProcessJustification" property="rdfs:label"></th>
+                        <thead>
+                          <tr class="border-bottom">
+                            <th width="40%" class="text-secondary fw-normal" about="v-bpa:BusinessProcess" property="rdfs:label"></th>
+                            <th width="20%" class="text-secondary fw-normal" about="v-bpa:hasProcessJustification" property="rdfs:label"></th>
                             <th width="20%" class="text-secondary fw-normal" about="v-bpa:responsibleDepartment" property="rdfs:comment"></th>
                             <th width="10%" class="text-secondary fw-normal" about="v-bpa:processParticipant" property="rdfs:comment"></th>
                             <th width="10%" class="text-secondary fw-normal"><span about="v-bpa:laborCosts" property="rdfs:label"></span></th>
                           </tr>
-                        </thead-->
+                        </thead>
                         <tbody rel="v-bpa:hasProcess">
                           <tr about="{{this.model.id}}" class="process-row">
-                            <td class="align-middle">
+                            <td width="40%" class="align-middle">
                               <h5 class="mb-0" property="rdfs:label"></h5>
                               <p class="text-muted mb-0">
                                 <${Literal} about="{{this.model.id}}" property="v-bpa:processDescription" max-chars="70"></${Literal}>
                               </p>
                             </td>
-                            <td class="align-middle" rel="v-bpa:hasProcessJustification">
+                            <td width="20%" class="align-middle" rel="v-bpa:hasProcessJustification">
                               <${ProcessJustificationIndicator} class="text-nowrap" about="{{this.model.id}}" property="rdfs:label"></${ProcessJustificationIndicator}>
                             </td>
-                            <td class="align-middle" property="v-bpa:responsibleDepartment"></td>
-                            <td class="align-middle">
+                            <td width="20%" class="align-middle" property="v-bpa:responsibleDepartment"></td>
+                            <td width="10%" class="align-middle">
                               <i class="bi bi-people-fill me-1"></i>
                               <strong>{{ this.model.hasValue('v-bpa:processParticipant') && typeof this.model['v-bpa:processParticipant'][0] === 'string' ? this.model['v-bpa:processParticipant'][0].split(',').length : 0 }}</strong>
                             </td>
-                            <td class="align-middle lh-sm">
+                            <td width="10%" class="align-middle lh-sm">
                               <strong>{{ this.model.hasValue('v-bpa:laborCosts') && this.model.hasValue('v-bpa:processFrequency') ? this.model['v-bpa:laborCosts'][0] * this.model['v-bpa:processFrequency'][0] : 0 }}</strong>
                               <br>
                               <small class="text-secondary" about="v-bpa:HoursPerYear" property="rdfs:comment"></small>
