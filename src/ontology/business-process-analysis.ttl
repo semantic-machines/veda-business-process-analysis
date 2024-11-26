@@ -23,7 +23,7 @@ v-bpa:BusinessProcess
 .
 
 v-bpa:processDescription
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Описание процесса"@ru ;
   rdfs:label "Process description"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
@@ -31,7 +31,7 @@ v-bpa:processDescription
 .
 
 v-bpa:processParticipant
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Участник процесса"@ru ;
   rdfs:label "Process participant"@en ;
   rdfs:comment "Участники"@ru ;
@@ -41,7 +41,7 @@ v-bpa:processParticipant
 .
 
 v-bpa:responsibleDepartment
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Ответственное подразделение"@ru ;
   rdfs:label "Responsible department"@en ;
   rdfs:comment "Подразделение"@ru ;
@@ -51,7 +51,7 @@ v-bpa:responsibleDepartment
 .
 
 v-bpa:processFrequency
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Частота исполнения"@ru ;
   rdfs:label "Execution frequency"@en ;
   rdfs:comment "Частота"@ru ;
@@ -60,9 +60,8 @@ v-bpa:processFrequency
   rdfs:range xsd:integer ;
 .
 
-
 v-bpa:laborCosts
-  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:DatatypeProperty, owl:FunctionalProperty ;
   rdfs:label "Трудозатраты"@ru ;
   rdfs:label "Labor costs"@en ;
   rdfs:domain v-bpa:BusinessProcess ;
@@ -471,4 +470,76 @@ v-bpa:NoActionExecution
   rdf:type v-bpa:ExecutionControl ;
   rdfs:label "Нет действия"@ru ;
   rdfs:label "No action"@en ;
+.
+
+# Бизнес-процесс
+v-bpa:BusinessProcessFilter
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Фильтр бизнес-процессов"@ru ;
+  rdfs:label "Business Process Filter"@en ;
+.
+
+v-bpa:processDescription_filter
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Описание процесса"@ru ;
+  rdfs:label "Process description"@en ;
+  rdfs:domain v-bpa:BusinessProcessFilter ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:processParticipant_filter
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Участник процесса"@ru ;
+  rdfs:label "Process participant"@en ;
+  rdfs:comment "Участники"@ru ;
+  rdfs:comment "Participants"@en ;
+  rdfs:domain v-bpa:BusinessProcessFilter ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:responsibleDepartment_filter
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Ответственное подразделение"@ru ;
+  rdfs:label "Responsible department"@en ;
+  rdfs:comment "Подразделение"@ru ;
+  rdfs:comment "Department"@en ;
+  rdfs:domain v-bpa:BusinessProcessFilter ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:processFrequency_filter
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Частота исполнения"@ru ;
+  rdfs:label "Execution frequency"@en ;
+  rdfs:comment "Частота"@ru ;
+  rdfs:comment "Frequency"@en ;
+  rdfs:domain v-bpa:BusinessProcessFilter ;
+  rdfs:range xsd:integer ;
+.
+
+v-bpa:laborCosts_filter
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Трудозатраты"@ru ;
+  rdfs:label "Labor costs"@en ;
+  rdfs:domain v-bpa:BusinessProcessFilter ;
+  rdfs:range xsd:decimal ;
+.
+
+v-bpa:hasProcessJustification_filter
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Обоснованность"@ru ;
+  rdfs:label "Justification"@en ;
+  rdfs:domain v-bpa:BusinessProcess ;
+  rdfs:range v-bpa:ProcessJustification ;
+.
+
+rdfs:label_filter
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Ответственное подразделение"@ru ;
+  rdfs:label "Responsible department"@en ;
+  rdfs:comment "Подразделение"@ru ;
+  rdfs:comment "Department"@en ;
+  rdfs:domain v-bpa:BusinessProcessFilter ;
+  rdfs:range xsd:string ;
 .
