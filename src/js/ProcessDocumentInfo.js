@@ -68,7 +68,7 @@ class ProcessDocumentListModal extends Component(HTMLElement) {
               </div>
               <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                  <span about="v-bpa:Cancel" property="rdfs:label"></span>
+                  <span about="v-bpa:Close" property="rdfs:label"></span>
                 </button>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#process-document-add-modal">
                   <span about="v-bpa:ChangeDocuments" property="rdfs:label"></span>
@@ -103,6 +103,11 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
     await this.model.save();
   }
 
+  async cancel(event) {
+    // event.preventDefault();
+    this.model.reset();
+  }
+
   previewDocument(e, model) {
     e.preventDefault();
     const preview = document.getElementById('process-document-preview');
@@ -126,7 +131,7 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
                 <h4 about="v-bpa:ChooseDocuments" property="rdfs:comment"></h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-              <form id="process-document-add-form" @submit="${(e) => this.submit(e)}">
+              <form id="process-document-add-form" @submit="${(e) => this.submit(e)}" @reset="${(e) => this.cancel(e)}">
                 ${(await this.getDocuments())?.map(([id]) => html`
                   <div class="form-check d-flex gap-2 align-items-center">
                     <input class="form-check-input mt-0" type="checkbox" value="${id}" ${this.model.hasValue('v-bpa:hasProcessDocument', id) ? 'checked' : ''} style="cursor:pointer">
@@ -146,9 +151,8 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
                   </div>
                 `).join('')}
                 <div class="d-flex justify-content-between mt-2">
-                  <button type="button" class="btn btn-light btn-back" data-bs-toggle="modal" data-bs-target="#process-document-list-modal">
-                    <i class="bi bi-arrow-left me-1"></i>
-                    <span about="v-bpa:Back" property="rdfs:label"></span>
+                  <button type="reset" class="btn btn-light btn-back" data-bs-toggle="modal" data-bs-target="#process-document-list-modal">
+                    <span about="v-bpa:Cancel" property="rdfs:label"></span>
                   </button>
                   <button type="submit" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#process-document-list-modal">
                     <span about="v-bpa:ChooseDocuments" property="rdfs:label"></span>
