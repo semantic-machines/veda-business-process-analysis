@@ -126,7 +126,7 @@ class ProcessFilterForm extends Component(HTMLElement) {
       <form @submit="${(e) => this.submit(e)}" @reset="${() => this.reset()}">
         <div class="mb-3">
           <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
-          <input type="text" class="form-control" id="label" name="rdfs:label" value="${this.data['rdfs:label_filter']?.[0] || ''}">
+          <input type="text" class="form-control" id="label" name="rdfs:label_filter" value="${this.data['rdfs:label_filter']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label for="justification" class="form-label" about="v-bpa:hasProcessJustification" property="rdfs:label"></label>

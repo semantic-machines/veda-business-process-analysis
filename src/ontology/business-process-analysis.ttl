@@ -536,10 +536,8 @@ v-bpa:hasProcessJustification_filter
 
 rdfs:label_filter
   rdf:type owl:DatatypeProperty ;
-  rdfs:label "Ответственное подразделение"@ru ;
-  rdfs:label "Responsible department"@en ;
-  rdfs:comment "Подразделение"@ru ;
-  rdfs:comment "Department"@en ;
+  rdfs:label "Наименование"@ru ;
+  rdfs:label "Label"@en ;
   rdfs:domain v-bpa:BusinessProcessFilter ;
   rdfs:range xsd:string ;
 .
