@@ -126,26 +126,26 @@ class ProcessFilterForm extends Component(HTMLElement) {
       <form @submit="${(e) => this.submit(e)}" @reset="${() => this.reset()}">
         <div class="mb-3">
           <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
-          <input type="text" class="form-control" id="label" name="rdfs:label" value="${this.data['rdfs:label']?.[0] || ''}">
+          <input type="text" class="form-control" id="label" name="rdfs:label" value="${this.data['rdfs:label_filter']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label for="justification" class="form-label" about="v-bpa:hasProcessJustification" property="rdfs:label"></label>
           <select class="form-select" id="justification" name="v-bpa:hasProcessJustification_filter" multiple>
-            <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:CompletelyJustified') ? 'selected' : ''}></option>
-            <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:PartlyJustified') ? 'selected' : ''}></option>
-            <option value="v-bpa:PoorlyJustified" about="v-bpa:PoorlyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:PoorlyJustified') ? 'selected' : ''}></option>
-            <option value="v-bpa:NoDocumentForJustification" about="v-bpa:NoDocumentForJustification" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification']?.includes('v-bpa:NoDocumentForJustification') ? 'selected' : ''}></option>
+            <option value="v-bpa:CompletelyJustified" about="v-bpa:CompletelyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification_filter']?.includes('v-bpa:CompletelyJustified') ? 'selected' : ''}></option>
+            <option value="v-bpa:PartlyJustified" about="v-bpa:PartlyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification_filter']?.includes('v-bpa:PartlyJustified') ? 'selected' : ''}></option>
+            <option value="v-bpa:PoorlyJustified" about="v-bpa:PoorlyJustified" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification_filter']?.includes('v-bpa:PoorlyJustified') ? 'selected' : ''}></option>
+            <option value="v-bpa:NoDocumentForJustification" about="v-bpa:NoDocumentForJustification" property="rdfs:label" ${this.data['v-bpa:hasProcessJustification_filter']?.includes('v-bpa:NoDocumentForJustification') ? 'selected' : ''}></option>
           </select>
         </div>
         <div class="mb-3">
           <label for="responsibleDepartment" class="form-label" about="v-bpa:responsibleDepartment" property="rdfs:comment"></label>
-          <input type="text" class="form-control" id="responsibleDepartment" name="v-bpa:responsibleDepartment_filter" value="${this.data['v-bpa:responsibleDepartment']?.[0] || ''}">
+          <input type="text" class="form-control" id="responsibleDepartment" name="v-bpa:responsibleDepartment_filter" value="${this.data['v-bpa:responsibleDepartment_filter']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label class="form-label" for="laborCosts" about="v-bpa:laborCosts" property="rdfs:label"></label>
           <div class="mb-3 d-flex align-items-center" id="laborCosts">
-            <input type="number" placeholder="от" class="form-control me-2 w-25" name="v-bpa:laborCosts_filter" value="${this.data['v-bpa:laborCosts']?.[0] || ''}">
-            <input type="number" placeholder="до" class="form-control w-25" name="v-bpa:laborCosts_filter" value="${this.data['v-bpa:laborCosts']?.[1] || ''}">
+            <input type="number" placeholder="от" class="form-control me-2 w-25" name="v-bpa:laborCosts_filter" value="${this.data['v-bpa:laborCosts_filter']?.[0] || ''}">
+            <input type="number" placeholder="до" class="form-control w-25" name="v-bpa:laborCosts_filter" value="${this.data['v-bpa:laborCosts_filter']?.[1] || ''}">
           </div>
         </div>
         <div class="d-flex justify-content-between">

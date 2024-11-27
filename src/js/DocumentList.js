@@ -123,17 +123,17 @@ class DocumentFilterForm extends Component(HTMLElement) {
       <form @submit="${(e) => this.submit(e)}" @reset="${() => this.reset()}">
         <div class="mb-3">
           <label for="name" class="form-label" about="v-bpa:documentName" property="rdfs:label"></label>
-          <input type="text" class="form-control" id="name" name="v-bpa:documentName_filter" value="${this.data['v-bpa:documentName']?.[0] || ''}">
+          <input type="text" class="form-control" id="name" name="v-bpa:documentName_filter" value="${this.data['v-bpa:documentName_filter']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label for="content" class="form-label" about="v-bpa:documentContent" property="rdfs:label"></label>
-          <input type="text" class="form-control" id="content" name="v-bpa:documentContent_filter" value="${this.data['v-bpa:documentContent']?.[0] || ''}">
+          <input type="text" class="form-control" id="content" name="v-bpa:documentContent_filter" value="${this.data['v-bpa:documentContent_filter']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label class="form-label me-2" about="v-s:created" property="rdfs:label"></label>
           <div class="mb-3 d-flex align-items-center" id="created">
-            <input type="date" placeholder="от" class="form-control me-2 w-50" name="v-s:created_filter" value="${this.data['v-s:created']?.[0] || ''}">
-            <input type="date" placeholder="до" class="form-control w-50" name="v-s:created_filter" value="${this.data['v-s:created']?.[1] || ''}">
+            <input type="date" placeholder="от" class="form-control me-2 w-50" name="v-s:created_filter" value="${this.data['v-s:created_filter']?.[0] || ''}">
+            <input type="date" placeholder="до" class="form-control w-50" name="v-s:created_filter" value="${this.data['v-s:created_filter']?.[1] || ''}">
           </div>
         </div>
         <!--div class="mb-3 position-relative">
