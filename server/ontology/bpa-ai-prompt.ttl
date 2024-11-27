@@ -153,6 +153,6 @@ v-bpa:ModifySearchFiltersPrompt
    - Измененные поля содержат новые значения согласно запросу
    - Неизмененные поля сохраняют точно такие же значения из inputData
 """@ru ;
-  v-bpa:properties rdfs:label, v-bpa:processDescription, v-bpa:responsibleDepartment, v-bpa:laborCosts, v-bpa:processFrequency, v-bpa:processParticipant, v-bpa:hasProcessJustification;
-  v-bpa:targetType v-bpa:BusinessProcess;
+  v-bpa:properties rdfs:label_filter, v-bpa:processDescription_filter, v-bpa:responsibleDepartment_filter, v-bpa:laborCosts_filter, v-bpa:processFrequency_filter, v-bpa:processParticipant_filter, v-bpa:hasProcessJustification_filter;
+  v-bpa:targetType v-bpa:BusinessProcessFilter;
 .

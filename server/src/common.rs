@@ -165,7 +165,7 @@ pub fn prepare_request_ai_parameters(
     // Собираем имена свойств для списка required
     let required: Vec<String> = property_mapping
         .keys()
-        .filter(|k| !k.contains('_')) // Исключаем маппинги для enum значений
+        .filter(|k| !k.contains('*')) // Исключаем маппинги для enum значений
         .cloned()
         .collect();
 
@@ -297,7 +297,7 @@ pub fn set_to_individual_from_ai_response(
                 if let Some(arr) = value.as_array() {
                     for val in arr {
                         if let Some(str_val) = val.as_str() {
-                            let enum_key = format!("{}_{}", short_name, str_val);
+                            let enum_key = format!("{}*{}", short_name, str_val);
                             if let Some(uri) = property_mapping.get(&enum_key) {
                                 info!("Adding enum value {} -> {} for property {}", str_val, uri, full_prop);
                                 individual.add_uri(full_prop, uri);
@@ -308,7 +308,7 @@ pub fn set_to_individual_from_ai_response(
                         }
                     }
                 } else if let Some(str_val) = value.as_str() {
-                    let enum_key = format!("{}_{}", short_name, str_val);
+                    let enum_key = format!("{}*{}", short_name, str_val);
                     if let Some(uri) = property_mapping.get(&enum_key) {
                         info!("Setting enum value {} -> {} for property {}", str_val, uri, full_prop);
                         individual.set_uri(full_prop, uri);
@@ -414,7 +414,7 @@ pub fn collect_define_from_schema(
                         .filter_map(|instance| {
                             let label = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]);
                             if let Some(label) = &label {
-                                property_mapping.insert(format!("{}_{}", short_name, label), instance.get_id().to_string());
+                                property_mapping.insert(format!("{}*{}", short_name, label), instance.get_id().to_string());
                             }
                             label
                         })
@@ -526,7 +526,7 @@ fn transform_uri_to_display_value(uri: &str, property_mapping: &PropertyMapping)
     info!("Transforming URI to display value: {}", uri);
     for (key, value) in property_mapping {
         if value == uri {
-            if let Some((_prefix, display_value)) = key.split_once('_') {
+            if let Some((_prefix, display_value)) = key.split_once('*') {
                 info!("Found display value: {} for URI: {}", display_value, uri);
                 return Some(display_value.to_string());
             }
@@ -538,7 +538,7 @@ fn transform_uri_to_display_value(uri: &str, property_mapping: &PropertyMapping)
 
 /// Преобразует человекочитаемое значение обратно в URI
 fn transform_display_value_to_uri(predicate: &str, display_value: &str, property_mapping: &PropertyMapping) -> Option<String> {
-    let enum_key = format!("{}_{}", predicate, display_value);
+    let enum_key = format!("{}*{}", predicate, display_value);
     info!("Looking up URI for key: {}", enum_key);
     if let Some(uri) = property_mapping.get(&enum_key) {
         info!("Found URI: {} for display value: {}", uri, display_value);
