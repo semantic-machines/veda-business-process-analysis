@@ -67,7 +67,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
 
   render() {
     return html`
-      <div class="mb-3 ms-3 d-flex justify-content-between">
+      <div class="mb-3 ms-3 d-flex justify-content-between align-items-center">
         <ul class="nav nav-underline">
           <li class="nav-item">
             <button id="processes" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'processes' ? 'active disabled' : 'text-secondary-emphasis'}">

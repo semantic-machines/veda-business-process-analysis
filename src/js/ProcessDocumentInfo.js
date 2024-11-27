@@ -59,7 +59,7 @@ class ProcessDocumentListModal extends Component(HTMLElement) {
                     <div class="card-title mb-0">
                       <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" @click="${(e) => this.parent.previewDocument(e, this.model)}">
                         <i class="fs-4 bi bi-file-earmark-text me-2"></i>
-                        <span property="v-bpa:documentName"></span>
+                        <span class="me-2" property="v-bpa:documentName"></span>
                         <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString('ru-RU') }}</span>
                       </a>
                     </div>
@@ -141,7 +141,7 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
                           <div class="card-title mb-0">
                             <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" style="cursor:pointer" @click="${(e) => this.parent.previewDocument(e, this.model)}">
                               <i class="fs-4 bi bi-file-earmark-text me-2"></i>
-                              <span property="v-bpa:documentName"></span>
+                              <span class="me-2" property="v-bpa:documentName"></span>
                               <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString('ru-RU') }}</span>
                             </a>
                           </div>

@@ -127,6 +127,9 @@ export default class ClusterView extends Component(HTMLElement) {
                     #ProcessViewAccordion .accordion-button:after {
                       margin-left: 0.5em;
                     }
+                    #ProcessViewAccordion .accordion-item {
+                      border-color: #aaa;
+                    }
                   </style>
                   <div class="accordion-item" style="padding:1rem 1.25rem;>
                     <h5 class="accordion-header">

@@ -93,7 +93,7 @@ v-bpa:documentName
   rdfs:range xsd:string ;
 .
 
-v-bpa:documentContent 
+v-bpa:documentContent
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Содержание документа"@ru ;
   rdfs:label "Document content"@en ;

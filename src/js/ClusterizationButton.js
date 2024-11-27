@@ -24,12 +24,13 @@ export default class ClusterizationButton extends Component(HTMLElement) {
 
   render() {
     return html`
-      <button class="btn btn-link text-dark text-decoration-none" @click="${(e) => this.updateClusters(e)}" ${this.model ? 'disabled' : ''}>
-        ${this.model
-          ? html`<${Attempt} about="${this.model.id}"></${Attempt}>`
-          : html`<i class="bi bi-arrow-repeat me-2"></i><span about="v-bpa:UpdateClusters" property="rdfs:label"></span>`
-        }
-      </button>
+      ${this.model
+        ? html`<${Attempt} about="${this.model.id}"></${Attempt}>`
+        : html`
+          <button class="btn btn-link text-dark text-decoration-none" @click="${(e) => this.updateClusters(e)}" ${this.model ? 'disabled' : ''}>
+            <i class="bi bi-arrow-repeat me-2"></i><span about="v-bpa:UpdateClusters" property="rdfs:label"></span>
+          </button>`
+      }
     `;
   }
 }
@@ -39,46 +40,42 @@ customElements.define(ClusterizationButton.tag, ClusterizationButton);
 class Attempt extends Component(HTMLElement) {
   static tag = 'bpa-attempt';
 
-  handler = () => this.update();
-
   added() {
     this.model.on('modified', this.handler);
   }
+
+  handler = () => this.update();
 
   removed() {
     this.model.off('modified', this.handler);
   }
 
   render() {
-    const state = safe(this.model?.['v-bpa:hasExecutionState']?.[0].id);
-    const progress = safe(this.model?.['v-bpa:clusterizationProgress']?.[0] ?? 0);
-    const secondsLeft = safe(this.model?.['v-bpa:estimatedTime']?.[0]);
-
-    let timeString = '';
-    if (secondsLeft) {
-      const minutes = Math.floor(secondsLeft / 60);
-      const seconds = secondsLeft % 60;
-      timeString += `${minutes}:${seconds.toString().padStart(2, '0')} осталось`;
-    }
+    const state = this.model?.['v-bpa:hasExecutionState']?.[0].id;
+    const progress = this.model?.['v-bpa:clusterizationProgress']?.[0] ?? 0;
 
     return html`
-      ${state === 'v-bpa:ExecutionCompleted'
-        ? html`<i class="bi bi-check-circle-fill text-success me-2"></i>
-           <${Literal} about="${state}" property="rdfs:label" class="me-1"></${Literal}>`
-        : html`
-          <div class="spinner-grow spinner-grow-sm me-2" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          ${state ? html`<${Literal} about="${state}" property="rdfs:label"></${Literal}>:` : ''}
-          <span class="ms-1">${progress}%</span>
-          ${timeString
-            ? html`<i class="bi bi-clock-history mx-1"></i><span>${timeString}</span>`
-            : ''
-          }`
-      }
+      <div class="d-flex align-items-center">
+        ${state === 'v-bpa:ExecutionCompleted'
+          ? html`
+            <i class="bi bi-check-circle-fill text-success me-2"></i>
+            <${Literal} about="${state}" property="rdfs:label" class="me-1"></${Literal}>`
+          : state === 'v-bpa:ExecutionError'
+          ? html`
+            <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>
+            <${Literal} about="${state}" property="rdfs:label" class="me-1" title="${this.model['v-bpa:lastError'][0]}"></${Literal}>`
+          : html`
+            <div class="spinner-grow spinner-grow-sm me-2" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            ${state ? html`<${Literal} class="me-2" about="${state}" property="rdfs:label"></${Literal}>` : ''}
+            <div class="progress d-inline-block border border-tertiary-subtle" role="progressbar" aria-label="Clusterization progress" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" style="height: 16px; width: 60px">
+              <div class="progress-bar fw-bold progress-bar-striped progress-bar-animated bg-success" style="width: ${progress}%">${progress}%</div>
+            </div>`
+        }
+      </div>
     `;
   }
 }
 
 customElements.define(Attempt.tag, Attempt);
-

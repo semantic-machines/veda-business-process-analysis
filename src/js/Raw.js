@@ -111,11 +111,9 @@ export default class Raw extends Component(HTMLElement) {
 
   post() {
     if (this.editing) {
-      this.querySelector('textarea').value = toJSON(this.model);
+      this.querySelector('textarea').innerHTML = toJSON(this.model);
     } else {
-      this.querySelector('code').innerHTML = this.format === 'ttl' ?
-        `${toTurtle(this.model)}` :
-        `${toJSON(this.model)}`;
+      this.querySelector('code').innerHTML = this.format === 'ttl' ? toTurtle(this.model) : toJSON(this.model);
     }
   }
 
@@ -124,7 +122,6 @@ export default class Raw extends Component(HTMLElement) {
   }
 
   modifiedHandler = () => {
-    console.log('model modified');
     this.update();
   }
 
