@@ -5,7 +5,9 @@ import Callback from './Callback.js';
 export default class ClusterizationButton extends Component(HTMLElement) {
   static tag = 'bpa-clusterization-button';
 
-  callback = Callback.get(this.getAttribute('callback'));
+  added() {
+    this.callback = Callback.get(this.getAttribute('callback'));
+  }
 
   async updateClusters() {
     const model = new Model();
