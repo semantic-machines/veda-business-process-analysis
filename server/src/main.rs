@@ -19,6 +19,7 @@ mod clustering_handler;
 mod common;
 mod prompt_manager;
 mod queue_processor;
+pub mod response_schema;
 mod types;
 
 mod clustering_common;
@@ -91,4 +92,9 @@ fn main() -> std::io::Result<()> {
     module.prepare_queue(&mut my_module);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    mod response_schema;
 }

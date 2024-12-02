@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "sections": {
+      "mapping": "v-bpa:documentSections",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "required": ["title", "content"]
+      }
+    },
+    "key_data": {
+      "type": "object",
+      "properties": {
+        "document_title": { 
+          "type": "string",
+          "mapping": "v-bpa:documentTitle"
+        },
+        "document_type": { 
+          "type": "string",
+          "mapping": "v-bpa:documentType"
+        },
+        "document_source": { 
+          "type": "string",
+          "mapping": "v-bpa:documentSource"
+        },
+        "date": { 
+          "type": "string",
+          "mapping": "v-bpa:documentDate"
+        },
+        "signed_by": { 
+          "type": "string",
+          "mapping": "v-bpa:documentSignedBy"
+        }
+      },
+      "required": ["document_title", "document_type", "document_source", "date", "signed_by"]
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "mapping": "v-bpa:documentErrors"
+    }
+  },
+  "required": ["sections", "key_data", "errors"]
+}

@@ -1,0 +1,23 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+v-bpa:TestResult
+  rdf:type v-bpa:Document ;
+  v-bpa:documentTitle "Тестовый документ" ;
+  v-bpa:documentType "Приказ" ;
+  v-bpa:documentSource "Тестовый отдел" ;
+  v-bpa:documentSignedBy "Иван Иванов" ;  
+  v-bpa:documentDate "2024-03-20T10:00:00Z" ;
+  v-bpa:documentErrors "Ошибка 1", "Ошибка 2" ;
+  v-bpa:documentSections """
+{
+  "title": "Раздел 1",
+  "content": "Содержимое раздела 1"
+}""", """
+{
+  "title": "Раздел 2",
+  "content": "Содержимое раздела 2"
+}""" ;
+.

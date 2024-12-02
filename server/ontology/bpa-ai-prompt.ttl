@@ -156,3 +156,88 @@ v-bpa:ModifySearchFiltersPrompt
   v-bpa:properties rdfs:label_filter, v-bpa:processDescription_filter, v-bpa:responsibleDepartment_filter, v-bpa:laborCosts_filter, v-bpa:processFrequency_filter, v-bpa:processParticipant_filter, v-bpa:hasProcessJustification_filter;
   v-bpa:targetType v-bpa:BusinessProcessFilter;
 .
+
+v-bpa:DocumentAnalysisPrompt
+  rdf:type v-bpa:SystemPrompt ;
+  rdfs:label "Промпт для анализа документов"@ru ;
+  rdfs:label "Document Analysis Prompt"@en ;
+  v-bpa:promptText """
+Ты эффективный помощник по извлечению информации из документов. Твоя задача — из предоставленного PDF-документа извлечь текст, структурировать его и дополнительно определить ключевые атрибуты документа:
+ • Заголовок документа (если имеется).
+ • Тип документа (например, запрос, постановление, отчет и т. д.).
+ • Источник документа (например, министерство, департамент, организация).
+ • Дата (если указана).
+ • Подпись (кто подписал документ, если это указано).
+Требования к результату:
+ 1. Структурирование текста:
+ • Раздели текст на логические блоки: заголовки, абзацы, списки.
+ • Если в документе есть таблицы, представь их в формате строк и столбцов.
+ 2. Извлечение ключевых данных:
+ • Заголовок документа.
+ • Тип документа.
+ • Источник.
+ • Дата.
+ • Подпись.
+ 3. Если не удается извлечь какую-либо из ключевых характеристик, зафиксируй это в разделе errors.
+Правила:
+ • Работай с документом последовательно, выделяя структуру и важные данные.
+ • Указывай любые ошибки или недостающие данные.
+"""@ru ;
+  v-bpa:responseSchema 
+"""
+{
+  "type": "object",
+  "additional_properties": {
+    "rdf:type": "v-bpa:Document"
+  },
+  "properties": {
+    "sections": {
+      "mapping": "v-bpa:documentSections",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "required": ["title", "content"]
+      }
+    },
+    "key_data": {
+      "type": "object",  
+      "properties": {
+        "document_title": { 
+          "type": "string",
+          "mapping": "v-bpa:documentTitle"
+        },
+        "document_type": { 
+          "type": "string", 
+          "mapping": "v-bpa:documentType"
+        },
+        "document_source": { 
+          "type": "string",
+          "mapping": "v-bpa:documentSource"
+        },
+        "date": { 
+          "type": "string",
+          "mapping": "v-bpa:documentDate"
+        },
+        "signed_by": { 
+          "type": "string",
+          "mapping": "v-bpa:documentSignedBy"
+        }
+      },
+      "required": ["document_title", "document_type", "document_source", "date", "signed_by"]
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "mapping": "v-bpa:documentErrors"
+    }
+  },
+  "required": ["sections", "key_data", "errors"]
+}
+""" ;
+  v-bpa:properties v-bpa:documentSections, v-bpa:documentTitle, v-bpa:documentType, 
+    v-bpa:documentSource, v-bpa:documentDate, v-bpa:documentSignedBy, v-bpa:documentErrors ;
+.
