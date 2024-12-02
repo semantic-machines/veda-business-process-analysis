@@ -22,6 +22,8 @@ pub struct ResponseSchema {
     #[serde(rename = "type")]
     pub type_name: String,
     pub properties: HashMap<String, PropertyMapping>,
+    #[serde(rename = "additional_properties")]
+    pub additional_properties: Option<HashMap<String, String>>,
     #[serde(flatten)]
     pub additional: Map<String, Value>,
 }
@@ -40,18 +42,34 @@ pub struct ParseResult {
 
 impl ResponseSchema {
     pub fn from_json(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let schema: ResponseSchema = serde_json::from_str(json)?;
+        let mut schema: ResponseSchema = serde_json::from_str(json)?;
         if schema.type_name != "object" {
             return Err("Root schema type must be 'object'".into());
         }
+
+        // Проверяем наличие additional_properties в дополнительных полях
+        if let Some(additional_props) = schema.additional.get("additional_properties") {
+            if let Some(props_obj) = additional_props.as_object() {
+                schema.additional_properties = Some(props_obj.iter().filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string()))).collect());
+            }
+        }
+
         Ok(schema)
     }
 
     pub fn from_value(value: &Value) -> Result<Self, Box<dyn std::error::Error>> {
-        let schema: ResponseSchema = serde_json::from_value(value.clone())?;
+        let mut schema: ResponseSchema = serde_json::from_value(value.clone())?;
         if schema.type_name != "object" {
             return Err("Root schema type must be 'object'".into());
         }
+
+        // Проверяем наличие additional_properties в дополнительных полях
+        if let Some(additional_props) = value.get("additional_properties") {
+            if let Some(props_obj) = additional_props.as_object() {
+                schema.additional_properties = Some(props_obj.iter().filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string()))).collect());
+            }
+        }
+
         Ok(schema)
     }
 
@@ -70,14 +88,11 @@ impl ResponseSchema {
                 }
                 map.insert("properties".to_string(), Value::Object(props_map));
             } else {
-                map.insert(
-                    "type".to_string(),
-                    Value::String(prop.type_name.clone().unwrap_or_else(|| "string".to_string())),
-                );
+                map.insert("type".to_string(), Value::String(prop.type_name.clone().unwrap_or_else(|| "string".to_string())));
             }
 
             for (key, value) in &prop.additional {
-                if !["mapping", "is_multiple"].contains(&key.as_str()) {
+                if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
                     map.insert(key.clone(), value.clone());
                 }
             }
@@ -95,7 +110,7 @@ impl ResponseSchema {
         schema_map.insert("properties".to_string(), Value::Object(props_map));
 
         for (key, value) in &self.additional {
-            if !["mapping", "is_multiple"].contains(&key.as_str()) {
+            if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
                 schema_map.insert(key.clone(), value.clone());
             }
         }
@@ -115,9 +130,7 @@ impl ResponseSchema {
         let property_type = if is_class {
             "owl:Class".to_string()
         } else {
-            prop_individual
-                .get_first_literal("rdfs:range")
-                .unwrap_or_else(|| "xsd:string".to_string())
+            prop_individual.get_first_literal("rdfs:range").unwrap_or_else(|| "xsd:string".to_string())
         };
 
         Ok(PropertyInfo {
@@ -127,13 +140,7 @@ impl ResponseSchema {
         })
     }
 
-    fn set_property_value(
-        individual: &mut Individual,
-        property: &str,
-        value: &Value,
-        property_type: &str,
-        is_multiple: bool,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn set_property_value(individual: &mut Individual, property: &str, value: &Value, property_type: &str, is_multiple: bool) -> Result<(), Box<dyn std::error::Error>> {
         match property_type {
             "xsd:string" | "xsd:dateTime" => {
                 if let Some(s) = value.as_str() {
@@ -143,7 +150,7 @@ impl ResponseSchema {
                         individual.set_string(property, s, Lang::none());
                     }
                 }
-            }
+            },
             "xsd:integer" => {
                 if let Some(n) = value.as_i64() {
                     if is_multiple {
@@ -152,7 +159,7 @@ impl ResponseSchema {
                         individual.set_integer(property, n);
                     }
                 }
-            }
+            },
             "xsd:decimal" => {
                 if let Some(n) = value.as_f64() {
                     if is_multiple {
@@ -161,14 +168,14 @@ impl ResponseSchema {
                         individual.set_decimal_from_f64(property, n);
                     }
                 }
-            }
+            },
             _ => {
                 if is_multiple {
                     individual.add_string(property, &value.to_string(), Lang::none());
                 } else {
                     individual.set_string(property, &value.to_string(), Lang::none());
                 }
-            }
+            },
         }
         Ok(())
     }
@@ -197,23 +204,9 @@ impl ResponseSchema {
                             println!("Found mapping URI for {}: {}", key, mapping_uri);
                             let property_info = Self::get_property_info(storage, mapping_uri)?;
 
-                            Self::set_property_value(
-                                parent_individual,
-                                mapping_uri,
-                                prop_value,
-                                &property_info.property_type,
-                                property_info.is_multiple,
-                            )?;
+                            Self::set_property_value(parent_individual, mapping_uri, prop_value, &property_info.property_type, property_info.is_multiple)?;
                         } else {
-                            Self::process_value(
-                                prop_value,
-                                prop_mapping,
-                                storage,
-                                related_individuals,
-                                parent_individual,
-                                key,
-                                sys_ticket,
-                            )?;
+                            Self::process_value(prop_value, prop_mapping, storage, related_individuals, parent_individual, key, sys_ticket)?;
                         }
                     }
                 }
@@ -238,16 +231,10 @@ impl ResponseSchema {
                         }
                     } else {
                         for item in arr {
-                            Self::set_property_value(
-                                parent_individual,
-                                mapping_uri,
-                                item,
-                                &property_info.property_type,
-                                true,
-                            )?;
+                            Self::set_property_value(parent_individual, mapping_uri, item, &property_info.property_type, true)?;
                         }
                     }
-                }
+                },
                 Value::Object(_obj) if property_info.is_class => {
                     // Сохраняем как JSON для объекта без маппинга
                     if is_multiple {
@@ -255,16 +242,10 @@ impl ResponseSchema {
                     } else {
                         parent_individual.set_string(mapping_uri, &serde_json::to_string_pretty(value)?, Lang::none());
                     }
-                }
+                },
                 _ => {
-                    Self::set_property_value(
-                        parent_individual,
-                        mapping_uri,
-                        value,
-                        &property_info.property_type,
-                        is_multiple,
-                    )?;
-                }
+                    Self::set_property_value(parent_individual, mapping_uri, value, &property_info.property_type, is_multiple)?;
+                },
             }
         }
         Ok(())
@@ -278,18 +259,19 @@ impl ResponseSchema {
 
         result.main_individual.set_id(&format!("d:result_{}", uuid::Uuid::new_v4()));
 
+        // Применяем additional_properties если они есть
+        if let Some(additional_props) = &self.additional_properties {
+            println!("Applying additional properties: {:?}", additional_props);
+            for (predicate, value) in additional_props {
+                println!("Setting additional property {} = {}", predicate, value);
+                result.main_individual.set_uri(predicate, value);
+            }
+        }
+
         if let Some(obj) = response.as_object() {
             for (key, prop_mapping) in &self.properties {
                 if let Some(value) = obj.get(key) {
-                    Self::process_value(
-                        value,
-                        prop_mapping,
-                        storage,
-                        &mut result.related_individuals,
-                        &mut result.main_individual,
-                        key,
-                        sys_ticket,
-                    )?;
+                    Self::process_value(value, prop_mapping, storage, &mut result.related_individuals, &mut result.main_individual, key, sys_ticket)?;
                 }
             }
         }

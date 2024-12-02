@@ -45,5 +45,8 @@
       "mapping": "v-bpa:documentErrors"
     }
   },
-  "required": ["sections", "key_data", "errors"]
+  "required": ["sections", "key_data", "errors"],
+  "additional_properties": {
+    "rdf:type": "v-bpa:Document"
+  }
 }

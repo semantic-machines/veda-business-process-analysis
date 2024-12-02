@@ -25,27 +25,17 @@ fn setup_test_context() -> TestContext {
     let mut backend = Backend::create(StorageMode::ReadWrite, false);
 
     // Получаем системный тикет
-    let sys_ticket = backend
-        .get_sys_ticket_id()
-        .expect("Failed to get system ticket");
+    let sys_ticket = backend.get_sys_ticket_id().expect("Failed to get system ticket");
 
     // Создаем базовые классы и свойства
-    let base_classes = [
-        ("owl:Class", "rdf:type", "owl:Class"),
-        ("owl:DatatypeProperty", "rdf:type", "owl:Class"),
-        ("owl:FunctionalProperty", "rdf:type", "owl:Class"),
-    ];
+    let base_classes = [("owl:Class", "rdf:type", "owl:Class"), ("owl:DatatypeProperty", "rdf:type", "owl:Class"), ("owl:FunctionalProperty", "rdf:type", "owl:Class")];
 
     for (id, pred, val) in base_classes.iter() {
         let mut indv = Individual::default();
         indv.set_id(id);
         indv.add_uri(pred, val);
 
-        if backend
-            .mstorage_api
-            .update_or_err(&sys_ticket, "", "schema", IndvOp::Put, &mut indv)
-            .is_err()
-        {
+        if backend.mstorage_api.update_or_err(&sys_ticket, "", "schema", IndvOp::Put, &mut indv).is_err() {
             panic!("Failed to store base class {}", id);
         }
     }
@@ -78,11 +68,7 @@ fn setup_test_context() -> TestContext {
             }
         }
 
-        if backend
-            .mstorage_api
-            .update_or_err(&sys_ticket, "", "schema", IndvOp::Put, &mut individual)
-            .is_err()
-        {
+        if backend.mstorage_api.update_or_err(&sys_ticket, "", "schema", IndvOp::Put, &mut individual).is_err() {
             panic!("Failed to store property definition {}", uri);
         }
 
@@ -93,24 +79,20 @@ fn setup_test_context() -> TestContext {
         }
     }
 
-    TestContext { backend, sys_ticket }
+    TestContext {
+        backend,
+        sys_ticket,
+    }
 }
 
 fn load_fixture(filename: &str) -> Value {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("src")
-        .join("tests")
-        .join("response_schema")
-        .join("fixtures")
-        .join(filename);
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src").join("tests").join("response_schema").join("fixtures").join(filename);
 
     println!("Loading fixture from: {}", path.display());
-    let content = fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("Failed to read fixture file {}: {}", filename, e));
+    let content = fs::read_to_string(&path).unwrap_or_else(|e| panic!("Failed to read fixture file {}: {}", filename, e));
 
     println!("Fixture content: {}", content);
-    serde_json::from_str(&content)
-        .unwrap_or_else(|e| panic!("Failed to parse JSON from fixture {}: {}", filename, e))
+    serde_json::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse JSON from fixture {}: {}", filename, e))
 }
 
 fn load_test_schema() -> ResponseSchema {
@@ -128,12 +110,7 @@ fn load_test_response() -> Value {
 }
 
 fn load_expected_result() -> Individual {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("src")
-        .join("tests")
-        .join("response_schema")
-        .join("fixtures")
-        .join("expected_result.ttl");
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src").join("tests").join("response_schema").join("fixtures").join("expected_result.ttl");
 
     println!("Loading expected result from: {}", path.display());
     let content = fs::read_to_string(&path).expect("Failed to read expected result file");
@@ -165,8 +142,7 @@ fn load_expected_result() -> Individual {
     // Находим и обрабатываем тройки
     loop {
         let res: Result<(), TurtleError> = parser.parse_step(&mut |t| {
-            println!("Processing triple: subject={:?}, predicate={:?}, object={:?}",
-                     t.subject, t.predicate, t.object);
+            println!("Processing triple: subject={:?}, predicate={:?}, object={:?}", t.subject, t.predicate, t.object);
 
             let subject = match t.subject {
                 NamedOrBlankNode::BlankNode(n) => n.id.to_string(),
@@ -195,16 +171,23 @@ fn load_expected_result() -> Individual {
                 },
                 Literal(lit) => {
                     match lit {
-                        Simple { value } => {
+                        Simple {
+                            value,
+                        } => {
                             println!("Adding simple literal: {} -> {}", predicate, value);
                             individual.add_string(&predicate, value, Lang::none());
                         },
-                        LanguageTaggedString { value, language } => {
-                            println!("Adding language-tagged literal: {} -> {} @{}",
-                                     predicate, value, language);
+                        LanguageTaggedString {
+                            value,
+                            language,
+                        } => {
+                            println!("Adding language-tagged literal: {} -> {} @{}", predicate, value, language);
                             individual.add_string(&predicate, value, Lang::new_from_str(language));
                         },
-                        Typed { value, datatype: _ } => {
+                        Typed {
+                            value,
+                            datatype: _,
+                        } => {
                             println!("Adding typed literal: {} -> {}", predicate, value);
                             individual.add_string(&predicate, value, Lang::none());
                         },
@@ -253,20 +236,11 @@ fn verify_parsing_result(parse_result: &mut ParseResult, context: &mut TestConte
         println!("\nChecking predicate: {}", predicate);
         println!("Expected resources: {:?}", resources);
 
-        let actual_resources = main
-            .get_obj()
-            .get_resources()
-            .get(predicate)
-            .unwrap_or_else(|| panic!("Missing predicate: {}", predicate));
+        let actual_resources = main.get_obj().get_resources().get(predicate).unwrap_or_else(|| panic!("Missing predicate: {}", predicate));
 
         println!("Actual resources: {:?}", actual_resources);
 
-        assert_eq!(
-            resources.len(),
-            actual_resources.len(),
-            "Different number of values for predicate: {}",
-            predicate
-        );
+        assert_eq!(resources.len(), actual_resources.len(), "Different number of values for predicate: {}", predicate);
 
         for (idx, (expected_res, actual_res)) in resources.iter().zip(actual_resources.iter()).enumerate() {
             println!("Comparing value {} for predicate {}", idx, predicate);
@@ -275,24 +249,15 @@ fn verify_parsing_result(parse_result: &mut ParseResult, context: &mut TestConte
 
             if predicate == "v-bpa:documentSections" {
                 let equal = compare_json_str(expected_res.get_str(), actual_res.get_str());
-                assert!(equal, "JSON values mismatch for predicate: {}\nExpected: {}\nActual: {}",
-                        predicate, expected_res.get_str(), actual_res.get_str());
+                assert!(equal, "JSON values mismatch for predicate: {}\nExpected: {}\nActual: {}", predicate, expected_res.get_str(), actual_res.get_str());
             } else {
-                assert_eq!(
-                    expected_res, actual_res,
-                    "Value mismatch for predicate: {}",
-                    predicate
-                );
+                assert_eq!(expected_res, actual_res, "Value mismatch for predicate: {}", predicate);
             }
         }
     }
 
     // Сохраняем основной индивид в хранилище
-    if let Err(e) = context
-        .backend
-        .mstorage_api
-        .update_or_err(&context.sys_ticket, "", "test", IndvOp::Put, main)
-    {
+    if let Err(e) = context.backend.mstorage_api.update_or_err(&context.sys_ticket, "", "test", IndvOp::Put, main) {
         panic!("Failed to store main individual: {:?}", e);
     }
 }
@@ -303,36 +268,20 @@ fn test_schema_parsing_and_response_processing() {
     let test_schema = load_test_schema();
 
     // Проверяем создание схемы для AI
-    let ai_schema = test_schema.to_ai_schema()
-        .expect("Failed to create AI schema");
+    let ai_schema = test_schema.to_ai_schema().expect("Failed to create AI schema");
     println!("AI schema: {:#?}", ai_schema);
 
     let ai_schema_obj = ai_schema.as_object().unwrap();
-    assert_eq!(
-        ai_schema_obj.get("type").unwrap().as_str().unwrap(),
-        "object",
-        "Root schema type should be object"
-    );
-    assert!(
-        ai_schema_obj.contains_key("properties"),
-        "Schema should contain properties"
-    );
+    assert_eq!(ai_schema_obj.get("type").unwrap().as_str().unwrap(), "object", "Root schema type should be object");
+    assert!(ai_schema_obj.contains_key("properties"), "Schema should contain properties");
 
     // Проверяем отсутствие служебных полей в схеме для AI
     let schema_str = serde_json::to_string(&ai_schema).unwrap();
-    assert!(
-        !schema_str.contains("mapping"),
-        "AI schema should not contain mapping field"
-    );
-    assert!(
-        !schema_str.contains("is_multiple"),
-        "AI schema should not contain is_multiple field"
-    );
+    assert!(!schema_str.contains("mapping"), "AI schema should not contain mapping field");
+    assert!(!schema_str.contains("is_multiple"), "AI schema should not contain is_multiple field");
 
     // Парсим ответ
-    let mut parse_result = test_schema
-        .parse_ai_response(&load_test_response(), &mut context.backend, &context.sys_ticket)
-        .expect("Failed to parse AI response");
+    let mut parse_result = test_schema.parse_ai_response(&load_test_response(), &mut context.backend, &context.sys_ticket).expect("Failed to parse AI response");
 
     verify_parsing_result(&mut parse_result, &mut context);
 }
@@ -348,20 +297,14 @@ fn test_invalid_schema() {
     });
 
     let result = ResponseSchema::from_value(&invalid_schema);
-    assert!(
-        result.is_err(),
-        "Schema with invalid root type should fail validation"
-    );
+    assert!(result.is_err(), "Schema with invalid root type should fail validation");
 
     let incomplete_schema = json!({
         "type": "object"
     });
 
     let result = ResponseSchema::from_value(&incomplete_schema);
-    assert!(
-        result.is_err(),
-        "Schema without required fields should fail validation"
-    );
+    assert!(result.is_err(), "Schema without required fields should fail validation");
 }
 
 #[test]
@@ -373,14 +316,8 @@ fn test_schema_ai_conversion() {
 
     fn check_no_service_fields(value: &Value) {
         if let Some(obj) = value.as_object() {
-            assert!(
-                !obj.contains_key("mapping"),
-                "Schema should not contain mapping field"
-            );
-            assert!(
-                !obj.contains_key("is_multiple"),
-                "Schema should not contain is_multiple field"
-            );
+            assert!(!obj.contains_key("mapping"), "Schema should not contain mapping field");
+            assert!(!obj.contains_key("is_multiple"), "Schema should not contain is_multiple field");
 
             for (_, v) in obj {
                 check_no_service_fields(v);
