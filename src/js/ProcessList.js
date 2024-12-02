@@ -123,7 +123,7 @@ class ProcessFilterForm extends Component(HTMLElement) {
 
   render() {
     return html`
-      <form @submit="${(e) => this.submit(e)}" @reset="${() => this.reset()}">
+      <form on:submit="${(e) => this.submit(e)}" on:reset="${() => this.reset()}">
         <div class="mb-3">
           <label for="label" class="form-label" about="rdfs:label" property="rdfs:label"></label>
           <input type="text" class="form-control" id="label" name="rdfs:label_filter" value="${this.data['rdfs:label_filter']?.[0] || ''}">
@@ -152,9 +152,9 @@ class ProcessFilterForm extends Component(HTMLElement) {
           <button type="submit" class="btn btn-secondary me-2"><span about="v-bpa:ApplyFilters" property="rdfs:label"></span></button>
           <button type="reset" class="btn btn-light"><span about="v-bpa:ResetFilters" property="rdfs:label"></span></button>
           <div class="mb-3 position-relative ms-auto">
-            <input type="hidden" class="form-control" id="process-filter-raw-input" name="v-bpa:rawInput" @change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}">
+            <input type="hidden" class="form-control" id="process-filter-raw-input" name="v-bpa:rawInput" on:change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}">
             <div class="position-absolute" style="bottom: -1rem; right: 0;">
-              <${InputAudio} data-for="process-filter-raw-input" id="process-filter-raw-input-audio"></${InputAudio}>
+              <${InputAudio} for="process-filter-raw-input" id="process-filter-raw-input-audio"></${InputAudio}>
               <div class="d-none spinner-grow spinner-grow-sm" id="process-filter-raw-input-spinner"></div>
             </div>
           </div>
@@ -200,8 +200,8 @@ class ProcessFilters extends Component(HTMLElement) {
             </div>
             <div class="modal-body">
               <${ProcessFilterForm}
-                @apply="${(e) => this.handleApplyFilters(e.detail)}"
-                @reset="${() => this.handleResetFilters()}"
+                on:apply="${(e) => this.handleApplyFilters(e.detail)}"
+                on:reset="${() => this.handleResetFilters()}"
               ></${ProcessFilterForm}>
             </div>
           </div>

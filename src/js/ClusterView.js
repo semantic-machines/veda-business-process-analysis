@@ -46,13 +46,13 @@ export default class ClusterView extends Component(HTMLElement) {
 
       <ul class="nav nav-underline mx-3 mb-3">
         <li class="nav-item">
-          <button @click="${(e) => this.toggleShowSimilarProcesses(e)}" class="nav-link ${this.showSimilarProcesses ? 'active disabled' : 'text-secondary-emphasis'}">
+          <button on:click="${(e) => this.toggleShowSimilarProcesses(e)}" class="nav-link ${this.showSimilarProcesses ? 'active disabled' : 'text-secondary-emphasis'}">
             <span class="me-1" about="v-bpa:SimilarProcesses" property="rdfs:label"></span>
             <span class="align-top badge bg-success-subtle text-dark">${this.model.hasValue('v-bpa:hasProcess') ? this.model['v-bpa:hasProcess'].length : 0}</span>
           </button>
         </li>
         <li class="nav-item">
-          <button @click="${(e) => this.toggleShowSimilarProcesses(e)}" class="nav-link ${!this.showSimilarProcesses ? 'active disabled' : 'text-secondary-emphasis'}">
+          <button on:click="${(e) => this.toggleShowSimilarProcesses(e)}" class="nav-link ${!this.showSimilarProcesses ? 'active disabled' : 'text-secondary-emphasis'}">
             <span class="me-2" about="v-bpa:ProposedProcess" property="rdfs:label"></span>
           </button>
         </li>

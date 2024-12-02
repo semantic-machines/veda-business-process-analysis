@@ -6,10 +6,8 @@ import Footer from './Footer.js';
 
 export default class App extends Component(HTMLElement) {
   static tag = 'bpa-application';
-    
-  static get observedAttributes() {
-    return ['authenticated'];
-  }
+
+  static observedAttributes = ['authenticated'];
 
   attributeChangedCallback(name, oldValue, newValue) {
     this.update();
@@ -30,3 +28,4 @@ export default class App extends Component(HTMLElement) {
 }
 
 customElements.define(App.tag, App);
+

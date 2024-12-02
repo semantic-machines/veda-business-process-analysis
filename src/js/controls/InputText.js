@@ -3,7 +3,9 @@ import {Component} from 'veda-client';
 export default class InputText extends Component(HTMLInputElement) {
   static tag = 'bpa-input-text';
 
-  property = this.dataset.property;
+  added() {
+    this.property = this.getAttribute('property');
+  }
 
   pre() {
     const getFilteredValue = (model, property) => {

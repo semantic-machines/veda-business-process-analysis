@@ -70,7 +70,7 @@ export default class ProcessOverview extends Component(HTMLElement) {
       <div class="mb-3 ms-3 d-flex justify-content-between align-items-center">
         <ul class="nav nav-underline">
           <li class="nav-item">
-            <button id="processes" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'processes' ? 'active disabled' : 'text-secondary-emphasis'}">
+            <button id="processes" on:click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'processes' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-1" about="v-bpa:ShowProcesses" property="rdfs:label"></span>
               ${this.processesPoorlyJustifiedCount
                 ? html`<span class="align-top badge bg-danger">${this.processesPoorlyJustifiedCount}</span>`
@@ -81,13 +81,13 @@ export default class ProcessOverview extends Component(HTMLElement) {
             </button>
           </li>
           <li class="nav-item">
-            <button id="documents" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'documents' ? 'active disabled' : 'text-secondary-emphasis'}">
+            <button id="documents" on:click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'documents' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>
               <!--span class="align-top badge bg-secondary">${this.documentsCount}</span-->
             </button>
           </li>
           <li class="nav-item">
-            <button id="clusters" @click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'clusters' ? 'active disabled' : 'text-secondary-emphasis'}">
+            <button id="clusters" on:click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'clusters' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-1" about="v-bpa:ShowClusters" property="rdfs:label"></span>
               <span class="align-top badge bg-warning text-dark">${this.completed?.['v-bpa:foundClusters']?.length ?? 0}</span>
             </button>

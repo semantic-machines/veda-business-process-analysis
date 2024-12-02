@@ -3,7 +3,9 @@ import {Component} from 'veda-client';
 export default class Textarea extends Component(HTMLTextAreaElement) {
   static tag = 'bpa-textarea';
 
-  property = this.dataset.property;
+  added() {
+    this.property = this.getAttribute('property');
+  }
 
   pre() {
     const getFilteredValue = (model, property) => {
@@ -27,7 +29,7 @@ export default class Textarea extends Component(HTMLTextAreaElement) {
       }
       this.model[this.property] = newValues;
     };
-        
+
     this.modifiedHandler = () => {
       const newValue = getFilteredValue(this.model, this.property);
       if (this.value !== newValue) {
@@ -38,7 +40,7 @@ export default class Textarea extends Component(HTMLTextAreaElement) {
 
     this.model.on(this.property, this.modifiedHandler);
   }
-  
+
   remove() {
     this.model.off(this.property, this.modifiedHandler);
   }

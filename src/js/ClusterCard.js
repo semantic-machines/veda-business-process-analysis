@@ -38,7 +38,7 @@ export default class ClusterCard extends Component(HTMLElement) {
         }
       </style>
       <div class="d-flex align-items-stretch">
-        <div class="toggle-expand d-flex flex-column justify-content-center align-items-center px-2" style="cursor: pointer;" @click="${(e) => this.toggleExpanded(e)}">
+        <div class="toggle-expand d-flex flex-column justify-content-center align-items-center px-2" style="cursor: pointer;" on:click="${(e) => this.toggleExpanded(e)}">
           <span class="badge bg-success-subtle text-dark mb-1">
             ${this.model['v-bpa:hasProcess']?.length ?? 0}
           </span>
@@ -71,7 +71,7 @@ export default class ClusterCard extends Component(HTMLElement) {
                 <small property="v-bpa:proposedParticipants"></small>
               </div>
             </div>
-            ${this.expanded 
+            ${this.expanded
               ? html`
                 <div rel="v-bpa:hasProcess" class="ms-4 mt-3 d-flex flex-column gap-3">
                   <${ProcessCard} about={{this.model.id}}></${ProcessCard}>

@@ -3,9 +3,11 @@ import {Component} from 'veda-client';
 export default class InputDecimal extends Component(HTMLInputElement) {
   static tag = 'bpa-input-decimal';
 
-  property = this.dataset.property;
+  added() {
+    this.property = this.getAttribute('property');
+  }
 
-  pre() {
+  post() {
     const getNumberValue = (model, property) => {
       const values = model[property] || [];
       const value = values[0];
@@ -25,14 +27,14 @@ export default class InputDecimal extends Component(HTMLInputElement) {
         this.model[this.property] = [];
       }
     };
-        
+
     this.modifiedHandler = () => {
       this.value = getNumberValue(this.model, this.property);
     };
-    
+
     this.model.on(this.property, this.modifiedHandler);
   }
-  
+
   remove() {
     this.model.off(this.property, this.modifiedHandler);
   }

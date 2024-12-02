@@ -3,7 +3,9 @@ import {Component, html} from 'veda-client';
 export default class ProcessJustificationIndicator extends Component(HTMLElement) {
   static tag = 'bpa-process-justification-indicator';
 
-  property = this.getAttribute('property');
+  added () {
+    this.property = this.getAttribute('property');
+  }
 
   render() {
     if (!this.model) return '';

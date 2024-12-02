@@ -3,8 +3,6 @@ import {Component, safe} from 'veda-client';
 export default class Expression extends Component(HTMLElement) {
   static tag = 'bpa-expression';
 
-  expression = this.getAttribute('expression');
-
   render () {
     return safe(new Function('return ' + this.expression).call(this.model ?? null));
   }
@@ -14,6 +12,7 @@ export default class Expression extends Component(HTMLElement) {
   }
 
   added () {
+    this.expression = this.getAttribute('expression');
     this.model?.on('modified', this.up);
   }
 

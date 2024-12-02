@@ -33,13 +33,13 @@ export default class ProcessEdit extends Component(HTMLElement) {
           <div class="col-12 col-md-8">
             <div class="mb-3">
               <label class="form-label fw-bold" about="rdfs:label" property="rdfs:label"></label>
-              <input type="text" class="form-control" is="${InputText}" about="${this.model.id}" data-property="rdfs:label">
+              <input type="text" class="form-control" is="${InputText}" about="${this.model.id}" property="rdfs:label">
             </div>
             <div class="mb-3 position-relative">
               <label class="form-label fw-bold" about="v-bpa:processDescription" property="rdfs:label"></label>
-              <textarea id="process-description" class="form-control" is="${Textarea}" about="${this.model.id}" data-property="v-bpa:processDescription" rows="10"></textarea>
+              <textarea id="process-description" class="form-control" is="${Textarea}" about="${this.model.id}" property="v-bpa:processDescription" rows="10"></textarea>
               <div class="position-absolute bottom-0" style="right:0.75rem;">
-                <${InputAudio} data-for="process-description"></${InputAudio}>
+                <${InputAudio} for="process-description"></${InputAudio}>
               </div>
             </div>
 
@@ -47,18 +47,18 @@ export default class ProcessEdit extends Component(HTMLElement) {
           <div class="col-12 col-md-4 border-start border-secondary-subtle">
             <div class="mb-3">
               <label class="form-label fw-bold" about="v-bpa:responsibleDepartment" property="rdfs:label"></label>
-              <input type="text" class="form-control" is="${InputText}" about="${this.model.id}" data-property="v-bpa:responsibleDepartment">
+              <input type="text" class="form-control" is="${InputText}" about="${this.model.id}" property="v-bpa:responsibleDepartment">
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold" about="v-bpa:processParticipant" property="rdfs:label"></label>
-              <textarea class="form-control" is="${Textarea}" about="${this.model.id}" data-property="v-bpa:processParticipant" rows="3"></textarea>
+              <textarea class="form-control" is="${Textarea}" about="${this.model.id}" property="v-bpa:processParticipant" rows="3"></textarea>
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold" about="v-bpa:processFrequency" property="rdfs:label"></label>
               <div class="input-group">
-                <input type="number" is="${InputInteger}" class="form-control" about="${this.model.id}" data-property="v-bpa:processFrequency">
+                <input type="number" is="${InputInteger}" class="form-control" about="${this.model.id}" property="v-bpa:processFrequency">
                 <span class="input-group-text" about="v-bpa:TimesPerYear" property="rdfs:label"></span>
               </div>
             </div>
@@ -66,7 +66,7 @@ export default class ProcessEdit extends Component(HTMLElement) {
             <div class="mb-3">
               <label class="form-label fw-bold" about="v-bpa:laborCosts" property="rdfs:label"></label>
               <div class="input-group">
-                <input type="number" is="${InputDecimal}" class="form-control" about="${this.model.id}" data-property="v-bpa:laborCosts">
+                <input type="number" is="${InputDecimal}" class="form-control" about="${this.model.id}" property="v-bpa:laborCosts">
                 <span class="input-group-text" about="v-bpa:Hours" property="rdfs:label"></span>
               </div>
             </div>
@@ -77,10 +77,10 @@ export default class ProcessEdit extends Component(HTMLElement) {
         <${ProcessDocumentAdd} about="${this.model.id}"></${ProcessDocumentAdd}>
       </div>
       <div class="d-flex justify-content-start gap-2 mt-3">
-        <button @click="${(e) => this.save(e)}" class="btn btn-success">
+        <button on:click="${(e) => this.save(e)}" class="btn btn-success">
           <span about="v-bpa:Save" property="rdfs:label"></span>
         </button>
-        <button @click="${(e) => this.cancel(e)}" class="btn btn-link text-muted text-decoration-none">
+        <button on:click="${(e) => this.cancel(e)}" class="btn btn-link text-muted text-decoration-none">
           <span about="v-bpa:Cancel" property="rdfs:label"></span>
         </button>
       </div>
@@ -116,7 +116,7 @@ class ProcessDocumentAdd extends Component(HTMLElement) {
           <div class="form-check d-flex gap-2 align-items-center">
             <input class="form-check-input mt-0" type="checkbox" value="${id}"
               ${this.model.hasValue('v-bpa:hasProcessDocument', id) ? 'checked' : ''}
-              @change="${(e) => this.submit(e)}">
+              on:change="${(e) => this.submit(e)}">
             <label class="form-check-label w-100">
               <div class="card mb-1 bg-light border-light" about="${id}">
                 <div class="card-body p-2">

@@ -72,12 +72,12 @@ export default class Raw extends Component(HTMLElement) {
           <div class="bottom-controls">
             <button type="button"
               class="btn btn-success"
-              @click="${(e) => this.saveChanges(e)}">
+              on:click="${(e) => this.saveChanges(e)}">
               Сохранить
             </button>
             <button type="button"
               class="btn btn-secondary"
-              @click="${(e) => this.toggleEdit(e)}">
+              on:click="${(e) => this.toggleEdit(e)}">
               Отмена
             </button>
           </div>
@@ -87,17 +87,17 @@ export default class Raw extends Component(HTMLElement) {
           <div class="nav nav-underline" role="group">
             <button type="button"
               class="nav-link ${this.format === 'ttl' ? 'active disabled' : 'text-secondary'}"
-              @click="${(e) => this.toggleFormat(e)}">
+              on:click="${(e) => this.toggleFormat(e)}">
               TTL
             </button>
             <button type="button"
               class="nav-link ${this.format === 'json' ? 'active disabled' : 'text-secondary'}"
-              @click="${(e) => this.toggleFormat(e)}">
+              on:click="${(e) => this.toggleFormat(e)}">
               JSON
             </button>
           </div>
           ${this.format === 'json' ? html`
-            <button type="button" class="btn text-dark" @click="${(e) => this.toggleEdit(e)}">
+            <button type="button" class="btn text-dark" on:click="${(e) => this.toggleEdit(e)}">
               <span about="v-bpa:Edit" property="rdfs:label"></span>
             </button>
           ` : ''}

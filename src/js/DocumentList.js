@@ -120,7 +120,7 @@ class DocumentFilterForm extends Component(HTMLElement) {
 
   render() {
     return html`
-      <form @submit="${(e) => this.submit(e)}" @reset="${() => this.reset()}">
+      <form on:submit="${(e) => this.submit(e)}" on:reset="${() => this.reset()}">
         <div class="mb-3">
           <label for="name" class="form-label" about="v-bpa:documentName" property="rdfs:label"></label>
           <input type="text" class="form-control" id="name" name="v-bpa:documentName_filter" value="${this.data['v-bpa:documentName_filter']?.[0] || ''}">
@@ -137,9 +137,9 @@ class DocumentFilterForm extends Component(HTMLElement) {
           </div>
         </div>
         <!--div class="mb-3 position-relative">
-          <textarea class="form-control" rows="3" id="document-filter-raw-input" name="v-bpa:rawInput" @change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}"></textarea>
+          <textarea class="form-control" rows="3" id="document-filter-raw-input" name="v-bpa:rawInput" on:change="${(e) => this.handleRawInput(e)}" value="${this.data['v-bpa:rawInput']?.[0] || ''}"></textarea>
           <div class="position-absolute" style="bottom: 0.125rem; right: 0.5rem;">
-            <${InputAudio} data-for="document-filter-raw-input" id="document-filter-raw-input-audio"></${InputAudio}>
+            <${InputAudio} for="document-filter-raw-input" id="document-filter-raw-input-audio"></${InputAudio}>
             <div class="d-none spinner-grow spinner-grow-sm" id="document-filter-raw-input-spinner"></div>
           </div>
         </div-->
@@ -192,8 +192,8 @@ class DocumentFilters extends Component(HTMLElement) {
             </div>
             <div class="modal-body">
               <${DocumentFilterForm}
-                @apply="${(e) => this.handleApplyFilters(e.detail)}"
-                @reset="${() => this.handleResetFilters()}"
+                on:apply="${(e) => this.handleApplyFilters(e.detail)}"
+                on:reset="${() => this.handleResetFilters()}"
               ></${DocumentFilterForm}>
             </div>
           </div>

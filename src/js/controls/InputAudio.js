@@ -3,9 +3,9 @@ import {Component, html, decorator} from 'veda-client';
 export default class InputAudio extends Component(HTMLElement) {
   static tag = 'bpa-input-audio';
 
-  property = this.dataset.property;
-
-  for = this.dataset.for;
+  added() {
+    this.for = this.getAttribute('for');
+  }
 
   render () {
     return html`
@@ -253,25 +253,6 @@ export default class InputAudio extends Component(HTMLElement) {
 }
 
 customElements.define(InputAudio.tag, InputAudio);
-
-function getFilteredValue (model, property) {
-  const regex = /\^\^[a-z]{2}$/i;
-  return model[property]
-    ?.filter(str => !regex.test(str) || str.toUpperCase().endsWith(`^^${document.documentElement.lang.toUpperCase()}`))
-    .map(str => str.split(regex)[0])
-    .join(' ') ?? '';
-};
-
-function updateFilteredValue (model, property, value) {
-  const regex = /\^\^[a-z]{2}$/i;
-  const existingValues = model[property] || [];
-  const currentLang = document.documentElement.lang.toUpperCase();
-  const newValues = [...existingValues.filter(str => regex.test(str) && !str.endsWith(`^^${currentLang}`))];
-  if (value) {
-    newValues.push(`${value}^^${currentLang}`);
-  }
-  model[property] = newValues;
-};
 
 async function recognizeAudioFile (file, fn) {
   const formData = new FormData();

@@ -27,7 +27,7 @@ export default class ClusterizationButton extends Component(HTMLElement) {
       ${this.model
         ? html`<${Attempt} about="${this.model.id}"></${Attempt}>`
         : html`
-          <button class="btn btn-link text-dark text-decoration-none" @click="${(e) => this.updateClusters(e)}" ${this.model ? 'disabled' : ''}>
+          <button class="btn btn-link text-dark text-decoration-none" on:click="${(e) => this.updateClusters(e)}" ${this.model ? 'disabled' : ''}>
             <i class="bi bi-arrow-repeat me-2"></i><span about="v-bpa:UpdateClusters" property="rdfs:label"></span>
           </button>`
       }

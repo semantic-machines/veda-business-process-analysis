@@ -128,23 +128,23 @@ export default class ProcessQuickCreateModal extends Component(HTMLElement) {
               <p class="text-muted fw-bold" about="v-bpa:ProcessQuickCreate" property="rdfs:comment"></p>
               <div class="mb-3 position-relative">
                 <textarea id="quick-create-raw-input" class="form-control" placeholder="Введите текст с клавиатуры или воспользуйтесь микрофоном"
-                  is="${Textarea}" about="${this.model.id}" data-property="v-bpa:rawInput" rows="7">
+                  is="${Textarea}" about="${this.model.id}" property="v-bpa:rawInput" rows="7">
                 </textarea>
                 <div class="position-absolute bottom-0" style="right:0.75rem;">
-                  <${InputAudio} data-for="quick-create-raw-input"></${InputAudio}>
+                  <${InputAudio} for="quick-create-raw-input"></${InputAudio}>
                 </div>
               </div>
               <div class="d-flex justify-content-between">
                 <div class="d-flex gap-2">
-                  <button @click="${(e) => this.create(e)}" class="btn btn-primary create-button">
+                  <button on:click="${(e) => this.create(e)}" class="btn btn-primary create-button">
                     <span class="spinner-grow spinner-grow-sm me-2 d-none" aria-hidden="true"></span>
                     <span about="v-bpa:Create" property="rdfs:label"></span>
                   </button>
-                  <button @click="${(e) => this.cancel(e)}" class="btn btn-light">
+                  <button on:click="${(e) => this.cancel(e)}" class="btn btn-light">
                     <span about="v-bpa:Cancel" property="rdfs:label"></span>
                   </button>
                 </div>
-                <button @click="${(e) => this.manualCreate(e)}" class="btn btn-light">
+                <button on:click="${(e) => this.manualCreate(e)}" class="btn btn-light">
                   <span about="v-bpa:ManualCreate" property="rdfs:label"></span>
                 </button>
               </div>
