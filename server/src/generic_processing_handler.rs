@@ -5,14 +5,19 @@ use crate::common::{
     set_to_individual_from_ai_response,
 };
 use crate::queue_processor::BusinessProcessAnalysisModule;
+use crate::response_schema::ResponseSchema;
 use crate::types::PropertyMapping;
+//use base64::engine::general_purpose::STANDARD;
+//use base64::Engine;
+use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
 use serde_json::Value;
+use std::fs;
+use std::path::Path;
 use tokio::runtime::Runtime;
 use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
-//use crate::types::SYSTEM_PREDICATE;
 
 /// Подготавливает данные для анализа на основе пользовательского ввода,
 /// определения целевого типа и промпта
@@ -35,21 +40,13 @@ fn prepare_analysis_data(raw_input: &str, target_type_def: &mut Individual, inpu
     Ok(data)
 }
 
-/// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
-/// и заданного типа целевого индивида.
-pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, request: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
-    info!("Starting generic request processing for request: {}", request.get_id());
-
+fn process_ontology_input(
+    module: &mut BusinessProcessAnalysisModule,
+    request: &mut Individual,
+    prompt_individual: &mut Individual,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Получаем пользовательский ввод
     let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
-
-    // Получаем ссылку на промпт и загружаем его
-    let prompt_id = request.get_first_literal("v-bpa:prompt").ok_or("No prompt specified")?;
-
-    let mut prompt_individual = Individual::default();
-    if module.backend.storage.get_individual(&prompt_id, &mut prompt_individual) != ResultCode::Ok {
-        return Err(format!("Failed to load prompt: {}", prompt_id).into());
-    }
 
     // Получаем тип целевого индивида
     let target_type = prompt_individual.get_first_literal("v-bpa:targetType").ok_or("No target type specified")?;
@@ -61,7 +58,7 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     target_type_def.parse_all();
 
     let mut property_mapping = PropertyMapping::new();
-    let property_schema = load_schema(module, &prompt_id, None, &mut property_mapping)?;
+    let property_schema = load_schema(module, &prompt_individual.get_id(), None, &mut property_mapping)?;
 
     // Обрабатываем входные данные, если они есть
     let structured_input = if let Some(input_str) = request.get_first_literal("v-bpa:structuredInput") {
@@ -80,7 +77,7 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     let analysis_data = prepare_analysis_data(&raw_input, &mut target_type_def, structured_input)?;
 
     // Создаем параметры запроса и получаем маппинг свойств
-    let req_to_ai = prepare_request_ai_parameters(module, &prompt_id, analysis_data, property_schema, &mut property_mapping)?;
+    let req_to_ai = prepare_request_ai_parameters(module, &prompt_individual.get_id(), analysis_data, property_schema, &mut property_mapping)?;
 
     info!("@E = req_to_ai={:?}", req_to_ai);
 
@@ -125,6 +122,115 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
         error!("Failed to update request {}: {:?}", request.get_id(), e);
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request, err={:?}", e))));
+    }
+    Ok(())
+}
+
+fn process_structured_schema(
+    module: &mut BusinessProcessAnalysisModule,
+    request: &mut Individual,
+    prompt_individual: &mut Individual,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Get content from file or raw input
+    let content = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
+        let path = Path::new(&file_path);
+        fs::read(path).map_err(|e| format!("Failed to read file {}: {}", file_path, e))?
+    } else {
+        let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
+        raw_input.as_bytes().to_vec()
+    };
+
+    let formatted_content = pdf_extract::extract_text_from_mem(&content).unwrap();
+    info!("formatted_content={}", formatted_content);
+
+    //let formatted_content = format!("Content-Type: application/pdf\nContent-Transfer-Encoding: base64\n\n{}", STANDARD.encode(&content));
+
+
+    // Parse schema
+    let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
+    let schema = ResponseSchema::from_json(&response_schema)?;
+    let ai_schema = schema.to_ai_schema()?;
+
+    info!("Generated AI schema: {}", serde_json::to_string_pretty(&ai_schema)?);
+
+    // Build request parameters
+    let parameters = ChatCompletionParametersBuilder::default()
+        .model(module.model.clone())
+        .messages(vec![
+            ChatMessage::System {
+                content: ChatMessageContent::Text("You must respond only in Russian language. Use only Russian for all text fields.".to_string()),
+                name: None,
+            },
+            ChatMessage::System {
+                content: ChatMessageContent::Text(prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?),
+                name: None,
+            },
+            ChatMessage::User {
+                content: ChatMessageContent::Text(formatted_content),
+                name: None,
+            },
+        ])
+        .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("document_analysis").schema(ai_schema).strict(true).build()?))
+        .build()?;
+
+    // Send request to AI
+    info!("Sending request to AI for analyzing document");
+    let rt = Runtime::new()?;
+    let ai_response = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
+
+    info!("Received AI response: {:?}", ai_response);
+
+    // Convert HashMap to Value
+    let response_value = serde_json::to_value(&ai_response)?;
+    info!("Converted AI response to Value: {}", serde_json::to_string_pretty(&response_value)?);
+
+    // Parse response and create result
+    let mut parse_result = schema.parse_ai_response(&response_value, &mut module.backend, &module.ticket)?;
+
+    // Save main individual
+    let result_id = parse_result.main_individual.get_id().to_string();
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut parse_result.main_individual) {
+        error!("Failed to save main individual: {:?}", e);
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save main individual: {:?}", e))));
+    }
+
+    // Save related individuals
+    for mut related in parse_result.related_individuals {
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut related) {
+            error!("Failed to save related individual: {:?}", e);
+            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save related individual: {:?}", e))));
+        }
+    }
+
+    // Update request
+    request.set_uri("v-bpa:hasResult", &result_id);
+    request.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
+
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
+        error!("Failed to update request: {:?}", e);
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request: {:?}", e))));
+    }
+
+    Ok(())
+}
+
+/// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
+/// и заданного типа целевого индивида.
+pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, request: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
+    info!("Starting generic request processing for request: {}", request.get_id());
+
+    // Получаем ссылку на промпт и загружаем его
+    let prompt_id = request.get_first_literal("v-bpa:prompt").ok_or("No prompt specified")?;
+
+    let mut prompt_individual = Individual::default();
+    if module.backend.storage.get_individual(&prompt_id, &mut prompt_individual) != ResultCode::Ok {
+        return Err(format!("Failed to load prompt: {}", prompt_id).into());
+    }
+
+    if prompt_individual.is_exists("v-bpa:responseSchema") {
+        process_structured_schema(module, request, &mut prompt_individual)?;
+    } else {
+        process_ontology_input(module, request, &mut prompt_individual)?;
     }
 
     info!("Successfully processed generic request {} ", request.get_id());

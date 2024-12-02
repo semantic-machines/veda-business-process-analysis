@@ -82,6 +82,9 @@ impl ResponseSchema {
                 map.insert("items".to_string(), convert_property(prop.items.as_ref().unwrap()));
             } else if prop.properties.is_some() {
                 map.insert("type".to_string(), Value::String("object".to_string()));
+                // Add additionalProperties: false for all objects
+                map.insert("additionalProperties".to_string(), Value::Bool(false));
+
                 let mut props_map = Map::new();
                 for (key, value) in prop.properties.as_ref().unwrap() {
                     props_map.insert(key.clone(), convert_property(value));
@@ -102,6 +105,8 @@ impl ResponseSchema {
 
         let mut schema_map = Map::new();
         schema_map.insert("type".to_string(), Value::String(self.type_name.clone()));
+        // Add additionalProperties: false for root object
+        schema_map.insert("additionalProperties".to_string(), Value::Bool(false));
 
         let mut props_map = Map::new();
         for (key, value) in &self.properties {

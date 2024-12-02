@@ -27,3 +27,6 @@ pretty_assertions = "1.4.1"
 
 rio_turtle = {git="https://github.com/semantic-machines/rio.git", rev="a3e887c58980b1e4b3519750da168ccf1c6f0fab"}
 rio_api = {git="https://github.com/semantic-machines/rio.git", rev="a3e887c58980b1e4b3519750da168ccf1c6f0fab"}
+base64 = "0.22.1"
+
+pdf-extract = "0.7.10"
