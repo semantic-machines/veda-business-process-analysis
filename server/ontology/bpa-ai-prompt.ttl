@@ -254,14 +254,9 @@ v-bpa:DocumentAnalysisPrompt
         }
       },
       "required": ["document_title", "document_type", "department", "document_source", "signed_date", "signed_by"]
-    },B
-    "errors": {
-      "type": "array",
-      "items": { "type": "string" },
-      "mapping": "v-bpa:documentErrors"
     }
   },
-  "required": ["sections", "key_data", "errors"]
+  "required": ["sections", "key_data"]
 }
 """ ;
 .
