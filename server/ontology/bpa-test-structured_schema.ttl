@@ -6,6 +6,8 @@ v-bpa:TestGenericRequestDocumentAnalysisPrompt
   rdf:type v-bpa:GenericProcessingRequest ;
   rdfs:label "Анализ документа с запросом через путь к файлу"@ru ;
   v-bpa:prompt v-bpa:DocumentAnalysisPrompt ;
-  v-bpa:targetType "v-bpa:Document" ;
-  v-bpa:rawInputPath "./files/test1.pdf" ;
+  v-bpa:rawInputPath "./files/ДИ и Положения/Положения/out-0.jpg";
 .
+
+
+

@@ -188,11 +188,11 @@ v-bpa:DocumentAnalysisPrompt
 {
   "type": "object",
   "additional_properties": {
-    "rdf:type": "v-bpa:Document"
+    "rdf:type": "v-bpa:ProcessDocument"
   },
   "properties": {
     "sections": {
-      "mapping": "v-bpa:documentSections",
+      "mapping": "v-bpa:documentSection",
       "type": "array",
       "items": {
         "type": "object",
@@ -238,6 +238,4 @@ v-bpa:DocumentAnalysisPrompt
   "required": ["sections", "key_data", "errors"]
 }
 """ ;
-  v-bpa:properties v-bpa:documentSections, v-bpa:documentTitle, v-bpa:documentType, 
-    v-bpa:documentSource, v-bpa:documentDate, v-bpa:documentSignedBy, v-bpa:documentErrors ;
 .

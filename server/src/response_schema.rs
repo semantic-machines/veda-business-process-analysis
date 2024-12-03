@@ -198,7 +198,30 @@ impl ResponseSchema {
         println!("Value: {:#?}", value);
         println!("Mapping: {:#?}", mapping);
 
-        // Handling nested properties
+        // Handle arrays with mapping
+        if mapping.type_name == Some("array".to_string()) && mapping.mapping.is_some() {
+            let mapping_uri = mapping.mapping.as_ref().unwrap();
+            match value {
+                Value::Array(arr) => {
+                    // Convert array to JSON string if it contains objects
+                    if arr.iter().any(|v| v.is_object()) {
+                        let json_str = serde_json::to_string_pretty(arr)?;
+                        parent_individual.add_string(mapping_uri, &json_str, Lang::none());
+                    } else {
+                        // Handle simple array values
+                        for item in arr {
+                            if let Some(str_val) = item.as_str() {
+                                parent_individual.add_string(mapping_uri, str_val, Lang::none());
+                            }
+                        }
+                    }
+                    return Ok(());
+                },
+                _ => return Ok(()),
+            }
+        }
+
+        // Rest of the existing code...
         if let Some(properties) = &mapping.properties {
             println!("Found properties for {}", property);
             if let Value::Object(obj) = value {
@@ -229,7 +252,7 @@ impl ResponseSchema {
                 Value::Array(arr) => {
                     if property_info.is_class {
                         for item in arr {
-                            // Сохраняем как JSON для немаппированных свойств
+                            // Save as JSON for unmapped properties
                             if let Value::Object(_) = item {
                                 parent_individual.add_string(mapping_uri, &serde_json::to_string_pretty(item)?, Lang::none());
                             }
@@ -241,7 +264,7 @@ impl ResponseSchema {
                     }
                 },
                 Value::Object(_obj) if property_info.is_class => {
-                    // Сохраняем как JSON для объекта без маппинга
+                    // Save as JSON for object without mapping
                     if is_multiple {
                         parent_individual.add_string(mapping_uri, &serde_json::to_string_pretty(value)?, Lang::none());
                     } else {

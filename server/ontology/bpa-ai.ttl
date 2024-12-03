@@ -120,3 +120,24 @@ v-bpa:cleanedInput
   rdfs:domain v-bpa:BusinessProcess ;
   rdfs:range xsd:string ;
 .
+
+v-bpa:responseSchema
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Схема ответа"@ru ;
+  rdfs:label "Response schema"@en ;
+  rdfs:domain v-bpa:SystemPrompt ;
+  rdfs:range xsd:string ;
+  rdfs:comment "JSON схема для структурированного ответа от AI"@ru ;
+  rdfs:comment "JSON schema for structured AI response"@en ;
+.
+
+# Raw input path property
+v-bpa:rawInputPath
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Путь к файлу ввода"@ru ;
+  rdfs:label "Raw input file path"@en ;
+  rdfs:domain v-bpa:GenericProcessingRequest ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Путь к файлу для обработки (PDF, DOCX, XLSX и т.д.)"@ru ;
+  rdfs:comment "Path to file for processing (PDF, DOCX, XLSX etc.)"@en ;
+.

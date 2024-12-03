@@ -25,6 +25,8 @@ mod types;
 mod clustering_common;
 mod generic_processing_handler;
 
+mod extractors;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct ApiConfig {
     api_key: String,

@@ -4,11 +4,10 @@ use crate::common::{
     convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, send_request_to_ai,
     set_to_individual_from_ai_response,
 };
+use crate::extractors::extract_text_from_document;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::response_schema::ResponseSchema;
 use crate::types::PropertyMapping;
-//use base64::engine::general_purpose::STANDARD;
-//use base64::Engine;
 use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
 use serde_json::Value;
 use std::fs;
@@ -134,17 +133,39 @@ fn process_structured_schema(
     // Get content from file or raw input
     let content = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
         let path = Path::new(&file_path);
-        fs::read(path).map_err(|e| format!("Failed to read file {}: {}", file_path, e))?
+        info!("Trying to read file from path: {}", path.display());
+
+        // Check if file exists
+        if !path.exists() {
+            error!("File does not exist: {}", path.display());
+            return Err("File not found".into());
+        }
+
+        // Read file content
+        fs::read(path).map_err(|e| {
+            error!("Failed to read file: {}", e);
+            format!("Failed to read file {}: {}", file_path, e)
+        })?
     } else {
         let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
         raw_input.as_bytes().to_vec()
     };
 
-    let formatted_content = pdf_extract::extract_text_from_mem(&content).unwrap();
-    info!("formatted_content={}", formatted_content);
+    // Extract text based on file extension
+    let formatted_content = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
+        let path = Path::new(&file_path);
+        if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
+            info!("Processing file with extension: {}", extension);
+            extract_text_from_document(&content, extension)?
+        } else {
+            error!("File has no extension");
+            return Err("File has no extension".into());
+        }
+    } else {
+        String::from_utf8(content).map_err(|e| format!("Failed to decode content as UTF-8: {}", e))?
+    };
 
-    //let formatted_content = format!("Content-Type: application/pdf\nContent-Transfer-Encoding: base64\n\n{}", STANDARD.encode(&content));
-
+    //info!("Extracted content: {}", formatted_content);
 
     // Parse schema
     let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
@@ -158,10 +179,6 @@ fn process_structured_schema(
         .model(module.model.clone())
         .messages(vec![
             ChatMessage::System {
-                content: ChatMessageContent::Text("You must respond only in Russian language. Use only Russian for all text fields.".to_string()),
-                name: None,
-            },
-            ChatMessage::System {
                 content: ChatMessageContent::Text(prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?),
                 name: None,
             },
@@ -172,6 +189,11 @@ fn process_structured_schema(
         ])
         .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("document_analysis").schema(ai_schema).strict(true).build()?))
         .build()?;
+
+    info!(
+    "Sending request to AI with parameters: {}",
+    serde_json::to_string_pretty(&parameters)?
+);
 
     // Send request to AI
     info!("Sending request to AI for analyzing document");
@@ -187,8 +209,14 @@ fn process_structured_schema(
     // Parse response and create result
     let mut parse_result = schema.parse_ai_response(&response_value, &mut module.backend, &module.ticket)?;
 
-    // Save main individual
+    // Save main individual and get its ID first
     let result_id = parse_result.main_individual.get_id().to_string();
+    info!("Saving main individual with ID: {}", result_id);
+
+    // Add target type to main individual
+    //parse_result.main_individual.add_uri("rdf:type", &prompt_individual.get_first_literal("v-bpa:targetType").unwrap_or("rdfs:Resource".to_string()));
+
+    // Save main individual
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut parse_result.main_individual) {
         error!("Failed to save main individual: {:?}", e);
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save main individual: {:?}", e))));
@@ -196,13 +224,14 @@ fn process_structured_schema(
 
     // Save related individuals
     for mut related in parse_result.related_individuals {
+        info!("Saving related individual: {}", related.get_id());
         if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut related) {
             error!("Failed to save related individual: {:?}", e);
             return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save related individual: {:?}", e))));
         }
     }
 
-    // Update request
+    // Update request with the result reference and status
     request.set_uri("v-bpa:hasResult", &result_id);
     request.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
 

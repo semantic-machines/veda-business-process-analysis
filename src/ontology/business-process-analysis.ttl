@@ -417,11 +417,6 @@ v-bpa:ExecutionError
   rdfs:label "Computation error"@en ;
 .
 
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
-
 v-bpa:controlAction
   rdf:type owl:ObjectProperty ;
   rdfs:label "Действие управления"@ru ;
@@ -539,5 +534,68 @@ rdfs:label_filter
   rdfs:label "Наименование"@ru ;
   rdfs:label "Label"@en ;
   rdfs:domain v-bpa:BusinessProcessFilter ;
+  rdfs:range xsd:string ;
+.
+
+# Document Section class
+v-bpa:documentSection
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Разделы документа"@ru ;
+  rdfs:label "Document sections"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+  rdfs:comment "JSON string containing sections array with title and content"@en ;
+.
+
+v-bpa:documentTitle
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Название документа"@ru ;
+  rdfs:label "Document title"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentType
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Тип документа"@ru ;
+  rdfs:label "Document type"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentSource
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Источник документа"@ru ;
+  rdfs:label "Document source"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentDate
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Дата документа"@ru ;
+  rdfs:label "Document date"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:dateTime ;
+.
+
+v-bpa:documentSignedBy
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Подписант"@ru ;
+  rdfs:label "Signed by"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentErrors
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Ошибки обработки документа"@ru ;
+  rdfs:label "Document processing errors"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
 .
