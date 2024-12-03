@@ -8,10 +8,9 @@ use crate::extractors::extract_text_from_document;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::response_schema::ResponseSchema;
 use crate::types::PropertyMapping;
-use openai_dive::v1::resources::assistant::message::MessageContent::ImageUrl;
 use openai_dive::v1::resources::chat::{
-    ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, ChatMessageContentPart, ChatMessageImageContentPart,
-    ChatMessageTextContentPart, ImageUrlDetail, ImageUrlType, JsonSchemaBuilder,
+    ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, ChatMessageContentPart, ChatMessageImageContentPart, ImageUrlDetail,
+    ImageUrlType, JsonSchemaBuilder,
 };
 
 use serde_json::Value;
@@ -130,8 +129,6 @@ fn process_ontology_input(
     Ok(())
 }
 
-use openai_dive::v1::resources::chat::ChatCompletionParameters;
-
 fn process_structured_schema(
     module: &mut BusinessProcessAnalysisModule,
     request: &mut Individual,
@@ -213,6 +210,7 @@ fn process_structured_schema(
 
     // Build request parameters
     let parameters = ChatCompletionParametersBuilder::default()
+        .seed(42 as u32)
         .model(module.model.clone())
         .messages(messages)
         .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("document_analysis").schema(ai_schema).strict(true).build()?))

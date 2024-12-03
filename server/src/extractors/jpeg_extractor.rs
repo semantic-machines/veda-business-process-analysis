@@ -3,23 +3,50 @@
 use super::DocumentExtractor;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
-use image::{imageops, imageops::FilterType, GenericImageView, ImageFormat};
+use image::{imageops, imageops::FilterType, GenericImageView};
 use log::info;
+use std::fs;
 use std::io::Cursor;
+use std::path::Path;
 
 /// JPEG image extractor with support for resizing and quality parameters
 pub struct JpegExtractor {
     max_size: u64,
     max_dimension: u32,
     jpeg_quality: u8,
+    output_dir: String,
+}
+
+impl JpegExtractor {
+    fn save_processed_image(&self, filename: &str, content: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+        // Create output directory if it doesn't exist
+        if !Path::new(&self.output_dir).exists() {
+            fs::create_dir_all(&self.output_dir)?;
+        }
+
+        let filepath = Path::new(&self.output_dir).join(filename);
+        info!("Saving processed image to: {}", filepath.display());
+
+        match fs::write(&filepath, content) {
+            Ok(_) => {
+                info!("Successfully saved processed image");
+                Ok(())
+            },
+            Err(e) => {
+                error!("Failed to save processed image: {}", e);
+                Err(Box::new(e))
+            },
+        }
+    }
 }
 
 impl Default for JpegExtractor {
     fn default() -> Self {
         JpegExtractor {
-            max_size: 20 * 1024 * 1024, // 20MB limit
-            max_dimension: 1024,        // Maximum dimension for any side
-            jpeg_quality: 60,           // Lower quality for smaller size
+            max_size: 20 * 1024 * 1024,
+            max_dimension: 2048,
+            jpeg_quality: 100,
+            output_dir: String::from("./processed_images"),
         }
     }
 }
@@ -57,6 +84,7 @@ impl DocumentExtractor for JpegExtractor {
         encoder.encode(gray_img.as_raw(), gray_img.width(), gray_img.height(), image::ColorType::L8)?;
 
         info!("Final image size: {} bytes", buffer.len());
+        self.save_processed_image("out.jpg", &buffer)?;
 
         // Convert to base64
         let base64_content = STANDARD.encode(&buffer);
