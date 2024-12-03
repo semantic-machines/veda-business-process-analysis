@@ -9,7 +9,10 @@ use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::response_schema::ResponseSchema;
 use crate::types::PropertyMapping;
 use openai_dive::v1::resources::assistant::message::MessageContent::ImageUrl;
-use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, ChatMessageContentPart, ChatMessageImageContentPart, ChatMessageTextContentPart, ImageUrlDetail, ImageUrlType, JsonSchemaBuilder};
+use openai_dive::v1::resources::chat::{
+    ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, ChatMessageContentPart, ChatMessageImageContentPart,
+    ChatMessageTextContentPart, ImageUrlDetail, ImageUrlType, JsonSchemaBuilder,
+};
 
 use serde_json::Value;
 use std::fs;

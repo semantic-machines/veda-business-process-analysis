@@ -574,6 +574,23 @@ v-bpa:documentSource
   rdfs:range xsd:string ;
 .
 
+v-bpa:documentDepartment
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Department"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentSignedDate
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Дата подписи документа"@ru ;
+  rdfs:label "Document signed date"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:dateTime ;
+.
+
 v-bpa:documentDate
   rdf:type owl:DatatypeProperty ;
   rdf:type owl:FunctionalProperty ;
