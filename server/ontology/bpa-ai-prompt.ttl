@@ -224,7 +224,7 @@ v-bpa:DocumentAnalysisPrompt
       }
     },
     "key_data": {
-      "type": "object",  
+      "type": "object",
       "properties": {
         "document_title": { 
           "type": "string",
@@ -234,21 +234,25 @@ v-bpa:DocumentAnalysisPrompt
           "type": "string", 
           "mapping": "v-bpa:documentType"
         },
+        "department": { 
+          "type": "string",
+          "mapping": "v-bpa:documentDepartment"
+        },
         "document_source": { 
           "type": "string",
           "mapping": "v-bpa:documentSource"
         },
-        "date": { 
+        "signed_date": { 
           "type": "string",
-          "mapping": "v-bpa:documentDate"
+          "mapping": "v-bpa:documentSignedDate"
         },
         "signed_by": { 
           "type": "string",
           "mapping": "v-bpa:documentSignedBy"
         }
       },
-      "required": ["document_title", "document_type", "document_source", "date", "signed_by"]
-    },
+      "required": ["document_title", "document_type", "department", "document_source", "signed_date", "signed_by"]
+    },B
     "errors": {
       "type": "array",
       "items": { "type": "string" },
