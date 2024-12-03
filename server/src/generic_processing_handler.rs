@@ -8,7 +8,9 @@ use crate::extractors::extract_text_from_document;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::response_schema::ResponseSchema;
 use crate::types::PropertyMapping;
-use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
+use openai_dive::v1::resources::assistant::message::MessageContent::ImageUrl;
+use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, ChatMessageContentPart, ChatMessageImageContentPart, ChatMessageTextContentPart, ImageUrlDetail, ImageUrlType, JsonSchemaBuilder};
+
 use serde_json::Value;
 use std::fs;
 use std::path::Path;
@@ -125,6 +127,8 @@ fn process_ontology_input(
     Ok(())
 }
 
+use openai_dive::v1::resources::chat::ChatCompletionParameters;
+
 fn process_structured_schema(
     module: &mut BusinessProcessAnalysisModule,
     request: &mut Individual,
@@ -151,21 +155,16 @@ fn process_structured_schema(
         raw_input.as_bytes().to_vec()
     };
 
-    // Extract text based on file extension
-    let formatted_content = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
+    // Get file extension and process content accordingly
+    let extension = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
         let path = Path::new(&file_path);
-        if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
-            info!("Processing file with extension: {}", extension);
-            extract_text_from_document(&content, extension)?
-        } else {
-            error!("File has no extension");
-            return Err("File has no extension".into());
-        }
+        path.extension().and_then(|ext| ext.to_str()).ok_or("File has no extension")?.to_lowercase()
     } else {
-        String::from_utf8(content).map_err(|e| format!("Failed to decode content as UTF-8: {}", e))?
+        "txt".to_string() // Default to text for raw input
     };
 
-    //info!("Extracted content: {}", formatted_content);
+    info!("Processing file with extension: {}", extension);
+    let extracted_content = extract_text_from_document(&content, &extension)?;
 
     // Parse schema
     let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
@@ -174,26 +173,50 @@ fn process_structured_schema(
 
     info!("Generated AI schema: {}", serde_json::to_string_pretty(&ai_schema)?);
 
+    let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
+
+    // Create content based on file type
+    let user_content = match extension.as_str() {
+        "jpg" | "jpeg" => vec![ChatMessageContentPart::Image(ChatMessageImageContentPart {
+            r#type: "image_url".to_string(),
+            image_url: ImageUrlType {
+                url: format!("data:image/jpeg;base64,{}", extracted_content),
+                detail: Some(ImageUrlDetail::High),
+            },
+        })],
+
+        _ => {
+            // TODO TEXT
+            vec![ChatMessageContentPart::Image(ChatMessageImageContentPart {
+                r#type: "image_url".to_string(),
+                image_url: ImageUrlType {
+                    url: format!("data:image/jpeg;base64,{}", extracted_content),
+                    detail: Some(ImageUrlDetail::High),
+                },
+            })]
+        },
+    };
+
+    let messages = vec![
+        ChatMessage::System {
+            content: ChatMessageContent::Text(prompt_text),
+            name: None,
+        },
+        ChatMessage::User {
+            content: ChatMessageContent::ContentPart(user_content),
+            name: None,
+        },
+    ];
+
     // Build request parameters
     let parameters = ChatCompletionParametersBuilder::default()
         .model(module.model.clone())
-        .messages(vec![
-            ChatMessage::System {
-                content: ChatMessageContent::Text(prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?),
-                name: None,
-            },
-            ChatMessage::User {
-                content: ChatMessageContent::Text(formatted_content),
-                name: None,
-            },
-        ])
+        .messages(messages)
         .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("document_analysis").schema(ai_schema).strict(true).build()?))
         .build()?;
 
-    info!(
-    "Sending request to AI with parameters: {}",
-    serde_json::to_string_pretty(&parameters)?
-);
+    // Log the request parameters
+    info!("Sending request to AI with parameters: {}", serde_json::to_string_pretty(&parameters)?);
 
     // Send request to AI
     info!("Sending request to AI for analyzing document");
@@ -209,12 +232,9 @@ fn process_structured_schema(
     // Parse response and create result
     let mut parse_result = schema.parse_ai_response(&response_value, &mut module.backend, &module.ticket)?;
 
-    // Save main individual and get its ID first
+    // Save main individual and get its ID
     let result_id = parse_result.main_individual.get_id().to_string();
     info!("Saving main individual with ID: {}", result_id);
-
-    // Add target type to main individual
-    //parse_result.main_individual.add_uri("rdf:type", &prompt_individual.get_first_literal("v-bpa:targetType").unwrap_or("rdfs:Resource".to_string()));
 
     // Save main individual
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut parse_result.main_individual) {
