@@ -12,7 +12,7 @@ pub use xlsx_extractor::XlsxExtractor;
 
 /// Common trait for all document extractors
 pub trait DocumentExtractor {
-    fn extract(&self, content: &[u8]) -> Result<String, Box<dyn std::error::Error>>;
+    fn extract(&self, content: &[u8]) -> Result<Vec<String>, Box<dyn std::error::Error>>;
     fn get_supported_extensions(&self) -> Vec<&'static str>;
 }
 
@@ -41,7 +41,7 @@ impl DocumentExtractorFactory {
 }
 
 /// Main function to extract text from any supported document type
-pub fn extract_text_from_document(content: &[u8], extension: &str) -> Result<String, Box<dyn std::error::Error>> {
+pub fn extract_text_from_document(content: &[u8], extension: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let factory = DocumentExtractorFactory::default();
 
     if let Some(extractor) = factory.get_extractor(extension) {

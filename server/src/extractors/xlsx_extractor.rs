@@ -9,7 +9,7 @@ use std::io::Cursor;
 pub struct XlsxExtractor;
 
 impl DocumentExtractor for XlsxExtractor {
-    fn extract(&self, content: &[u8]) -> Result<String, Box<dyn std::error::Error>> {
+    fn extract(&self, content: &[u8]) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         info!("Starting XLSX text extraction");
         let cursor = Cursor::new(content);
         let mut workbook: Xlsx<_> = calamine::Xlsx::new(cursor)?;
@@ -43,7 +43,7 @@ impl DocumentExtractor for XlsxExtractor {
         text = text.lines().map(|line| line.trim()).filter(|line| !line.is_empty()).collect::<Vec<_>>().join("\n");
 
         info!("XLSX text extraction completed");
-        Ok(text)
+        Ok(vec![text])
     }
 
     fn get_supported_extensions(&self) -> Vec<&'static str> {

@@ -1,3 +1,4 @@
+use crate::common::calculate_cost;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
 use std::io;
@@ -46,6 +47,16 @@ pub async fn send_comparison_request(
     parameters: openai_dive::v1::resources::chat::ChatCompletionParameters,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     let result = module.client.chat().create(parameters).await?;
+
+    if let Some(usage) = result.usage {
+        info!(
+            "API usage metrics - Tokens: input={}, output={}, total={}, cost={}$",
+            usage.prompt_tokens,
+            usage.completion_tokens.unwrap_or(0),
+            usage.total_tokens,
+            calculate_cost(usage.total_tokens as f64, &module.model)
+        );
+    }
 
     if let Some(choice) = result.choices.first() {
         if let ChatMessage::Assistant {

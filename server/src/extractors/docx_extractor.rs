@@ -8,7 +8,7 @@ use log::info;
 pub struct DocxExtractor;
 
 impl DocumentExtractor for DocxExtractor {
-    fn extract(&self, content: &[u8]) -> Result<String, Box<dyn std::error::Error>> {
+    fn extract(&self, content: &[u8]) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         info!("Starting DOCX text extraction");
         let docx = docx_rs::read_docx(content)?;
 
@@ -56,7 +56,7 @@ impl DocumentExtractor for DocxExtractor {
         text = text.lines().map(|line| line.trim()).filter(|line| !line.is_empty()).collect::<Vec<_>>().join("\n");
 
         info!("DOCX text extraction completed");
-        Ok(text)
+        Ok(vec![text])
     }
 
     fn get_supported_extensions(&self) -> Vec<&'static str> {

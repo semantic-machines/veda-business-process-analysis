@@ -217,11 +217,22 @@ pub fn prepare_request_ai_parameters(
 ///
 /// # Returns
 /// * `Result<AIResponseValues, Box<dyn std::error::Error>>` - Обработанный ответ от AI
+/// Sends request to AI and processes response
 pub async fn send_request_to_ai(
     module: &mut BusinessProcessAnalysisModule,
     parameters: ChatCompletionParameters,
 ) -> Result<AIResponseValues, Box<dyn std::error::Error>> {
     let result = module.client.chat().create(parameters).await?;
+
+    if let Some(usage) = result.usage {
+        info!(
+            "API usage metrics - Tokens: input={}, output={}, total={}, cost={}$",
+            usage.prompt_tokens,
+            usage.completion_tokens.unwrap_or(0),
+            usage.total_tokens,
+            calculate_cost(usage.total_tokens as f64, &module.model)
+        );
+    }
 
     if let Some(choice) = result.choices.first() {
         if let ChatMessage::Assistant {
@@ -231,10 +242,7 @@ pub async fn send_request_to_ai(
         {
             let response: Value = serde_json::from_str(text)?;
             let response_object = response.as_object().ok_or("Response is not a JSON object")?;
-
-            // Преобразуем Map в HashMap
             let response_values: AIResponseValues = response_object.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
-
             Ok(response_values)
         } else {
             error!("Unexpected message format in AI response");
@@ -650,4 +658,20 @@ fn shorten_predicate_name(full_name: &str, property_mapping: &mut PropertyMappin
         property_mapping.insert(short_name.clone(), full_name.to_string());
     }
     short_name
+}
+
+// Helper function to calculate cost based on model and tokens
+pub fn calculate_cost(tokens: f64, model: &str) -> f64 {
+    match model {
+        // GPT-4 pricing
+        "gpt-4-turbo-preview" => (tokens * 0.01) / 1000.0, // $0.01 per 1K tokens
+        "gpt-4" => (tokens * 0.03) / 1000.0,               // $0.03 per 1K tokens
+
+        // GPT-3.5 pricing
+        "gpt-3.5-turbo-0125" => (tokens * 0.0015) / 1000.0, // $0.0015 per 1K tokens
+        "gpt-3.5-turbo" => (tokens * 0.002) / 1000.0,       // $0.002 per 1K tokens
+
+        // Default case
+        _ => 0.0,
+    }
 }

@@ -52,7 +52,7 @@ impl Default for JpegExtractor {
 }
 
 impl DocumentExtractor for JpegExtractor {
-    fn extract(&self, content: &[u8]) -> Result<String, Box<dyn std::error::Error>> {
+    fn extract(&self, content: &[u8]) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         info!("Processing JPEG image");
 
         if content.len() as u64 > self.max_size {
@@ -90,7 +90,7 @@ impl DocumentExtractor for JpegExtractor {
         let base64_content = STANDARD.encode(&buffer);
         info!("Base64 encoded size: {} bytes", base64_content.len());
 
-        Ok(base64_content)
+        Ok(vec![base64_content])
     }
 
     fn get_supported_extensions(&self) -> Vec<&'static str> {

@@ -9,8 +9,8 @@ use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::response_schema::ResponseSchema;
 use crate::types::PropertyMapping;
 use openai_dive::v1::resources::chat::{
-    ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, ChatMessageContentPart, ChatMessageImageContentPart, ImageUrlDetail,
-    ImageUrlType, JsonSchemaBuilder,
+    ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, ChatMessageContentPart, ChatMessageImageContentPart,
+    ChatMessageTextContentPart, ImageUrlDetail, ImageUrlType, JsonSchemaBuilder,
 };
 
 use serde_json::Value;
@@ -175,26 +175,24 @@ fn process_structured_schema(
 
     let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
 
-    // Create content based on file type
     let user_content = match extension.as_str() {
-        "jpg" | "jpeg" => vec![ChatMessageContentPart::Image(ChatMessageImageContentPart {
-            r#type: "image_url".to_string(),
-            image_url: ImageUrlType {
-                url: format!("data:image/jpeg;base64,{}", extracted_content),
-                detail: Some(ImageUrlDetail::High),
-            },
-        })],
-
-        _ => {
-            // TODO TEXT
-            vec![ChatMessageContentPart::Image(ChatMessageImageContentPart {
-                r#type: "image_url".to_string(),
-                image_url: ImageUrlType {
-                    url: format!("data:image/jpeg;base64,{}", extracted_content),
-                    detail: Some(ImageUrlDetail::High),
-                },
-            })]
+        "jpg" | "jpeg" | "pdf" => {
+            let mut content_parts = Vec::new();
+            for base64_img in extracted_content {
+                content_parts.push(ChatMessageContentPart::Image(ChatMessageImageContentPart {
+                    r#type: "image_url".to_string(),
+                    image_url: ImageUrlType {
+                        url: format!("data:image/jpeg;base64,{}", base64_img),
+                        detail: Some(ImageUrlDetail::High),
+                    },
+                }));
+            }
+            content_parts
         },
+        _ => vec![ChatMessageContentPart::Text(ChatMessageTextContentPart {
+            r#type: "text".to_string(),
+            text: extracted_content.join("\n"),
+        })],
     };
 
     let messages = vec![
@@ -217,7 +215,7 @@ fn process_structured_schema(
         .build()?;
 
     // Log the request parameters
-    info!("Sending request to AI with parameters: {}", serde_json::to_string_pretty(&parameters)?);
+    //info!("Sending request to AI with parameters: {}", serde_json::to_string_pretty(&parameters)?);
 
     // Send request to AI
     info!("Sending request to AI for analyzing document");
