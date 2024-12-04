@@ -616,3 +616,14 @@ v-bpa:documentErrors
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
 .
+
+v-bpa:extractedText
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Извлеченный текст"@ru ;
+  rdfs:label "Extracted text"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Текст, извлеченный из документа"@ru ;
+  rdfs:comment "Text extracted from document"@en ;
+.

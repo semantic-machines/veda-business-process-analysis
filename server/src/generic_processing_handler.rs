@@ -164,7 +164,7 @@ fn process_structured_schema(
     };
 
     info!("Processing file with extension: {}", extension);
-    let extracted_content = extract_text_from_document(&content, &extension)?;
+    let extracted_contents = extract_text_from_document(&content, &extension)?;
 
     // Parse schema
     let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
@@ -175,88 +175,100 @@ fn process_structured_schema(
 
     let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
 
-    let user_content = match extension.as_str() {
-        "jpg" | "jpeg" | "pdf" => {
-            let mut content_parts = Vec::new();
-            for base64_img in extracted_content {
-                content_parts.push(ChatMessageContentPart::Image(ChatMessageImageContentPart {
+    // Generate base UUID for all results
+    let base_result_id = format!("d:result_{}", uuid::Uuid::new_v4());
+
+    // Process each extracted content separately
+    for (index, base64_content) in extracted_contents.iter().enumerate() {
+        info!("Processing content {} of {}", index + 1, extracted_contents.len());
+
+        let user_content = match extension.as_str() {
+            "jpg" | "jpeg" | "pdf" => {
+                vec![ChatMessageContentPart::Image(ChatMessageImageContentPart {
                     r#type: "image_url".to_string(),
                     image_url: ImageUrlType {
-                        url: format!("data:image/jpeg;base64,{}", base64_img),
+                        url: format!("data:image/jpeg;base64,{}", base64_content),
                         detail: Some(ImageUrlDetail::High),
                     },
-                }));
-            }
-            content_parts
-        },
-        _ => vec![ChatMessageContentPart::Text(ChatMessageTextContentPart {
-            r#type: "text".to_string(),
-            text: extracted_content.join("\n"),
-        })],
-    };
+                })]
+            },
+            _ => vec![ChatMessageContentPart::Text(ChatMessageTextContentPart {
+                r#type: "text".to_string(),
+                text: base64_content.to_string(),
+            })],
+        };
 
-    let messages = vec![
-        ChatMessage::System {
-            content: ChatMessageContent::Text(prompt_text),
-            name: None,
-        },
-        ChatMessage::User {
-            content: ChatMessageContent::ContentPart(user_content),
-            name: None,
-        },
-    ];
+        let messages = vec![
+            ChatMessage::System {
+                content: ChatMessageContent::Text(prompt_text.clone()),
+                name: None,
+            },
+            ChatMessage::User {
+                content: ChatMessageContent::ContentPart(user_content),
+                name: None,
+            },
+        ];
 
-    // Build request parameters
-    let parameters = ChatCompletionParametersBuilder::default()
-        .seed(42 as u32)
-        .model(module.model.clone())
-        .messages(messages)
-        .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("document_analysis").schema(ai_schema).strict(true).build()?))
-        .build()?;
+        // Build request parameters
+        let parameters = ChatCompletionParametersBuilder::default()
+            .seed(42 as u32)
+            .model(module.model.clone())
+            .messages(messages)
+            .response_format(ChatCompletionResponseFormat::JsonSchema(
+                JsonSchemaBuilder::default().name("document_analysis").schema(ai_schema.clone()).strict(true).build()?,
+            ))
+            .build()?;
 
-    // Log the request parameters
-    //info!("Sending request to AI with parameters: {}", serde_json::to_string_pretty(&parameters)?);
+        // Send request to AI
+        info!("Sending request to AI for analyzing content {}", index + 1);
+        let rt = Runtime::new()?;
+        let ai_response = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
 
-    // Send request to AI
-    info!("Sending request to AI for analyzing document");
-    let rt = Runtime::new()?;
-    let ai_response = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
+        info!("Received AI response for content {}: {:?}", index + 1, ai_response);
 
-    info!("Received AI response: {:?}", ai_response);
+        // Convert HashMap to Value
+        let response_value = serde_json::to_value(&ai_response)?;
 
-    // Convert HashMap to Value
-    let response_value = serde_json::to_value(&ai_response)?;
-    info!("Converted AI response to Value: {}", serde_json::to_string_pretty(&response_value)?);
+        // Parse response
+        let mut parse_result = schema.parse_ai_response(&response_value, &mut module.backend, &module.ticket)?;
 
-    // Parse response and create result
-    let mut parse_result = schema.parse_ai_response(&response_value, &mut module.backend, &module.ticket)?;
+        // Generate result ID with sequence number
+        let result_id = format!("{}_{}", base_result_id, index + 1);
 
-    // Save main individual and get its ID
-    let result_id = parse_result.main_individual.get_id().to_string();
-    info!("Saving main individual with ID: {}", result_id);
+        // Set the generated ID for the main individual
+        parse_result.main_individual.set_id(&result_id);
 
-    // Save main individual
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut parse_result.main_individual) {
-        error!("Failed to save main individual: {:?}", e);
-        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save main individual: {:?}", e))));
-    }
+        info!("Saving main individual with ID: {}", result_id);
 
-    // Save related individuals
-    for mut related in parse_result.related_individuals {
-        info!("Saving related individual: {}", related.get_id());
-        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut related) {
-            error!("Failed to save related individual: {:?}", e);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save related individual: {:?}", e))));
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut parse_result.main_individual) {
+            error!("Failed to save main individual: {:?}", e);
+            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save main individual: {:?}", e))));
         }
-    }
 
-    // Update request with the result reference and status
-    request.set_uri("v-bpa:hasResult", &result_id);
-    request.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
+        // Save related individuals
+        for mut related in parse_result.related_individuals {
+            info!("Saving related individual: {}", related.get_id());
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut related) {
+                error!("Failed to save related individual: {:?}", e);
+                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save related individual: {:?}", e))));
+            }
+        }
 
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
-        error!("Failed to update request: {:?}", e);
-        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request: {:?}", e))));
+        // Add result ID to request's hasResult
+        request.add_uri("v-bpa:hasResult", &result_id);
+
+        // Update processing status
+        if index == extracted_contents.len() - 1 {
+            request.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
+        } else {
+            request.set_uri("v-bpa:processingStatus", "v-bpa:Processing");
+        }
+
+        // Save updated request
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
+            error!("Failed to update request: {:?}", e);
+            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request: {:?}", e))));
+        }
     }
 
     Ok(())
