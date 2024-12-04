@@ -141,3 +141,12 @@ v-bpa:rawInputPath
   rdfs:comment "Путь к файлу для обработки (PDF, DOCX, XLSX и т.д.)"@ru ;
   rdfs:comment "Path to file for processing (PDF, DOCX, XLSX etc.)"@en ;
 .
+
+v-bpa:separateResults
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Разделять результаты"@ru ;
+  rdfs:label "Separate results"@en ;
+  rdfs:domain v-bpa:GenericProcessingRequest ;
+  rdfs:range xsd:boolean ;
+  rdfs:comment "If true, each processed content will be saved as a separate individual"@en ;
+.

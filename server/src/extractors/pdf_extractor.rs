@@ -52,7 +52,7 @@ impl DocumentExtractor for PdfExtractor {
             info!("Page {} average brightness: {:.2}", page_num + 1, avg_brightness);
 
             {
-                let mut encoder = JpegEncoder::new_with_quality(&mut buffer, 95);
+                let mut encoder = JpegEncoder::new_with_quality(&mut buffer, 100);
                 encoder.encode(&rgb, width, height, image::ColorType::Rgb8)?;
             }
 

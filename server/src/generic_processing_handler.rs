@@ -129,6 +129,7 @@ fn process_ontology_input(
     Ok(())
 }
 
+/// Process structured schema data with support for separated or combined results
 fn process_structured_schema(
     module: &mut BusinessProcessAnalysisModule,
     request: &mut Individual,
@@ -178,10 +179,26 @@ fn process_structured_schema(
     // Generate base UUID for all results
     let base_result_id = format!("d:result_{}", uuid::Uuid::new_v4());
 
-    // Process each extracted content separately
-    for (index, base64_content) in extracted_contents.iter().enumerate() {
-        info!("Processing content {} of {}", index + 1, extracted_contents.len());
+    // Check if results should be separated
+    let separate_results = request.get_first_bool("v-bpa:separateResults").unwrap_or(false);
 
+    if !separate_results {
+        // Create initial result individual with type
+        let mut initial = Individual::default();
+        initial.set_id(&base_result_id);
+        initial.set_uri("rdf:type", "v-bpa:ProcessDocument");
+
+        // Save empty individual with type
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut initial) {
+            error!("Failed to create initial result individual: {:?}", e);
+            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to create initial result individual: {:?}", e))));
+        }
+
+        request.add_uri("v-bpa:hasResult", &base_result_id);
+    }
+
+    // Process each extracted content
+    for (index, base64_content) in extracted_contents.iter().enumerate() {
         let user_content = match extension.as_str() {
             "jpg" | "jpeg" | "pdf" => {
                 vec![ChatMessageContentPart::Image(ChatMessageImageContentPart {
@@ -209,7 +226,6 @@ fn process_structured_schema(
             },
         ];
 
-        // Build request parameters
         let parameters = ChatCompletionParametersBuilder::default()
             .seed(42 as u32)
             .model(module.model.clone())
@@ -226,49 +242,71 @@ fn process_structured_schema(
 
         info!("Received AI response for content {}: {:?}", index + 1, ai_response);
 
-        // Convert HashMap to Value
+        // Convert HashMap to Value and parse response
         let response_value = serde_json::to_value(&ai_response)?;
-
-        // Parse response
         let mut parse_result = schema.parse_ai_response(&response_value, &mut module.backend, &module.ticket)?;
 
-        // Generate result ID with sequence number
-        let result_id = format!("{}_{}", base_result_id, index + 1);
+        if separate_results {
+            // Generate result ID with sequence number for separate storage
+            let result_id = format!("{}_{}", base_result_id, index + 1);
+            parse_result.main_individual.set_id(&result_id);
 
-        // Set the generated ID for the main individual
-        parse_result.main_individual.set_id(&result_id);
+            // Save individual immediately
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut parse_result.main_individual) {
+                error!("Failed to save individual {}: {:?}", result_id, e);
+                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save individual, err={:?}", e))));
+            }
 
-        info!("Saving main individual with ID: {}", result_id);
+            // Add result ID to request's hasResult
+            request.add_uri("v-bpa:hasResult", &result_id);
+        } else {
+            // Add results to the main individual using AddTo operation
+            let mut update = Individual::default();
+            update.set_id(&base_result_id);
 
-        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut parse_result.main_individual) {
-            error!("Failed to save main individual: {:?}", e);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save main individual: {:?}", e))));
+            // Copy all predicates from parse result except rdf:type
+            for predicate in parse_result.main_individual.get_predicates() {
+                if predicate != "rdf:type" {
+                    update.apply_predicate_as_add_unique(&predicate, &mut parse_result.main_individual);
+                }
+            }
+
+            info!("Adding content update to {}: {:?}", base_result_id, update.get_obj().as_json());
+
+            // Update main individual using AddTo
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::AddTo, &mut update) {
+                error!("Failed to update main individual: {:?}", e);
+                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update main individual: {:?}", e))));
+            }
         }
 
-        // Save related individuals
+        // Save related individuals immediately
         for mut related in parse_result.related_individuals {
-            info!("Saving related individual: {}", related.get_id());
             if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut related) {
                 error!("Failed to save related individual: {:?}", e);
                 return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save related individual: {:?}", e))));
             }
         }
 
-        // Add result ID to request's hasResult
-        request.add_uri("v-bpa:hasResult", &result_id);
-
         // Update processing status
-        if index == extracted_contents.len() - 1 {
-            request.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
+        let status = if index == extracted_contents.len() - 1 {
+            "v-bpa:Completed"
         } else {
-            request.set_uri("v-bpa:processingStatus", "v-bpa:Processing");
-        }
+            "v-bpa:Processing"
+        };
+        request.set_uri("v-bpa:processingStatus", status);
 
-        // Save updated request
-        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
-            error!("Failed to update request: {:?}", e);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request: {:?}", e))));
+        // Update request status
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, request) {
+            error!("Failed to update request status: {:?}", e);
+            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request status: {:?}", e))));
         }
+    }
+
+    // Final update of request
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
+        error!("Failed to update request: {:?}", e);
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request: {:?}", e))));
     }
 
     Ok(())
