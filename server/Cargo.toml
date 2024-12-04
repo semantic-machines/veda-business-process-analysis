@@ -11,7 +11,7 @@ git-version = "0.3.9"
 
 config = "0.13"
 serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0", features = ["raw_value"] }
+serde_json = { version = "1.0", features = ["raw_value", "preserve_order"] }
 openai_dive = "0.7"
 
 tokio = "1.0"
@@ -35,3 +35,4 @@ docx-rs = "0.4"
 calamine = "0.19"
 image = "0.24"
 pdf2image = "0.1.2"
+indexmap = { version = "2.1.0", features = ["serde"] }

@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use v_common::module::veda_backend::Backend;
@@ -152,54 +153,58 @@ impl ResponseSchema {
 
     pub fn to_ai_schema(&self) -> Result<Value, Box<dyn std::error::Error>> {
         fn convert_property(prop: &PropertyMapping) -> Value {
-            let mut map = IndexMap::new();
+            match &prop.items {
+                Some(items) => json!({
+                    "type": "array",
+                    "items": convert_property(items)
+                }),
+                None if prop.properties.is_some() => {
+                    let props = prop.properties.as_ref().unwrap();
+                    let mut props_json = json!({
+                        "type": "object",
+                        "additionalProperties": false,
+                    });
 
-            if prop.items.is_some() {
-                map.insert("type".to_string(), Value::String("array".to_string()));
-                map.insert("items".to_string(), convert_property(prop.items.as_ref().unwrap()));
-            } else if prop.properties.is_some() {
-                map.insert("type".to_string(), Value::String("object".to_string()));
-                map.insert("additionalProperties".to_string(), Value::Bool(false));
+                    if let Some(obj) = props_json.as_object_mut() {
+                        let mut properties = Map::new();
+                        for (key, value) in props {
+                            properties.insert(key.clone(), convert_property(value));
+                        }
+                        obj.insert("properties".to_string(), Value::Object(properties));
 
-                let mut props_map = IndexMap::new();
-                for (key, value) in prop.properties.as_ref().unwrap() {
-                    props_map.insert(key.clone(), convert_property(value));
-                }
-                map.insert("properties".to_string(), Value::Object(Map::from_iter(props_map)));
-            } else {
-                map.insert("type".to_string(), Value::String(prop.type_name.clone().unwrap_or_else(|| "string".to_string())));
+                        // Add required parameters if present
+                        for (key, value) in &prop.additional {
+                            if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
+                                obj.insert(key.clone(), value.clone());
+                            }
+                        }
+                    }
+
+                    props_json
+                },
+                None => json!({
+                    "type": prop.type_name.clone().unwrap_or_else(|| "string".to_string())
+                }),
             }
-
-            for (key, value) in &prop.additional {
-                if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
-                    map.insert(key.clone(), value.clone());
-                }
-            }
-
-            Value::Object(Map::from_iter(map))
         }
 
-        let mut schema_map = IndexMap::new();
-        schema_map.insert("type".to_string(), Value::String(self.type_name.clone()));
-        schema_map.insert("additionalProperties".to_string(), Value::Bool(false));
-
-        let mut props_map = IndexMap::new();
+        // Build properties json maintaining field order
+        let mut properties = Map::new();
         for key in &self.field_order {
-            if let Some(value) = self.properties.get(key) {
-                props_map.insert(key.clone(), convert_property(value));
-            }
-        }
-        info!("props_map={:?}", props_map);
-        schema_map.insert("properties".to_string(), Value::Object(Map::from_iter(props_map)));
-        info!("schema_map={:?}", schema_map);
-
-        for (key, value) in &self.additional {
-            if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
-                schema_map.insert(key.clone(), value.clone());
+            if let Some(prop) = self.properties.get(key) {
+                properties.insert(key.clone(), convert_property(prop));
             }
         }
 
-        Ok(Value::Object(Map::from_iter(schema_map)))
+        // Build final schema
+        let schema = json!({
+            "type": self.type_name,
+            "additionalProperties": false,
+            "properties": properties,
+            "required": self.field_order
+        });
+
+        Ok(schema)
     }
 
     fn get_property_info(storage: &mut Backend, property: &str) -> Result<PropertyInfo, Box<dyn std::error::Error>> {

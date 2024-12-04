@@ -224,9 +224,6 @@ v-bpa:DocumentAnalysisPrompt
         "required": ["title", "content"]
       }
     },
-    "key_data": {
-      "type": "object",
-      "properties": {
         "document_title": { 
           "type": "string",
           "mapping": "v-bpa:documentTitle"
@@ -251,11 +248,11 @@ v-bpa:DocumentAnalysisPrompt
           "type": "string",
           "mapping": "v-bpa:documentSignedBy"
         }
-      },
-      "required": ["document_title", "document_type", "department", "document_source", "signed_date", "signed_by"]
-    }
   },
-  "required": ["sections", "key_data"]
+  "required": ["sections", "document_title", "document_type", "department", "document_source", "signed_date", "signed_by"]
 }
+""" ;
+.
+
 """ ;
 .
