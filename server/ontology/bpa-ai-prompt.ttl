@@ -275,7 +275,7 @@ v-bpa:ImagesToTextPrompt
 {
   "type": "object",
   "additional_properties": {
-    "rdf:type": "v-bpa:ProcessDocument"
+    "v-bpa:targetType": "v-bpa:ProcessDocument"
   },
   "properties": {
         "data": { 
