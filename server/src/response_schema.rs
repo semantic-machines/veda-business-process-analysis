@@ -93,71 +93,25 @@ impl ResponseSchema {
         Ok(schema)
     }
 
-    pub fn to_ai_schema1(&self) -> Result<Value, Box<dyn std::error::Error>> {
-        let mut schema_map = IndexMap::new();
-        fn convert_property(prop: &PropertyMapping) -> Value {
-            let mut map = IndexMap::new();
-
-            if prop.items.is_some() {
-                map.insert("type".to_string(), Value::String("array".to_string()));
-                map.insert("items".to_string(), convert_property(prop.items.as_ref().unwrap()));
-            } else if prop.properties.is_some() {
-                map.insert("type".to_string(), Value::String("object".to_string()));
-                map.insert("additionalProperties".to_string(), Value::Bool(false));
-
-                let mut props_map = IndexMap::new();
-                for (key, value) in prop.properties.as_ref().unwrap() {
-                    props_map.insert(key.clone(), convert_property(value));
-                }
-                map.insert("properties".to_string(), Value::Object(Map::from_iter(props_map)));
-            } else {
-                map.insert("type".to_string(), Value::String(prop.type_name.clone().unwrap_or_else(|| "string".to_string())));
-            }
-
-            for (key, value) in &prop.additional {
-                if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
-                    map.insert(key.clone(), value.clone());
-                }
-            }
-
-            Value::Object(Map::from_iter(map))
-        }
-
-        // Add fields in original order
-        for key in &self.field_order {
-            match key.as_str() {
-                "type" => schema_map.insert("type".into(), Value::String(self.type_name.clone())),
-                "properties" => {
-                    let props_map = self.properties.iter().map(|(k, v)| (k.clone(), convert_property(v))).collect();
-                    schema_map.insert("properties".into(), Value::Object(props_map))
-                },
-                "additional_properties" => {
-                    if let Some(props) = &self.additional_properties {
-                        schema_map.insert("additional_properties".into(), Value::Object(props.iter().map(|(k, v)| (k.clone(), Value::String(v.clone()))).collect()))
-                    } else {
-                        None
-                    }
-                },
-                _ => {
-                    if let Some(value) = self.additional.get(key) {
-                        schema_map.insert(key.clone(), value.clone())
-                    } else {
-                        None
-                    }
-                },
-            };
-        }
-
-        Ok(Value::Object(Map::from_iter(schema_map)))
-    }
-
     pub fn to_ai_schema(&self) -> Result<Value, Box<dyn std::error::Error>> {
         fn convert_property(prop: &PropertyMapping) -> Value {
             match &prop.items {
-                Some(items) => json!({
-                    "type": "array",
-                    "items": convert_property(items)
-                }),
+                Some(items) => {
+                    let mut array_schema = json!({
+                        "type": "array",
+                        "items": convert_property(items)
+                    });
+
+                    // Copy any additional fields from the parent property
+                    if let Some(obj) = array_schema.as_object_mut() {
+                        for (key, value) in &prop.additional {
+                            if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
+                                obj.insert(key.clone(), value.clone());
+                            }
+                        }
+                    }
+                    array_schema
+                },
                 None if prop.properties.is_some() => {
                     let props = prop.properties.as_ref().unwrap();
                     let mut props_json = json!({
@@ -172,7 +126,28 @@ impl ResponseSchema {
                         }
                         obj.insert("properties".to_string(), Value::Object(properties));
 
-                        // Add required parameters if present
+                        // Add any additional fields from the property definition
+                        for (key, value) in &prop.additional {
+                            if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
+                                obj.insert(key.clone(), value.clone());
+                            }
+                        }
+
+                        // Add required fields if specified in the properties
+                        if let Some(required) = prop.additional.get("required") {
+                            obj.insert("required".to_string(), required.clone());
+                        }
+                    }
+
+                    props_json
+                },
+                None => {
+                    let mut prop_json = json!({
+                        "type": prop.type_name.clone().unwrap_or_else(|| "string".to_string())
+                    });
+
+                    // Copy additional fields like enum, description etc.
+                    if let Some(obj) = prop_json.as_object_mut() {
                         for (key, value) in &prop.additional {
                             if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
                                 obj.insert(key.clone(), value.clone());
@@ -180,11 +155,8 @@ impl ResponseSchema {
                         }
                     }
 
-                    props_json
+                    prop_json
                 },
-                None => json!({
-                    "type": prop.type_name.clone().unwrap_or_else(|| "string".to_string())
-                }),
             }
         }
 
@@ -196,13 +168,20 @@ impl ResponseSchema {
             }
         }
 
-        // Build final schema
-        let schema = json!({
+        // Build final schema with additional properties if specified
+        let mut schema = json!({
             "type": self.type_name,
             "additionalProperties": false,
             "properties": properties,
             "required": self.field_order
         });
+
+        // Add any additional root level properties
+        if let Some(obj) = schema.as_object_mut() {
+            if let Some(add_props) = &self.additional_properties {
+                obj.insert("additional_properties".to_string(), json!(add_props));
+            }
+        }
 
         Ok(schema)
     }
