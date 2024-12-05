@@ -1,0 +1,178 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+
+v-bpa:ProcessDocument
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Документ процесса"@ru ;
+  rdfs:label "Process document"@en ;
+  rdfs:comment "Документ"@ru ;
+  rdfs:comment "Document"@en ;
+.
+
+v-bpa:documentName
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Название документа"@ru ;
+  rdfs:label "Document name"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentContent
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Содержание документа"@ru ;
+  rdfs:label "Document content"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentJSONSection
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Разделы документа"@ru ;
+  rdfs:label "Document sections"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+  rdfs:comment "JSON string containing sections array with title and content"@en ;
+.
+
+v-bpa:documentTitle
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Название документа"@ru ;
+  rdfs:label "Document title"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentType
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Тип документа"@ru ;
+  rdfs:label "Document type"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentSource
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Источник документа"@ru ;
+  rdfs:label "Document source"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentDepartment
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Department"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentSignedDate
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Дата подписи документа"@ru ;
+  rdfs:label "Document signed date"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:dateTime ;
+.
+
+v-bpa:documentDate
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Дата документа"@ru ;
+  rdfs:label "Document date"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:dateTime ;
+.
+
+v-bpa:documentSignedBy
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Подписант"@ru ;
+  rdfs:label "Signed by"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentErrors
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Ошибки обработки документа"@ru ;
+  rdfs:label "Document processing errors"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:extractedText
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Извлеченный текст"@ru ;
+  rdfs:label "Extracted text"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Текст, извлеченный из документа"@ru ;
+  rdfs:comment "Text extracted from document"@en ;
+.
+
+# Document Section class
+v-bpa:DocumentSection
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Секция документа"@ru ;
+  rdfs:label "Document section"@en ;
+.
+
+# Properties for document section content
+v-bpa:sectionTitle
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Заголовок секции"@ru ;
+  rdfs:label "Section title"@en ;
+  rdfs:domain v-bpa:DocumentSection ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:sectionContent
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Содержание секции"@ru ;
+  rdfs:label "Section content"@en ;
+  rdfs:domain v-bpa:DocumentSection ;
+  rdfs:range xsd:string ;
+.
+
+# Section order in document
+v-bpa:sectionOrder
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Порядковый номер секции"@ru ;
+  rdfs:label "Section order"@en ;
+  rdfs:domain v-bpa:DocumentSection ;
+  rdfs:range xsd:integer ;
+.
+
+# Property for linking section with type
+v-bpa:hasSectionType
+  rdf:type owl:ObjectProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Тип раздела"@ru ;
+  rdfs:label "Section type"@en ;
+  rdfs:domain v-bpa:DocumentSection ;
+  rdfs:range v-bpa:DocumentSectionType ;
+.
+
+# Property for linking document with sections
+v-bpa:hasDocumentSection
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Содержит секцию"@ru ;
+  rdfs:label "Has section"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range v-bpa:DocumentSection ;
+.
+
