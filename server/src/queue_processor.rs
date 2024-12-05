@@ -4,6 +4,7 @@ use crate::business_process_handler::analyze_process_justification;
 use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
 use crate::generic_processing_handler::process_generic_request;
+use crate::pipeline::extraction_partitioning::process_extraction_summarization;
 use openai_dive::v1::api::Client;
 use v_common::ft_xapian::xapian_reader::XapianReader;
 use v_common::module::info::ModuleInfo;
@@ -123,6 +124,10 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         info!("Found generic processing request: {}", new_state.get_id());
         if let Err(e) = process_generic_request(module, &mut new_state) {
             error!("Error processing generic request: {:?}", e);
+        }
+
+        if let Err(e) = process_extraction_summarization(module, &mut new_state) {
+            error!("Error processing extraction and summarization pipeline: {:?}", e);
         }
     }
 

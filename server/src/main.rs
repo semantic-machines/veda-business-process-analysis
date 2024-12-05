@@ -23,9 +23,9 @@ pub mod response_schema;
 mod types;
 
 mod clustering_common;
-mod generic_processing_handler;
-
 mod extractors;
+mod generic_processing_handler;
+mod pipeline;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ApiConfig {
@@ -94,9 +94,4 @@ fn main() -> std::io::Result<()> {
     module.prepare_queue(&mut my_module);
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    mod response_schema;
 }

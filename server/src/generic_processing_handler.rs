@@ -135,8 +135,21 @@ fn process_structured_schema(
     request: &mut Individual,
     prompt_individual: &mut Individual,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // Get file extension and process content accordingly
+    let extension = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
+        let path = Path::new(&file_path);
+        path.extension().and_then(|ext| ext.to_str()).ok_or("File has no extension")?.to_lowercase()
+    } else {
+        "txt".to_string() // Default to text for raw input
+    };
+
+    info!("Processing file with extension: {}", extension);
     // Get content from file or raw input
-    let content = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
+    let extracted_contents = if extension == "txt" {
+        let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
+        vec![raw_input]
+    } else {
+        let file_path = request.get_first_literal("v-bpa:rawInputPath").ok_or("No raw input path provided")?;
         let path = Path::new(&file_path);
         info!("Trying to read file from path: {}", path.display());
 
@@ -147,25 +160,13 @@ fn process_structured_schema(
         }
 
         // Read file content
-        fs::read(path).map_err(|e| {
+        let content = fs::read(path).map_err(|e| {
             error!("Failed to read file: {}", e);
             format!("Failed to read file {}: {}", file_path, e)
-        })?
-    } else {
-        let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
-        raw_input.as_bytes().to_vec()
-    };
+        })?;
 
-    // Get file extension and process content accordingly
-    let extension = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
-        let path = Path::new(&file_path);
-        path.extension().and_then(|ext| ext.to_str()).ok_or("File has no extension")?.to_lowercase()
-    } else {
-        "txt".to_string() // Default to text for raw input
+        extract_text_from_document(&content, &extension)?
     };
-
-    info!("Processing file with extension: {}", extension);
-    let extracted_contents = extract_text_from_document(&content, &extension)?;
 
     // Parse schema
     let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
@@ -184,12 +185,13 @@ fn process_structured_schema(
 
     if !separate_results {
         // Create initial result individual with type
-        let mut initial = Individual::default();
-        initial.set_id(&base_result_id);
-        initial.set_uri("rdf:type", "v-bpa:ProcessDocument");
+        let mut initial_res = Individual::default();
+        initial_res.set_id(&base_result_id);
+        initial_res.set_uri("rdf:type", "v-bpa:GenericProcessingResult");
+        initial_res.set_uri("v-s:hasParentLink", request.get_id());
 
         // Save empty individual with type
-        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut initial) {
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut initial_res) {
             error!("Failed to create initial result individual: {:?}", e);
             return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to create initial result individual: {:?}", e))));
         }
