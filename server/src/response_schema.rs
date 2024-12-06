@@ -288,7 +288,7 @@ impl ResponseSchema {
                 _ => {
                     if let Some(str_value) = value.as_str() {
                         let enum_key = format!("{}*{}", property, str_value);
-                        //info!("Looking up enum key: {} in property_mapping", enum_key);
+                        info!("Looking up enum key: {} in property_mapping", enum_key);
 
                         if let Some(uri) = enum_value_mapping.get(&enum_key) {
                             //info!("Found URI mapping: {} -> {}", enum_key, uri);
@@ -329,6 +329,8 @@ impl ResponseSchema {
             }
         }
 
+        info!("@A enum_value_mapping={:?}", self.enum_value_mapping);
+
         if let Some(obj) = response.as_object() {
             for (key, prop_mapping) in &self.properties {
                 if let Some(value) = obj.get(key) {
@@ -345,13 +347,13 @@ impl ResponseSchema {
 fn convert_property(
     module: &mut BusinessProcessAnalysisModule,
     prop: &PropertyMapping,
-    property_mapping: &mut HashMap<String, String>,
+    enum_value_mapping: &mut HashMap<String, String>,
 ) -> Result<Value, Box<dyn std::error::Error>> {
     match &prop.items {
         Some(items) => {
             let mut array_schema = json!({
                 "type": "array",
-                "items": convert_property(module, items, property_mapping)?
+                "items": convert_property(module, items, enum_value_mapping)?
             });
 
             if let Some(mapping_uri) = &prop.mapping {
@@ -371,7 +373,7 @@ fn convert_property(
                                             let short_name = mapping_uri.split(':').last().unwrap_or(mapping_uri);
                                             let map_key = format!("{}*{}", short_name, label);
                                             //info!("Creating enum mapping: {} -> {}", map_key, instance.get_id());
-                                            property_mapping.insert(map_key, instance.get_id().to_string());
+                                            enum_value_mapping.insert(map_key, instance.get_id().to_string());
                                         }
                                         label
                                     })
@@ -410,8 +412,8 @@ fn convert_property(
             if let Some(obj) = props_json.as_object_mut() {
                 let mut properties = Map::new();
                 for (key, value) in props {
-                    //info!("Processing nested property: {}", key);
-                    let mut prop_schema = convert_property(module, value, property_mapping)?;
+                    info!("Processing nested property: {}", key);
+                    let mut prop_schema = convert_property(module, value, enum_value_mapping)?;
 
                     if let Some(mapping_uri) = &value.mapping {
                         let mut prop_individual = Individual::default();
@@ -429,7 +431,7 @@ fn convert_property(
                                                 if let Some(label) = &label {
                                                     let map_key = format!("{}*{}", key, label);
                                                     //info!("Creating enum mapping for nested property: {} -> {}", map_key, instance.get_id());
-                                                    property_mapping.insert(map_key, instance.get_id().to_string());
+                                                    enum_value_mapping.insert(map_key, instance.get_id().to_string());
                                                 }
                                                 label
                                             })
@@ -488,7 +490,7 @@ fn convert_property(
                                             let short_name = mapping_uri.split(':').last().unwrap_or(mapping_uri);
                                             let map_key = format!("{}*{}", short_name, label);
                                             //info!("Creating enum mapping for simple property: {} -> {}", map_key, instance.get_id());
-                                            property_mapping.insert(map_key, instance.get_id().to_string());
+                                            enum_value_mapping.insert(map_key, instance.get_id().to_string());
                                         }
                                         label
                                     })

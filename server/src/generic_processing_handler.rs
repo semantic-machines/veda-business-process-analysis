@@ -233,8 +233,10 @@ fn process_structured_schema(
         ];
 
         let parameters = ChatCompletionParametersBuilder::default()
-            .seed(42 as u32)
+            .seed(43 as u32)
             .model(module.model.clone())
+            .max_tokens(16384 as u32)
+            //.max_tokens(100000 as u32)
             .messages(messages)
             .response_format(ChatCompletionResponseFormat::JsonSchema(
                 JsonSchemaBuilder::default().name("document_analysis").schema(ai_schema.clone()).strict(true).build()?,
