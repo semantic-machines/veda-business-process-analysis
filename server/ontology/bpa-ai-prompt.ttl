@@ -222,7 +222,7 @@ v-bpa:DocumentAnalysisPrompt
     },
     "department": { 
       "type": "string",
-      "mapping": "v-bpa:documentDepartment"
+      "mapping": "v-bpa:hasDepartment"
     },
     "document_source": { 
       "type": "string",
@@ -241,80 +241,6 @@ v-bpa:DocumentAnalysisPrompt
 }
 """ ;
 .
-
-v-bpa:DocumentAnalysisPrompt0
-  rdf:type v-bpa:SystemPrompt ;
-  rdfs:label "Промпт для анализа документов"@ru ;
-  rdfs:label "Document Analysis Prompt"@en ;
-  v-bpa:promptText """
-Ты эффективный помощник по извлечению информации из неструктурированного документа. Твоя задача — разбить текст на главы и определить ключевые атрибуты документа. Содержание глав документа ДОЛЖНО быть написано 1 в 1 как в оригинале, без каких-либо сокращений или комментариев, даже если текст длинный.
-
-Требования к результату:
-1. Раздели текст документа по главам:
- • Используй существующие заголовки для определения структуры глав.
- • Каждый раздел должен содержать два ключевых элемента: название раздела (title) и содержание раздела (content). Текст внутри каждого раздела должен быть представлен в полном объеме, строго в оригинальной формулировке, включая все пункты и подпункты. Никакие сокращения, обобщения или пропуски текста не допускаются.
-
-
-2. Определи ключевые атрибуты документа:
- • Источник документа (например, "Министерство образования").
- • Полное название документа (например, "Положение о работе IT-отдела" или "Должностная инструкция для инженера-программиста").
- • Тип документа (например, "Положение" или "Должностная инструкция").
- • Департамент, о котором идет речь или в котором работает человек.
- • Лицо, подписавшее документ (полное имя).
- • Укажи дату (в формате ДД.ММ.ГГГГ).
- • Лица, утвердившие документ (если такие лица есть, предоставь их список с полными именами и датами утверждения).
-
-"""@ru ;
-  v-bpa:responseSchema 
-"""
-{
-  "type": "object",
-  "additional_properties": {
-    "rdf:type": "v-bpa:ProcessDocument"
-  },
-  "properties": {
-    "sections": {
-      "mapping": "v-bpa:documentSection",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "title": { "type": "string" },
-          "content": { "type": "string" }
-        },
-        "required": ["title", "content"]
-      }
-    },
-        "document_title": { 
-          "type": "string",
-          "mapping": "v-bpa:documentTitle"
-        },
-        "document_type": { 
-          "type": "string", 
-          "mapping": "v-bpa:documentType"
-        },
-        "department": { 
-          "type": "string",
-          "mapping": "v-bpa:documentDepartment"
-        },
-        "document_source": { 
-          "type": "string",
-          "mapping": "v-bpa:documentSource"
-        },
-        "signed_date": { 
-          "type": "string",
-          "mapping": "v-bpa:documentSignedDate"
-        },
-        "signed_by": { 
-          "type": "string",
-          "mapping": "v-bpa:documentSignedBy"
-        }
-  },
-  "required": ["sections", "document_title", "document_type", "department", "document_source", "signed_date", "signed_by"]
-}
-""" ;
-.
-
 
 v-bpa:ImagesToTextPrompt
   rdf:type v-bpa:SystemPrompt ;
