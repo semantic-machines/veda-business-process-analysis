@@ -170,7 +170,7 @@ fn process_structured_schema(
 
     // Parse schema
     let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
-    let schema = ResponseSchema::from_json(&response_schema)?;
+    let mut schema = ResponseSchema::from_json(&response_schema)?;
     let ai_schema = schema.to_ai_schema(module)?;
 
     info!("Generated AI schema: {}", serde_json::to_string_pretty(&ai_schema)?);
@@ -218,6 +218,10 @@ fn process_structured_schema(
         };
 
         let messages = vec![
+            ChatMessage::System {
+                content: ChatMessageContent::Text("You must respond only in Russian language. Use only Russian for all text fields.".to_string()),
+                name: None,
+            },
             ChatMessage::System {
                 content: ChatMessageContent::Text(prompt_text.clone()),
                 name: None,

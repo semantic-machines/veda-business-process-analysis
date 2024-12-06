@@ -32,6 +32,8 @@ pub struct ResponseSchema {
     pub additional: Map<String, Value>,
     #[serde(skip)]
     field_order: Vec<String>,
+    #[serde(skip)]
+    enum_value_mapping: HashMap<String, String>,
 }
 
 #[derive(Debug)]
@@ -49,6 +51,7 @@ pub struct ParseResult {
 
 impl ResponseSchema {
     pub fn from_json(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        info!("Parsing JSON schema: {}", json);
         let mut schema: ResponseSchema = serde_json::from_str(json)?;
 
         if let Some(additional_props) = schema.additional.get("additional_properties") {
@@ -58,31 +61,25 @@ impl ResponseSchema {
         }
 
         schema.field_order = schema.properties.keys().cloned().collect();
+        info!("Field order: {:?}", schema.field_order);
 
         Ok(schema)
     }
 
-    pub fn from_value(value: &Value) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut schema: ResponseSchema = serde_json::from_value(value.clone())?;
-
-        if let Some(additional_props) = value.get("additional_properties") {
-            if let Some(props_obj) = additional_props.as_object() {
-                schema.additional_properties = Some(props_obj.iter().filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string()))).collect());
-            }
-        }
-
-        schema.field_order = schema.properties.keys().cloned().collect();
-
-        Ok(schema)
-    }
-
-    pub fn to_ai_schema(&self, module: &mut BusinessProcessAnalysisModule) -> Result<Value, Box<dyn std::error::Error>> {
+    pub fn to_ai_schema(&mut self, module: &mut BusinessProcessAnalysisModule) -> Result<Value, Box<dyn std::error::Error>> {
+        info!("Converting schema to AI format");
         let mut properties = Map::new();
+        let mut enum_mapping = HashMap::new();
+
+        info!("Processing {} fields", self.field_order.len());
+
         for key in &self.field_order {
             if let Some(prop) = self.properties.get(key) {
-                properties.insert(key.clone(), convert_property(module, prop)?);
+                properties.insert(key.clone(), convert_property(module, prop, &mut enum_mapping)?);
             }
         }
+
+        self.enum_value_mapping = enum_mapping;
 
         let mut schema = json!({
             "type": self.type_name,
@@ -97,12 +94,14 @@ impl ResponseSchema {
             }
         }
 
+        info!("Generated AI schema: {}", schema.to_string());
         Ok(schema)
     }
 
     fn get_property_info(module: &mut BusinessProcessAnalysisModule, property: &str) -> Result<PropertyInfo, Box<dyn std::error::Error>> {
         let mut prop_individual = Individual::default();
         if module.backend.storage.get_individual(property, &mut prop_individual) != ResultCode::Ok {
+            error!("Property {} not found in ontology", property);
             return Err(format!("Property {} not found in ontology", property).into());
         }
         prop_individual.parse_all();
@@ -135,26 +134,6 @@ impl ResponseSchema {
             is_class,
             is_multiple,
         })
-    }
-
-    fn get_enum_values(module: &mut BusinessProcessAnalysisModule, predicate_uri: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        let prop_info = Self::get_property_info(module, predicate_uri)?;
-
-        let range_type = if let Some(rt) = prop_info.range_type {
-            rt
-        } else {
-            return Ok(Vec::new());
-        };
-
-        let mut enum_values = Vec::new();
-        let individuals = get_individuals_by_type(module, &range_type)?;
-        for mut indv in individuals {
-            if let Some(label) = indv.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]) {
-                enum_values.push(label);
-            }
-        }
-
-        Ok(enum_values)
     }
 
     fn set_property_value(individual: &mut Individual, property: &str, value: &Value, property_type: &str, is_multiple: bool) -> Result<(), Box<dyn std::error::Error>> {
@@ -204,6 +183,7 @@ impl ResponseSchema {
         related_individuals: &mut Vec<Individual>,
         parent_individual: &mut Individual,
         property: &str,
+        enum_value_mapping: &HashMap<String, String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if mapping.type_name == Some("array".to_string()) && mapping.items.is_some() {
             if let Value::Array(arr) = value {
@@ -222,7 +202,7 @@ impl ResponseSchema {
                     }
 
                     if let Some(item_mapping) = &mapping.items {
-                        Self::process_value(item, item_mapping, module, related_individuals, &mut related, property)?;
+                        Self::process_value(item, item_mapping, module, related_individuals, &mut related, property, enum_value_mapping)?;
                     }
 
                     if let Some(mapping_uri) = &mapping.mapping {
@@ -242,21 +222,26 @@ impl ResponseSchema {
                         if let Some(mapping_uri) = &prop_mapping.mapping {
                             let prop_info = Self::get_property_info(module, mapping_uri)?;
                             if prop_info.range_type.is_some() {
-                                let enum_values = Self::get_enum_values(module, mapping_uri)?;
                                 if let Some(input_value) = prop_value.as_str() {
-                                    if let Some((uri, _)) = enum_values.iter().find(|label| label == &input_value).map(|label| (label, ())) {
+                                    let enum_key = format!("{}*{}", key, input_value);
+                                    //info!("Looking up enum key: {} in mapping table", enum_key);
+
+                                    if let Some(uri) = enum_value_mapping.get(&enum_key) {
+                                        //info!("Found URI mapping: {} -> {}", enum_key, uri);
                                         if prop_info.is_multiple {
                                             parent_individual.add_uri(mapping_uri, uri);
                                         } else {
                                             parent_individual.set_uri(mapping_uri, uri);
                                         }
                                         continue;
+                                    } else {
+                                        warn!("No mapping found for key: {}", enum_key);
                                     }
                                 }
                             }
                             Self::set_property_value(parent_individual, mapping_uri, prop_value, &prop_info.property_type, prop_info.is_multiple)?;
                         } else {
-                            Self::process_value(prop_value, prop_mapping, module, related_individuals, parent_individual, key)?;
+                            Self::process_value(prop_value, prop_mapping, module, related_individuals, parent_individual, key, enum_value_mapping)?;
                         }
                     }
                 }
@@ -278,7 +263,18 @@ impl ResponseSchema {
                         }
                     } else {
                         for item in arr {
-                            Self::set_property_value(parent_individual, mapping_uri, item, &prop_info.property_type, true)?;
+                            if let Some(str_value) = item.as_str() {
+                                let enum_key = format!("{}*{}", property, str_value);
+                                //info!("Looking up array enum key: {} in property_mapping", enum_key);
+
+                                if let Some(uri) = enum_value_mapping.get(&enum_key) {
+                                    //info!("Found URI mapping (array): {} -> {}", enum_key, uri);
+                                    parent_individual.add_uri(mapping_uri, uri);
+                                } else {
+                                    info!("No mapping found for array key: {}", enum_key);
+                                    Self::set_property_value(parent_individual, mapping_uri, item, &prop_info.property_type, true)?;
+                                }
+                            }
                         }
                     }
                 },
@@ -290,7 +286,26 @@ impl ResponseSchema {
                     }
                 },
                 _ => {
-                    Self::set_property_value(parent_individual, mapping_uri, value, &prop_info.property_type, is_multiple)?;
+                    if let Some(str_value) = value.as_str() {
+                        let enum_key = format!("{}*{}", property, str_value);
+                        //info!("Looking up enum key: {} in property_mapping", enum_key);
+
+                        if let Some(uri) = enum_value_mapping.get(&enum_key) {
+                            //info!("Found URI mapping: {} -> {}", enum_key, uri);
+                            if is_multiple {
+                                //info!("Adding multiple URI: {}", uri);
+                                parent_individual.add_uri(mapping_uri, uri);
+                            } else {
+                                //info!("Setting single URI: {}", uri);
+                                parent_individual.set_uri(mapping_uri, uri);
+                            }
+                        } else {
+                            //info!("No mapping found for key: {}", enum_key);
+                            Self::set_property_value(parent_individual, mapping_uri, value, &prop_info.property_type, is_multiple)?;
+                        }
+                    } else {
+                        Self::set_property_value(parent_individual, mapping_uri, value, &prop_info.property_type, is_multiple)?;
+                    }
                 },
             }
         }
@@ -304,7 +319,9 @@ impl ResponseSchema {
             related_individuals: Vec::new(),
         };
 
-        result.main_individual.set_id(&format!("d:result_{}", uuid::Uuid::new_v4()));
+        let result_id = format!("d:result_{}", uuid::Uuid::new_v4());
+        info!("Created result ID: {}", result_id);
+        result.main_individual.set_id(&result_id);
 
         if let Some(add_props) = &self.additional_properties {
             for (predicate, value) in add_props {
@@ -315,7 +332,8 @@ impl ResponseSchema {
         if let Some(obj) = response.as_object() {
             for (key, prop_mapping) in &self.properties {
                 if let Some(value) = obj.get(key) {
-                    Self::process_value(value, prop_mapping, module, &mut result.related_individuals, &mut result.main_individual, key)?;
+                    //info!("Processing field: {} with value: {:?}", key, value);
+                    Self::process_value(value, prop_mapping, module, &mut result.related_individuals, &mut result.main_individual, key, &self.enum_value_mapping)?;
                 }
             }
         }
@@ -324,12 +342,16 @@ impl ResponseSchema {
     }
 }
 
-fn convert_property(module: &mut BusinessProcessAnalysisModule, prop: &PropertyMapping) -> Result<Value, Box<dyn std::error::Error>> {
+fn convert_property(
+    module: &mut BusinessProcessAnalysisModule,
+    prop: &PropertyMapping,
+    property_mapping: &mut HashMap<String, String>,
+) -> Result<Value, Box<dyn std::error::Error>> {
     match &prop.items {
         Some(items) => {
             let mut array_schema = json!({
                 "type": "array",
-                "items": convert_property(module, items)?
+                "items": convert_property(module, items, property_mapping)?
             });
 
             if let Some(mapping_uri) = &prop.mapping {
@@ -337,12 +359,31 @@ fn convert_property(module: &mut BusinessProcessAnalysisModule, prop: &PropertyM
                 if module.backend.storage.get_individual(mapping_uri, &mut prop_individual) == ResultCode::Ok {
                     prop_individual.parse_all();
 
-                    // Set type for array items from property range
                     if let Some(range_type) = prop_individual.get_first_literal("rdfs:range") {
                         if !range_type.starts_with("xsd:") {
-                            if let Some(items) = array_schema.get_mut("items") {
-                                if let Some(items_obj) = items.as_object_mut() {
-                                    items_obj.insert("rdf:type".to_string(), json!(range_type));
+                            //info!("Processing non-xsd range type: {}", range_type);
+                            if let Ok(mut instances) = get_individuals_by_type(module, &range_type) {
+                                let enum_values: Vec<String> = instances
+                                    .iter_mut()
+                                    .filter_map(|instance| {
+                                        let label = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]);
+                                        if let Some(label) = &label {
+                                            let short_name = mapping_uri.split(':').last().unwrap_or(mapping_uri);
+                                            let map_key = format!("{}*{}", short_name, label);
+                                            //info!("Creating enum mapping: {} -> {}", map_key, instance.get_id());
+                                            property_mapping.insert(map_key, instance.get_id().to_string());
+                                        }
+                                        label
+                                    })
+                                    .collect();
+
+                                //info!("Collected enum values: {:?}", enum_values);
+                                if !enum_values.is_empty() {
+                                    if let Some(items) = array_schema.get_mut("items") {
+                                        if let Some(items_obj) = items.as_object_mut() {
+                                            items_obj.insert("enum".to_string(), json!(enum_values));
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -350,7 +391,6 @@ fn convert_property(module: &mut BusinessProcessAnalysisModule, prop: &PropertyM
                 }
             }
 
-            // Copy additional properties
             if let Some(obj) = array_schema.as_object_mut() {
                 for (key, value) in &prop.additional {
                     if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
@@ -370,9 +410,9 @@ fn convert_property(module: &mut BusinessProcessAnalysisModule, prop: &PropertyM
             if let Some(obj) = props_json.as_object_mut() {
                 let mut properties = Map::new();
                 for (key, value) in props {
-                    let mut prop_schema = convert_property(module, value)?;
+                    //info!("Processing nested property: {}", key);
+                    let mut prop_schema = convert_property(module, value, property_mapping)?;
 
-                    // Check for enum values in properties
                     if let Some(mapping_uri) = &value.mapping {
                         let mut prop_individual = Individual::default();
                         if module.backend.storage.get_individual(mapping_uri, &mut prop_individual) == ResultCode::Ok {
@@ -380,13 +420,22 @@ fn convert_property(module: &mut BusinessProcessAnalysisModule, prop: &PropertyM
 
                             if let Some(range_type) = prop_individual.get_first_literal("rdfs:range") {
                                 if !range_type.starts_with("xsd:") {
-                                    // Get enum values for properties with non-xsd range type
+                                    //info!("Processing non-xsd range type for nested property: {}", range_type);
                                     if let Ok(mut instances) = get_individuals_by_type(module, &range_type) {
                                         let enum_values: Vec<String> = instances
                                             .iter_mut()
-                                            .filter_map(|instance| instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]))
+                                            .filter_map(|instance| {
+                                                let label = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]);
+                                                if let Some(label) = &label {
+                                                    let map_key = format!("{}*{}", key, label);
+                                                    //info!("Creating enum mapping for nested property: {} -> {}", map_key, instance.get_id());
+                                                    property_mapping.insert(map_key, instance.get_id().to_string());
+                                                }
+                                                label
+                                            })
                                             .collect();
 
+                                        //info!("Collected enum values for nested property: {:?}", enum_values);
                                         if !enum_values.is_empty() {
                                             if let Some(obj) = prop_schema.as_object_mut() {
                                                 obj.insert("enum".to_string(), json!(enum_values));
@@ -420,6 +469,42 @@ fn convert_property(module: &mut BusinessProcessAnalysisModule, prop: &PropertyM
             let mut prop_json = json!({
                 "type": prop.type_name.clone().unwrap_or_else(|| "string".to_string())
             });
+
+            if let Some(mapping_uri) = &prop.mapping {
+                let mut prop_individual = Individual::default();
+                if module.backend.storage.get_individual(mapping_uri, &mut prop_individual) == ResultCode::Ok {
+                    prop_individual.parse_all();
+                    //info!("Property individual for simple property: {:?}", prop_individual.get_obj().as_json());
+
+                    if let Some(range_type) = prop_individual.get_first_literal("rdfs:range") {
+                        if !range_type.starts_with("xsd:") {
+                            //info!("Processing non-xsd range type for simple property: {}", range_type);
+                            if let Ok(mut instances) = get_individuals_by_type(module, &range_type) {
+                                let enum_values: Vec<String> = instances
+                                    .iter_mut()
+                                    .filter_map(|instance| {
+                                        let label = instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]);
+                                        if let Some(label) = &label {
+                                            let short_name = mapping_uri.split(':').last().unwrap_or(mapping_uri);
+                                            let map_key = format!("{}*{}", short_name, label);
+                                            //info!("Creating enum mapping for simple property: {} -> {}", map_key, instance.get_id());
+                                            property_mapping.insert(map_key, instance.get_id().to_string());
+                                        }
+                                        label
+                                    })
+                                    .collect();
+
+                                info!("Collected enum values for simple property: {:?}", enum_values);
+                                if !enum_values.is_empty() {
+                                    if let Some(obj) = prop_json.as_object_mut() {
+                                        obj.insert("enum".to_string(), json!(enum_values));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             if let Some(obj) = prop_json.as_object_mut() {
                 for (key, value) in &prop.additional {
