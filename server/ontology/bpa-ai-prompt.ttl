@@ -191,27 +191,22 @@ v-bpa:DocumentAnalysisPrompt
   },
   "properties": {
     "sections": {
-      "mapping": "v-bpa:documentSection",
+      "mapping": "v-bpa:hasDocumentSection",
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "title": { "type": "string" },
-          "content": { "type": "string" },
+          "title": { 
+		"type": "string", 
+    		"mapping": "v-bpa:sectionTitle"
+		},
+        "content": {
+		 "type": "string", 
+    		"mapping": "v-bpa:sectionContent"
+		},
           "section_type": { 
             "type": "string",
-            "enum": [
-              "Общие положения",
-              "Основные задачи",
-              "Основные функции",
-              "Права",
-              "Ответственность",
-              "Взаимодействие",
-              "Заключительные положения",
-              "Квалификационные требования",
-              "Должностные обязанности",
-              "Прочее"
-            ]
+    	    "mapping": "v-bpa:hasSectionType"
           }
         },
         "required": ["title", "content", "section_type"]

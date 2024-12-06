@@ -176,3 +176,74 @@ v-bpa:hasDocumentSection
   rdfs:range v-bpa:DocumentSection ;
 .
 
+# Document Section Type class
+v-bpa:DocumentSectionType
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Тип раздела документа"@ru ;
+  rdfs:label "Document section type"@en ;
+.
+
+# Property for section type
+v-bpa:hasSectionType
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Тип раздела"@ru ;
+  rdfs:label "Section type"@en ;
+  rdfs:domain v-bpa:DocumentSection ;
+  rdfs:range v-bpa:DocumentSectionType ;
+.
+
+# Document section types
+v-bpa:SectionGeneralProvisions
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Общие положения"@ru ;
+  rdfs:label "General Provisions"@en ;
+.
+
+v-bpa:SectionMainTasks
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Основные задачи"@ru ;
+  rdfs:label "Main Tasks"@en ;
+.
+
+v-bpa:SectionMainFunctions
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Основные функции"@ru ;
+  rdfs:label "Main Functions"@en ;
+.
+
+v-bpa:SectionRightsAndAuthorities
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Права и полномочия"@ru ;
+  rdfs:label "Rights and Authorities"@en ;
+.
+
+v-bpa:SectionResponsibilities
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Ответственность"@ru ;
+  rdfs:label "Responsibilities"@en ;
+.
+
+v-bpa:SectionInteractionRules
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Правила взаимодействия"@ru ;
+  rdfs:label "Interaction Rules"@en ;
+.
+
+v-bpa:SectionFinalProvisions
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Заключительные положения"@ru ;
+  rdfs:label "Final Provisions"@en ;
+.
+
+v-bpa:SectionQualificationRequirements
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Квалификационные требования"@ru ;
+  rdfs:label "Qualification Requirements"@en ;
+.
+
+v-bpa:SectionJobDutiesAndObligations
+  rdf:type v-bpa:DocumentSectionType ;
+  rdfs:label "Должностные обязанности и функции"@ru ;
+  rdfs:label "Job Duties and Obligations"@en ;
+.

@@ -171,7 +171,7 @@ fn process_structured_schema(
     // Parse schema
     let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
     let schema = ResponseSchema::from_json(&response_schema)?;
-    let ai_schema = schema.to_ai_schema()?;
+    let ai_schema = schema.to_ai_schema(module)?;
 
     info!("Generated AI schema: {}", serde_json::to_string_pretty(&ai_schema)?);
 
@@ -246,7 +246,7 @@ fn process_structured_schema(
 
         // Convert HashMap to Value and parse response
         let response_value = serde_json::to_value(&ai_response)?;
-        let mut parse_result = schema.parse_ai_response(&response_value, &mut module.backend, &module.ticket)?;
+        let mut parse_result = schema.parse_ai_response(&response_value, module)?;
 
         if separate_results {
             // Generate result ID with sequence number for separate storage

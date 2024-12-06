@@ -1,11 +1,13 @@
+use crate::common::get_individuals_by_type;
+use crate::queue_processor::BusinessProcessAnalysisModule;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
-use v_common::module::veda_backend::Backend;
 use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
+use v_common::v_api::obj::ResultCode;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PropertyMapping {
@@ -28,14 +30,14 @@ pub struct ResponseSchema {
     pub additional_properties: Option<HashMap<String, String>>,
     #[serde(flatten)]
     pub additional: Map<String, Value>,
-
     #[serde(skip)]
-    field_order: Vec<String>, // Store original field order
+    field_order: Vec<String>,
 }
 
 #[derive(Debug)]
 struct PropertyInfo {
     property_type: String,
+    range_type: Option<String>,
     is_class: bool,
     is_multiple: bool,
 }
@@ -46,32 +48,15 @@ pub struct ParseResult {
 }
 
 impl ResponseSchema {
-    pub fn from_json0(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut schema: ResponseSchema = serde_json::from_str(json)?;
-        if schema.type_name != "object" {
-            return Err("Root schema type must be 'object'".into());
-        }
-
-        // Проверяем наличие additional_properties в дополнительных полях
-        if let Some(additional_props) = schema.additional.get("additional_properties") {
-            if let Some(props_obj) = additional_props.as_object() {
-                schema.additional_properties = Some(props_obj.iter().filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string()))).collect());
-            }
-        }
-
-        Ok(schema)
-    }
     pub fn from_json(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let mut schema: ResponseSchema = serde_json::from_str(json)?;
 
-        // Проверяем наличие additional_properties в дополнительных полях
         if let Some(additional_props) = schema.additional.get("additional_properties") {
             if let Some(props_obj) = additional_props.as_object() {
                 schema.additional_properties = Some(props_obj.iter().filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string()))).collect());
             }
         }
 
-        // Extract field order from original JSON
         schema.field_order = schema.properties.keys().cloned().collect();
 
         Ok(schema)
@@ -79,96 +64,26 @@ impl ResponseSchema {
 
     pub fn from_value(value: &Value) -> Result<Self, Box<dyn std::error::Error>> {
         let mut schema: ResponseSchema = serde_json::from_value(value.clone())?;
-        if schema.type_name != "object" {
-            return Err("Root schema type must be 'object'".into());
-        }
 
-        // Проверяем наличие additional_properties в дополнительных полях
         if let Some(additional_props) = value.get("additional_properties") {
             if let Some(props_obj) = additional_props.as_object() {
                 schema.additional_properties = Some(props_obj.iter().filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string()))).collect());
             }
         }
 
+        schema.field_order = schema.properties.keys().cloned().collect();
+
         Ok(schema)
     }
 
-    pub fn to_ai_schema(&self) -> Result<Value, Box<dyn std::error::Error>> {
-        fn convert_property(prop: &PropertyMapping) -> Value {
-            match &prop.items {
-                Some(items) => {
-                    let mut array_schema = json!({
-                        "type": "array",
-                        "items": convert_property(items)
-                    });
-
-                    // Copy any additional fields from the parent property
-                    if let Some(obj) = array_schema.as_object_mut() {
-                        for (key, value) in &prop.additional {
-                            if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
-                                obj.insert(key.clone(), value.clone());
-                            }
-                        }
-                    }
-                    array_schema
-                },
-                None if prop.properties.is_some() => {
-                    let props = prop.properties.as_ref().unwrap();
-                    let mut props_json = json!({
-                        "type": "object",
-                        "additionalProperties": false,
-                    });
-
-                    if let Some(obj) = props_json.as_object_mut() {
-                        let mut properties = Map::new();
-                        for (key, value) in props {
-                            properties.insert(key.clone(), convert_property(value));
-                        }
-                        obj.insert("properties".to_string(), Value::Object(properties));
-
-                        // Add any additional fields from the property definition
-                        for (key, value) in &prop.additional {
-                            if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
-                                obj.insert(key.clone(), value.clone());
-                            }
-                        }
-
-                        // Add required fields if specified in the properties
-                        if let Some(required) = prop.additional.get("required") {
-                            obj.insert("required".to_string(), required.clone());
-                        }
-                    }
-
-                    props_json
-                },
-                None => {
-                    let mut prop_json = json!({
-                        "type": prop.type_name.clone().unwrap_or_else(|| "string".to_string())
-                    });
-
-                    // Copy additional fields like enum, description etc.
-                    if let Some(obj) = prop_json.as_object_mut() {
-                        for (key, value) in &prop.additional {
-                            if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
-                                obj.insert(key.clone(), value.clone());
-                            }
-                        }
-                    }
-
-                    prop_json
-                },
-            }
-        }
-
-        // Build properties json maintaining field order
+    pub fn to_ai_schema(&self, module: &mut BusinessProcessAnalysisModule) -> Result<Value, Box<dyn std::error::Error>> {
         let mut properties = Map::new();
         for key in &self.field_order {
             if let Some(prop) = self.properties.get(key) {
-                properties.insert(key.clone(), convert_property(prop));
+                properties.insert(key.clone(), convert_property(module, prop)?);
             }
         }
 
-        // Build final schema with additional properties if specified
         let mut schema = json!({
             "type": self.type_name,
             "additionalProperties": false,
@@ -176,7 +91,6 @@ impl ResponseSchema {
             "required": self.field_order
         });
 
-        // Add any additional root level properties
         if let Some(obj) = schema.as_object_mut() {
             if let Some(add_props) = &self.additional_properties {
                 obj.insert("additional_properties".to_string(), json!(add_props));
@@ -186,26 +100,61 @@ impl ResponseSchema {
         Ok(schema)
     }
 
-    fn get_property_info(storage: &mut Backend, property: &str) -> Result<PropertyInfo, Box<dyn std::error::Error>> {
+    fn get_property_info(module: &mut BusinessProcessAnalysisModule, property: &str) -> Result<PropertyInfo, Box<dyn std::error::Error>> {
         let mut prop_individual = Individual::default();
-
-        if storage.get_individual(property, &mut prop_individual).is_none() {
+        if module.backend.storage.get_individual(property, &mut prop_individual) != ResultCode::Ok {
             return Err(format!("Property {} not found in ontology", property).into());
         }
+        prop_individual.parse_all();
 
         let is_class = prop_individual.any_exists("rdf:type", &["owl:Class"]);
         let is_multiple = !prop_individual.any_exists("rdf:type", &["owl:FunctionalProperty"]);
+
+        let range = prop_individual.get_first_literal("rdfs:range");
+        let range_type = if is_class {
+            None
+        } else if let Some(ref range_uri) = range {
+            if !range_uri.starts_with("xsd:") {
+                Some(range_uri.clone())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         let property_type = if is_class {
             "owl:Class".to_string()
         } else {
-            prop_individual.get_first_literal("rdfs:range").unwrap_or_else(|| "xsd:string".to_string())
+            range.unwrap_or_else(|| "xsd:string".to_string())
         };
 
         Ok(PropertyInfo {
             property_type,
+            range_type,
             is_class,
             is_multiple,
         })
+    }
+
+    fn get_enum_values(module: &mut BusinessProcessAnalysisModule, predicate_uri: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+        let prop_info = Self::get_property_info(module, predicate_uri)?;
+
+        let range_type = if let Some(rt) = prop_info.range_type {
+            rt
+        } else {
+            return Ok(Vec::new());
+        };
+
+        let mut enum_values = Vec::new();
+        let individuals = get_individuals_by_type(module, &range_type)?;
+        for mut indv in individuals {
+            if let Some(label) = indv.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]) {
+                enum_values.push(label);
+            }
+        }
+
+        Ok(enum_values)
     }
 
     fn set_property_value(individual: &mut Individual, property: &str, value: &Value, property_type: &str, is_multiple: bool) -> Result<(), Box<dyn std::error::Error>> {
@@ -251,53 +200,63 @@ impl ResponseSchema {
     fn process_value(
         value: &Value,
         mapping: &PropertyMapping,
-        storage: &mut Backend,
+        module: &mut BusinessProcessAnalysisModule,
         related_individuals: &mut Vec<Individual>,
         parent_individual: &mut Individual,
         property: &str,
-        sys_ticket: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        println!("\nProcessing property: {}", property);
-        println!("Value: {:#?}", value);
-        println!("Mapping: {:#?}", mapping);
+        if mapping.type_name == Some("array".to_string()) && mapping.items.is_some() {
+            if let Value::Array(arr) = value {
+                let prop_info = if let Some(mapping_uri) = &mapping.mapping {
+                    Self::get_property_info(module, mapping_uri)?
+                } else {
+                    return Err("No mapping URI provided for array items".into());
+                };
 
-        // Handle arrays with mapping
-        if mapping.type_name == Some("array".to_string()) && mapping.mapping.is_some() {
-            let mapping_uri = mapping.mapping.as_ref().unwrap();
-            match value {
-                Value::Array(arr) => {
-                    // Convert array to JSON string if it contains objects
-                    if arr.iter().any(|v| v.is_object()) {
-                        let json_str = serde_json::to_string_pretty(arr)?;
-                        parent_individual.add_string(mapping_uri, &json_str, Lang::none());
-                    } else {
-                        // Handle simple array values
-                        for item in arr {
-                            if let Some(str_val) = item.as_str() {
-                                parent_individual.add_string(mapping_uri, str_val, Lang::none());
-                            }
-                        }
+                for item in arr {
+                    let mut related = Individual::default();
+                    related.set_id(&format!("d:{}", uuid::Uuid::new_v4()));
+
+                    if let Some(range_type) = &prop_info.range_type {
+                        related.set_uri("rdf:type", range_type);
                     }
-                    return Ok(());
-                },
-                _ => return Ok(()),
+
+                    if let Some(item_mapping) = &mapping.items {
+                        Self::process_value(item, item_mapping, module, related_individuals, &mut related, property)?;
+                    }
+
+                    if let Some(mapping_uri) = &mapping.mapping {
+                        parent_individual.add_uri(mapping_uri, related.get_id());
+                    }
+
+                    related_individuals.push(related);
+                }
+                return Ok(());
             }
         }
 
-        // Rest of the existing code...
         if let Some(properties) = &mapping.properties {
-            println!("Found properties for {}", property);
             if let Value::Object(obj) = value {
                 for (key, prop_mapping) in properties {
-                    println!("\nHandling nested property: {}", key);
                     if let Some(prop_value) = obj.get(key) {
                         if let Some(mapping_uri) = &prop_mapping.mapping {
-                            println!("Found mapping URI for {}: {}", key, mapping_uri);
-                            let property_info = Self::get_property_info(storage, mapping_uri)?;
-
-                            Self::set_property_value(parent_individual, mapping_uri, prop_value, &property_info.property_type, property_info.is_multiple)?;
+                            let prop_info = Self::get_property_info(module, mapping_uri)?;
+                            if prop_info.range_type.is_some() {
+                                let enum_values = Self::get_enum_values(module, mapping_uri)?;
+                                if let Some(input_value) = prop_value.as_str() {
+                                    if let Some((uri, _)) = enum_values.iter().find(|label| label == &input_value).map(|label| (label, ())) {
+                                        if prop_info.is_multiple {
+                                            parent_individual.add_uri(mapping_uri, uri);
+                                        } else {
+                                            parent_individual.set_uri(mapping_uri, uri);
+                                        }
+                                        continue;
+                                    }
+                                }
+                            }
+                            Self::set_property_value(parent_individual, mapping_uri, prop_value, &prop_info.property_type, prop_info.is_multiple)?;
                         } else {
-                            Self::process_value(prop_value, prop_mapping, storage, related_individuals, parent_individual, key, sys_ticket)?;
+                            Self::process_value(prop_value, prop_mapping, module, related_individuals, parent_individual, key)?;
                         }
                     }
                 }
@@ -305,29 +264,25 @@ impl ResponseSchema {
             }
         }
 
-        // Direct mapping handling
         if let Some(mapping_uri) = &mapping.mapping {
-            println!("\nHandling direct mapping for: {}", mapping_uri);
-            let property_info = Self::get_property_info(storage, mapping_uri)?;
-            let is_multiple = mapping.is_multiple.unwrap_or(property_info.is_multiple);
+            let prop_info = Self::get_property_info(module, mapping_uri)?;
+            let is_multiple = mapping.is_multiple.unwrap_or(prop_info.is_multiple);
 
             match value {
                 Value::Array(arr) => {
-                    if property_info.is_class {
+                    if prop_info.is_class {
                         for item in arr {
-                            // Save as JSON for unmapped properties
                             if let Value::Object(_) = item {
                                 parent_individual.add_string(mapping_uri, &serde_json::to_string_pretty(item)?, Lang::none());
                             }
                         }
                     } else {
                         for item in arr {
-                            Self::set_property_value(parent_individual, mapping_uri, item, &property_info.property_type, true)?;
+                            Self::set_property_value(parent_individual, mapping_uri, item, &prop_info.property_type, true)?;
                         }
                     }
                 },
-                Value::Object(_obj) if property_info.is_class => {
-                    // Save as JSON for object without mapping
+                Value::Object(_) if prop_info.is_class => {
                     if is_multiple {
                         parent_individual.add_string(mapping_uri, &serde_json::to_string_pretty(value)?, Lang::none());
                     } else {
@@ -335,14 +290,15 @@ impl ResponseSchema {
                     }
                 },
                 _ => {
-                    Self::set_property_value(parent_individual, mapping_uri, value, &property_info.property_type, is_multiple)?;
+                    Self::set_property_value(parent_individual, mapping_uri, value, &prop_info.property_type, is_multiple)?;
                 },
             }
         }
+
         Ok(())
     }
 
-    pub fn parse_ai_response(&self, response: &Value, storage: &mut Backend, sys_ticket: &str) -> Result<ParseResult, Box<dyn std::error::Error>> {
+    pub fn parse_ai_response(&self, response: &Value, module: &mut BusinessProcessAnalysisModule) -> Result<ParseResult, Box<dyn std::error::Error>> {
         let mut result = ParseResult {
             main_individual: Individual::default(),
             related_individuals: Vec::new(),
@@ -350,11 +306,8 @@ impl ResponseSchema {
 
         result.main_individual.set_id(&format!("d:result_{}", uuid::Uuid::new_v4()));
 
-        // Применяем additional_properties если они есть
-        if let Some(additional_props) = &self.additional_properties {
-            println!("Applying additional properties: {:?}", additional_props);
-            for (predicate, value) in additional_props {
-                println!("Setting additional property {} = {}", predicate, value);
+        if let Some(add_props) = &self.additional_properties {
+            for (predicate, value) in add_props {
                 result.main_individual.set_uri(predicate, value);
             }
         }
@@ -362,11 +315,121 @@ impl ResponseSchema {
         if let Some(obj) = response.as_object() {
             for (key, prop_mapping) in &self.properties {
                 if let Some(value) = obj.get(key) {
-                    Self::process_value(value, prop_mapping, storage, &mut result.related_individuals, &mut result.main_individual, key, sys_ticket)?;
+                    Self::process_value(value, prop_mapping, module, &mut result.related_individuals, &mut result.main_individual, key)?;
                 }
             }
         }
 
         Ok(result)
+    }
+}
+
+fn convert_property(module: &mut BusinessProcessAnalysisModule, prop: &PropertyMapping) -> Result<Value, Box<dyn std::error::Error>> {
+    match &prop.items {
+        Some(items) => {
+            let mut array_schema = json!({
+                "type": "array",
+                "items": convert_property(module, items)?
+            });
+
+            if let Some(mapping_uri) = &prop.mapping {
+                let mut prop_individual = Individual::default();
+                if module.backend.storage.get_individual(mapping_uri, &mut prop_individual) == ResultCode::Ok {
+                    prop_individual.parse_all();
+
+                    // Set type for array items from property range
+                    if let Some(range_type) = prop_individual.get_first_literal("rdfs:range") {
+                        if !range_type.starts_with("xsd:") {
+                            if let Some(items) = array_schema.get_mut("items") {
+                                if let Some(items_obj) = items.as_object_mut() {
+                                    items_obj.insert("rdf:type".to_string(), json!(range_type));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Copy additional properties
+            if let Some(obj) = array_schema.as_object_mut() {
+                for (key, value) in &prop.additional {
+                    if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
+                        obj.insert(key.clone(), value.clone());
+                    }
+                }
+            }
+            Ok(array_schema)
+        },
+        None if prop.properties.is_some() => {
+            let props = prop.properties.as_ref().unwrap();
+            let mut props_json = json!({
+                "type": "object",
+                "additionalProperties": false,
+            });
+
+            if let Some(obj) = props_json.as_object_mut() {
+                let mut properties = Map::new();
+                for (key, value) in props {
+                    let mut prop_schema = convert_property(module, value)?;
+
+                    // Check for enum values in properties
+                    if let Some(mapping_uri) = &value.mapping {
+                        let mut prop_individual = Individual::default();
+                        if module.backend.storage.get_individual(mapping_uri, &mut prop_individual) == ResultCode::Ok {
+                            prop_individual.parse_all();
+
+                            if let Some(range_type) = prop_individual.get_first_literal("rdfs:range") {
+                                if !range_type.starts_with("xsd:") {
+                                    // Get enum values for properties with non-xsd range type
+                                    if let Ok(mut instances) = get_individuals_by_type(module, &range_type) {
+                                        let enum_values: Vec<String> = instances
+                                            .iter_mut()
+                                            .filter_map(|instance| instance.get_first_literal_with_lang("rdfs:label", &[Lang::new_from_i64(1)]))
+                                            .collect();
+
+                                        if !enum_values.is_empty() {
+                                            if let Some(obj) = prop_schema.as_object_mut() {
+                                                obj.insert("enum".to_string(), json!(enum_values));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    properties.insert(key.clone(), prop_schema);
+                }
+
+                obj.insert("properties".to_string(), Value::Object(properties));
+
+                for (key, value) in &prop.additional {
+                    if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
+                        obj.insert(key.clone(), value.clone());
+                    }
+                }
+
+                if let Some(required) = prop.additional.get("required") {
+                    obj.insert("required".to_string(), required.clone());
+                }
+            }
+
+            Ok(props_json)
+        },
+        None => {
+            let mut prop_json = json!({
+                "type": prop.type_name.clone().unwrap_or_else(|| "string".to_string())
+            });
+
+            if let Some(obj) = prop_json.as_object_mut() {
+                for (key, value) in &prop.additional {
+                    if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
+                        obj.insert(key.clone(), value.clone());
+                    }
+                }
+            }
+
+            Ok(prop_json)
+        },
     }
 }
