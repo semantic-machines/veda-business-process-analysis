@@ -377,7 +377,7 @@ fn process_enum_values(
             } else {
                 Some(enum_values)
             }
-        }
+        },
         Err(_) => None,
     }
 }

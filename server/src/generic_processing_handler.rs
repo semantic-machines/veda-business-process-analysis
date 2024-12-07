@@ -323,6 +323,11 @@ fn process_structured_schema(
 /// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
 /// и заданного типа целевого индивида.
 pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, request: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
+    // Check processing status
+    if request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
+        return Ok(());
+    }
+
     info!("Starting generic request processing for request: {}", request.get_id());
 
     // Получаем ссылку на промпт и загружаем его
