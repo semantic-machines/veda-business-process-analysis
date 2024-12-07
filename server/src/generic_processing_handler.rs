@@ -248,7 +248,7 @@ fn process_structured_schema(
         let rt = Runtime::new()?;
         let ai_response = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
 
-        info!("Received AI response for content {}: {:?}", index + 1, ai_response);
+        //info!("Received AI response for content {}: {:?}", index + 1, ai_response);
 
         // Convert HashMap to Value and parse response
         let response_value = serde_json::to_value(&ai_response)?;
