@@ -35,36 +35,59 @@ struct ApiConfig {
     base_url: String,
 }
 
-fn main() -> std::io::Result<()> {
-    init_module_log!("BUSINESS_PROCESS_ANALYSIS");
+// Configuration for both providers
+#[derive(Debug)]
+pub struct ProvidersConfig {
+    pub default: Client,
+    pub reasoning: Client,
+    pub default_model: String,
+    pub reasoning_model: String,
+}
 
-    // Читаем настройки из файла business-process-analysis.toml
-    let settings = config::Config::builder().add_source(config::File::with_name("./config/business-process-analysis")).build().expect("Failed to read configuration");
-
-    // Получаем название провайдера
-    let provider = settings.get_string("provider").expect("Failed to get provider from config");
-
-    // Читаем конфигурацию для выбранного провайдера
-    let api_config: ApiConfig = settings.get(&provider).expect("Failed to get provider config");
-
-    // Создаем клиент с учетом возможного base_url
-    let client = Client {
+fn create_client(api_config: &ApiConfig) -> Client {
+    Client {
         http_client: reqwest::Client::new(),
         base_url: if !api_config.base_url.is_empty() {
-            api_config.base_url
+            api_config.base_url.clone()
         } else {
             "https://api.openai.com/v1".to_string()
         },
-        api_key: api_config.api_key,
+        api_key: api_config.api_key.clone(),
         headers: None,
         organization: None,
         project: None,
+    }
+}
+
+fn main() -> std::io::Result<()> {
+    init_module_log!("BUSINESS_PROCESS_ANALYSIS");
+
+    // Read settings from business-process-analysis.toml
+    let settings = config::Config::builder().add_source(config::File::with_name("./config/business-process-analysis")).build().expect("Failed to read configuration");
+
+    // Get both provider names
+    let default_provider = settings.get_string("default_provider").expect("Failed to get default provider from config");
+    let reasoning_provider = settings.get_string("reasoning_provider").expect("Failed to get reasoning provider from config");
+
+    // Get configurations for both providers
+    let default_config: ApiConfig = settings.get(&default_provider).expect("Failed to get default provider config");
+    let reasoning_config: ApiConfig = settings.get(&reasoning_provider).expect("Failed to get reasoning provider config");
+
+    // Create clients for both providers
+    let default_client = create_client(&default_config);
+    let reasoning_client = create_client(&reasoning_config);
+
+    let providers_config = ProvidersConfig {
+        default: default_client,
+        reasoning: reasoning_client,
+        default_model: default_config.model,
+        reasoning_model: reasoning_config.model,
     };
 
-    // Инициализируем бэкенд для доступа к хранилищу онтологии
+    // Initialize backend for ontology storage access
     let mut backend = Backend::create(StorageMode::ReadOnly, false);
 
-    // Инициализируем XapianReader
+    // Initialize XapianReader
     let xr = XapianReader::new("russian", &mut backend.storage).expect("Failed to create XapianReader");
 
     let mut module = Module::new_with_name("business-process-analysis");
@@ -83,10 +106,12 @@ fn main() -> std::io::Result<()> {
     };
 
     let mut my_module = BusinessProcessAnalysisModule {
-        client,
+        default_client: providers_config.default,
+        reasoning_client: providers_config.reasoning,
         backend,
         xr,
-        model: api_config.model,
+        default_model: providers_config.default_model,
+        reasoning_model: providers_config.reasoning_model,
         ticket: systicket,
         module_info: module_info.unwrap(),
     };

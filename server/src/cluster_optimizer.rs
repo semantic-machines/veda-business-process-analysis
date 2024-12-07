@@ -1,4 +1,4 @@
-use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response};
+use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response, ClientType};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::types::PropertyMapping;
 use serde_json;
@@ -57,7 +57,7 @@ pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, 
     // Отправляем запрос к AI
     info!("Sending optimization request to AI for cluster {}", cluster_id);
     let rt = Runtime::new()?;
-    let optimization_result = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
+    let optimization_result = rt.block_on(async { send_request_to_ai(module, parameters, ClientType::Default).await })?;
 
     info!("@ optimization_result={:?}", optimization_result);
 

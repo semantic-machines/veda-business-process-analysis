@@ -2,7 +2,7 @@
 /// и заданного типа целевого индивида.
 use crate::common::{
     convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, send_request_to_ai,
-    set_to_individual_from_ai_response,
+    set_to_individual_from_ai_response, ClientType,
 };
 use crate::extractors::extract_text_from_document;
 use crate::queue_processor::BusinessProcessAnalysisModule;
@@ -87,7 +87,7 @@ fn process_ontology_input(
     // Отправляем запрос к AI
     info!("Sending request to AI for processing input: {}", raw_input);
     let rt = Runtime::new()?;
-    let ai_response = rt.block_on(async { send_request_to_ai(module, req_to_ai).await })?;
+    let ai_response = rt.block_on(async { send_request_to_ai(module, req_to_ai, ClientType::Default).await })?;
 
     info!("@G ai_response={:?}", ai_response);
 
@@ -234,7 +234,7 @@ fn process_structured_schema(
 
         let parameters = ChatCompletionParametersBuilder::default()
             .seed(43 as u32)
-            .model(module.model.clone())
+            .model(module.default_model.clone())
             .max_tokens(16384 as u32)
             //.max_tokens(100000 as u32)
             .messages(messages)
@@ -246,7 +246,7 @@ fn process_structured_schema(
         // Send request to AI
         info!("Sending request to AI for analyzing content {}", index + 1);
         let rt = Runtime::new()?;
-        let ai_response = rt.block_on(async { send_request_to_ai(module, parameters).await })?;
+        let ai_response = rt.block_on(async { send_request_to_ai(module, parameters, ClientType::Default).await })?;
 
         //info!("Received AI response for content {}: {:?}", index + 1, ai_response);
 

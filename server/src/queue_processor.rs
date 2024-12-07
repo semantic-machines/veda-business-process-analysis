@@ -18,10 +18,12 @@ use v_common::onto::parser::parse_raw;
 use v_common::v_api::api_client::IndvOp;
 
 pub struct BusinessProcessAnalysisModule {
-    pub client: Client,
+    pub default_client: Client,
+    pub reasoning_client: Client,
     pub backend: Backend,
     pub xr: XapianReader,
-    pub model: String,
+    pub default_model: String,
+    pub reasoning_model: String,
     pub ticket: String,
     pub module_info: ModuleInfo,
 }

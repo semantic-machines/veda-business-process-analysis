@@ -13,6 +13,12 @@ use v_common::onto::individual::Individual;
 use v_common::search::common::{FTQuery, QueryResult};
 use v_common::v_api::obj::ResultCode;
 
+#[derive(Debug, Clone, Copy)]
+pub enum ClientType {
+    Default,
+    Reasoning,
+}
+
 /// Формирует JSON-представление бизнес-процесса из индивида, включая связанные документы
 ///
 /// # Arguments
@@ -188,7 +194,7 @@ pub fn prepare_request_ai_parameters(
     info!("@A5 schema={}", schema.to_string());
 
     let parameters = ChatCompletionParametersBuilder::default()
-        .model(module.model.clone())
+        .model(module.default_model.clone())
         .messages(vec![
             ChatMessage::System {
                 content: ChatMessageContent::Text("You must respond only in Russian language. Use only Russian for all text fields.".to_string()),
@@ -209,20 +215,16 @@ pub fn prepare_request_ai_parameters(
     Ok(parameters)
 }
 
-/// Отправляет запрос к AI и обрабатывает ответ
-///
-/// # Arguments
-/// * `module` - Модуль анализа с настройками и клиентом AI
-/// * `parameters` - Параметры запроса к AI
-///
-/// # Returns
-/// * `Result<AIResponseValues, Box<dyn std::error::Error>>` - Обработанный ответ от AI
-/// Sends request to AI and processes response
 pub async fn send_request_to_ai(
     module: &mut BusinessProcessAnalysisModule,
     parameters: ChatCompletionParameters,
+    client_type: ClientType,
 ) -> Result<AIResponseValues, Box<dyn std::error::Error>> {
-    let result = module.client.chat().create(parameters).await?;
+    // Выбираем нужный клиент в зависимости от переданного типа
+    let result = match client_type {
+        ClientType::Default => module.default_client.chat().create(parameters).await?,
+        ClientType::Reasoning => module.reasoning_client.chat().create(parameters).await?,
+    };
 
     if let Some(usage) = result.usage {
         info!(
@@ -230,7 +232,7 @@ pub async fn send_request_to_ai(
             usage.prompt_tokens,
             usage.completion_tokens.unwrap_or(0),
             usage.total_tokens,
-            calculate_cost(usage.total_tokens as f64, &module.model)
+            calculate_cost(usage.total_tokens as f64, &module.default_model) // можно добавить логику выбора модели
         );
     }
 
