@@ -1,6 +1,6 @@
 // business_process_handler.rs
 
-use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, send_request_to_ai, set_to_individual_from_ai_response, ClientType};
+use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, send_structured_request_to_ai, set_to_individual_from_ai_response, ClientType};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::types::PropertyMapping;
 use std::collections::HashSet;
@@ -55,7 +55,7 @@ pub fn analyze_process_justification(module: &mut BusinessProcessAnalysisModule,
     let rt = Runtime::new()?;
 
     // Отправляем запрос к AI
-    let ai_response = rt.block_on(async { send_request_to_ai(module, parameters, ClientType::Default).await })?;
+    let ai_response = rt.block_on(async { send_structured_request_to_ai(module, parameters, ClientType::Default).await })?;
 
     // Сохраняем результат в индивиде с учетом маппинга свойств
     set_to_individual_from_ai_response(module, bp_obj, &ai_response, &mut property_mapping)?;

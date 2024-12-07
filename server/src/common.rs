@@ -1,3 +1,4 @@
+// common.rs
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::types::{AIResponseValues, PropertyMapping, PropertySchema};
 use humantime::format_duration;
@@ -19,6 +20,28 @@ pub enum ClientType {
     Reasoning,
 }
 
+/// Gets prompt text from ontology individual
+///
+/// # Arguments
+/// * `module` - Business process analysis module
+/// * `prompt_id` - ID of prompt individual
+///
+/// # Returns
+/// * `Result<String, Box<dyn std::error::Error>>` - Prompt text or error
+pub fn get_prompt_text(module: &mut BusinessProcessAnalysisModule, prompt_id: &str) -> Result<String, Box<dyn std::error::Error>> {
+    // Load prompt individual
+    let mut prompt_individual = Individual::default();
+    if module.backend.storage.get_individual(prompt_id, &mut prompt_individual) != ResultCode::Ok {
+        return Err(format!("Failed to get prompt with ID: {}", prompt_id).into());
+    }
+
+    prompt_individual.parse_all();
+
+    // Get prompt text
+    let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
+
+    Ok(prompt_text)
+}
 /// Формирует JSON-представление бизнес-процесса из индивида, включая связанные документы
 ///
 /// # Arguments
@@ -215,7 +238,7 @@ pub fn prepare_request_ai_parameters(
     Ok(parameters)
 }
 
-pub async fn send_request_to_ai(
+pub async fn send_structured_request_to_ai(
     module: &mut BusinessProcessAnalysisModule,
     parameters: ChatCompletionParameters,
     client_type: ClientType,
@@ -243,6 +266,7 @@ pub async fn send_request_to_ai(
         } = &choice.message
         {
             let response: Value = serde_json::from_str(text)?;
+            info!("@ response text ={}", text);
             let response_object = response.as_object().ok_or("Response is not a JSON object")?;
             let response_values: AIResponseValues = response_object.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
             Ok(response_values)
@@ -675,5 +699,44 @@ pub fn calculate_cost(tokens: f64, model: &str) -> f64 {
 
         // Default case
         _ => 0.0,
+    }
+}
+
+/// Sends request to AI and gets text response
+pub async fn send_text_request_to_ai(
+    module: &mut BusinessProcessAnalysisModule,
+    parameters: ChatCompletionParameters,
+    client_type: ClientType,
+) -> Result<String, Box<dyn std::error::Error>> {
+    // Используем нужный клиент в зависимости от типа
+    let result = match client_type {
+        ClientType::Default => module.default_client.chat().create(parameters).await?,
+        ClientType::Reasoning => module.reasoning_client.chat().create(parameters).await?,
+    };
+
+    if let Some(usage) = result.usage {
+        info!(
+            "API usage metrics - Tokens: input={}, output={}, total={}, cost={}$",
+            usage.prompt_tokens,
+            usage.completion_tokens.unwrap_or(0),
+            usage.total_tokens,
+            calculate_cost(usage.total_tokens as f64, &module.default_model)
+        );
+    }
+
+    if let Some(choice) = result.choices.first() {
+        if let ChatMessage::Assistant {
+            content: Some(ChatMessageContent::Text(text)),
+            ..
+        } = &choice.message
+        {
+            Ok(text.clone())
+        } else {
+            error!("Unexpected message format in AI response");
+            Err("Unexpected message format".into())
+        }
+    } else {
+        error!("No response received from AI");
+        Err("No response from AI".into())
     }
 }

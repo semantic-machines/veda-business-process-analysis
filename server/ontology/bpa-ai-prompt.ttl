@@ -308,3 +308,67 @@ v-bpa:ProcessExtractionPrompt
 6. Оценивай частоту выполнения исходя из контекста и требований
 """@ru ;
 .
+
+v-bpa:ProcessListExtractionPrompt
+  rdf:type v-bpa:SystemPrompt ;
+  rdfs:label "Промпт для извлечения процессов из неструктурированного текста"@ru ;
+  rdfs:label "Prompt for process extraction from unstructured text"@en ;
+  v-bpa:promptText """
+Ты эффективный помощник по извлечению информации из неструктурированного текста. Твоя задача — структурировать перечисленные бизнес процессы и выделить отдельные атрибуты в них. 
+
+Требования к результату:
+1. Все бизнес процессы должны быть структурированы
+2. У каждого бизнес процесса должны быть заполнены следующие поля:
+   - Название процесса (label): Краткое и четкое название бизнес-процесса
+   - Описание процесса: Описание действий во время выполнения процесса и мотивы исполнения процесса
+   - Ответственный департамент: Название ответственного подразделения
+   - Затраченные трудовые ресурсы: Время на выполнение процесса (количество затраченных человеко-часов на одно повторение)
+   - Частота: Количество повторений в год
+   - Участники процесса: Список ответственных должностей (через запятую)
+"""@ru ;
+  v-bpa:responseSchema 
+"""
+{
+  "type": "object",
+  "additional_properties": {
+    "rdf:type": "v-bpa:BusinessProcess"
+  },
+  "properties": {
+    "processes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": { 
+            "type": "string", 
+            "mapping": "rdfs:label"
+          },
+          "description": {
+            "type": "string", 
+            "mapping": "v-bpa:processDescription"
+          },
+          "department": {
+            "type": "string",
+            "mapping": "v-bpa:responsibleDepartment"
+          },
+          "laborCosts": {
+            "type": "number",
+            "mapping": "v-bpa:laborCosts"
+          },
+          "frequency": {
+            "type": "integer",
+            "mapping": "v-bpa:processFrequency"
+          },
+          "participants": {
+            "type": "string",
+            "mapping": "v-bpa:processParticipant"
+          }
+        },
+        "required": ["label", "description", "department", "laborCosts", "frequency", "participants"]
+      }
+    }
+  },
+  "required": ["processes"]
+}
+""" ;
+.

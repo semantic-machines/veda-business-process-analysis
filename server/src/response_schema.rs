@@ -415,7 +415,7 @@ fn convert_property(
     prop: &Property,
     enum_value_mapping: &mut HashMap<String, String>,
 ) -> Result<Value, Box<dyn std::error::Error>> {
-    info!("json_field_name={}, prop={:?}", json_field_name, prop);
+    //info!("json_field_name={}, prop={:?}", json_field_name, prop);
     match &prop.items {
         Some(items) => {
             let mut array_schema = json!({

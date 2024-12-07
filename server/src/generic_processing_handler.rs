@@ -1,7 +1,7 @@
 /// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
 /// и заданного типа целевого индивида.
 use crate::common::{
-    convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, send_request_to_ai,
+    convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, send_structured_request_to_ai,
     set_to_individual_from_ai_response, ClientType,
 };
 use crate::extractors::extract_text_from_document;
@@ -87,7 +87,7 @@ fn process_ontology_input(
     // Отправляем запрос к AI
     info!("Sending request to AI for processing input: {}", raw_input);
     let rt = Runtime::new()?;
-    let ai_response = rt.block_on(async { send_request_to_ai(module, req_to_ai, ClientType::Default).await })?;
+    let ai_response = rt.block_on(async { send_structured_request_to_ai(module, req_to_ai, ClientType::Default).await })?;
 
     info!("@G ai_response={:?}", ai_response);
 
@@ -246,7 +246,7 @@ fn process_structured_schema(
         // Send request to AI
         info!("Sending request to AI for analyzing content {}", index + 1);
         let rt = Runtime::new()?;
-        let ai_response = rt.block_on(async { send_request_to_ai(module, parameters, ClientType::Default).await })?;
+        let ai_response = rt.block_on(async { send_structured_request_to_ai(module, parameters, ClientType::Default).await })?;
 
         //info!("Received AI response for content {}: {:?}", index + 1, ai_response);
 

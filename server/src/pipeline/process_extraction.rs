@@ -1,8 +1,11 @@
+use crate::common::{get_prompt_text, send_text_request_to_ai, ClientType};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use chrono::Utc;
+use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatMessage, ChatMessageContent};
 use serde_json::json;
 use std::fs::File;
 use std::io::Write;
+use tokio::runtime::Runtime;
 use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
@@ -25,6 +28,10 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
         error!("Failed to save initial state: {:?}", e);
         return Err(format!("Failed to update pipeline state: {:?}", e).into());
     }
+
+    // Get prompt text
+    let prompt_text = get_prompt_text(module, "v-bpa:ProcessExtractionPrompt")?;
+    info!("Retrieved extraction prompt");
 
     // Get target department
     let department = pipeline.get_first_literal("v-bpa:targetDepartment").ok_or_else(|| {
@@ -118,6 +125,9 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
                 "department": document.get_first_literal("v-bpa:documentDepartment").unwrap_or_default(),
                 "documentTitle": document.get_first_literal("v-bpa:documentTitle").unwrap_or_default(),
                 "documentType": document.get_first_literal("v-bpa:documentType").unwrap_or_default(),
+                "documentSource": document.get_first_literal("v-bpa:documentSource").unwrap_or_default(),
+                "documentSignedDate": document.get_first_literal("v-bpa:documentSignedDate").unwrap_or_default(),
+                "documentSignedBy": document.get_first_literal("v-bpa:documentSignedBy").unwrap_or_default(),
                 "sections": doc_sections
             });
             documents_data.push(doc_json);
@@ -134,7 +144,11 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
     info!("Documents without matching sections: {}", skipped_docs);
     info!("Total processed sections: {}", total_processed_sections);
 
-    let output_json = json!(documents_data);
+    // Create input data with prompt and documents
+    let input_json = json!({
+        "prompt": prompt_text,
+        "documents": documents_data
+    });
 
     // Create output directory
     info!("Creating output directory...");
@@ -144,14 +158,33 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
         return Err(e.into());
     }
 
-    // Generate output filename and save results
-    let filename = format!("{}/extracted_processes_{}_{}.json", output_dir, department.split(':').last().unwrap_or("unknown"), Utc::now().format("%Y%m%d_%H%M%S"));
-    info!("Writing results to file: {}", filename);
+    // Save input data
+    let input_filename = format!("{}/input_data_{}_{}.json", output_dir, department.split(':').last().unwrap_or("unknown"), Utc::now().format("%Y%m%d_%H%M%S"));
+    info!("Writing input data to file: {}", input_filename);
+    let mut input_file = File::create(&input_filename)?;
+    let input_json_string = serde_json::to_string_pretty(&input_json)?;
+    input_file.write_all(input_json_string.as_bytes())?;
 
-    let mut file = File::create(&filename)?;
-    let json_string = serde_json::to_string_pretty(&output_json)?;
-    file.write_all(json_string.as_bytes())?;
-    info!("Successfully wrote {} bytes to file", json_string.len());
+    // Prepare parameters for reasoning model
+    let parameters = ChatCompletionParametersBuilder::default()
+        .model(module.reasoning_model.clone())
+        .messages(vec![ChatMessage::User {
+            content: ChatMessageContent::Text(input_json_string),
+            name: None,
+        }])
+        .build()?;
+
+    // Send request to reasoning model
+    info!("Sending request to reasoning model...");
+    let rt = Runtime::new()?;
+    let ai_response_txt = rt.block_on(async { send_text_request_to_ai(module, parameters, ClientType::Reasoning).await })?;
+
+    // Generate output filename and save AI response
+    let response_filename = format!("{}/ai_response_{}_{}.txt", output_dir, department.split(':').last().unwrap_or("unknown"), Utc::now().format("%Y%m%d_%H%M%S"));
+    info!("Writing AI response to file: {}", response_filename);
+
+    let mut response_file = File::create(&response_filename)?;
+    response_file.write_all(ai_response_txt.as_bytes())?;
 
     // Update pipeline status
     info!("Updating pipeline completion status...");
