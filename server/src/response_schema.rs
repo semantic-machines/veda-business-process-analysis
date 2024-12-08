@@ -229,32 +229,42 @@ impl ResponseSchema {
         if let Some(properties) = &mapping.properties {
             if let Value::Object(obj) = value {
                 for (key, prop_mapping) in properties {
-                    if let Some(prop_value) = obj.get(key) {
-                        if let Some(mapping_uri) = &prop_mapping.mapping {
-                            let prop_info = Self::get_property_info(module, mapping_uri)?;
-                            if prop_info.range_type.is_some() {
-                                if let Some(input_value) = prop_value.as_str() {
-                                    let enum_key = format!("{}*{}", key, input_value);
-                                    //info!("Looking up enum key: {} in mapping table", enum_key);
+                    // Get property value or skip iteration
+                    let prop_value = match obj.get(key) {
+                        Some(value) => value,
+                        None => continue,
+                    };
 
-                                    if let Some(uri) = enum_value_mapping.get(&enum_key) {
-                                        //info!("Found URI mapping: {} -> {}", enum_key, uri);
-                                        if prop_info.is_multiple {
-                                            parent_individual.add_uri(mapping_uri, uri);
-                                        } else {
-                                            parent_individual.set_uri(mapping_uri, uri);
-                                        }
-                                        continue;
-                                    } else {
-                                        warn!("No mapping found for key: {}", enum_key);
-                                    }
-                                }
-                            }
-                            Self::set_property_value(parent_individual, mapping_uri, prop_value, &prop_info.property_type, prop_info.is_multiple)?;
-                        } else {
+                    // Handle non-mapped properties
+                    let mapping_uri = match &prop_mapping.mapping {
+                        None => {
                             Self::map_ai_value_to_individual(prop_value, prop_mapping, module, related_individuals, parent_individual, key, enum_value_mapping)?;
+                            continue;
+                        },
+                        Some(uri) => uri,
+                    };
+
+                    // Get property info
+                    let prop_info = Self::get_property_info(module, mapping_uri)?;
+
+                    // Handle enum values if range type exists and it's not a basic xsd type
+                    if prop_info.range_type.is_some() && !prop_info.property_type.starts_with("xsd:") {
+                        if let Some(input_value) = prop_value.as_str() {
+                            let enum_key = format!("{}*{}", key, input_value);
+
+                            if let Some(uri) = enum_value_mapping.get(&enum_key) {
+                                if prop_info.is_multiple {
+                                    parent_individual.add_uri(mapping_uri, uri);
+                                } else {
+                                    parent_individual.set_uri(mapping_uri, uri);
+                                }
+                                continue;
+                            }
                         }
                     }
+
+                    // Set property value for non-enum cases
+                    Self::set_property_value(parent_individual, mapping_uri, prop_value, &prop_info.property_type, prop_info.is_multiple)?;
                 }
                 return Ok(());
             }
@@ -344,7 +354,15 @@ impl ResponseSchema {
             for (key, prop_mapping) in &self.properties {
                 if let Some(value) = obj.get(key) {
                     //info!("Processing field: {} with value: {:?}", key, value);
-                    Self::map_ai_value_to_individual(value, prop_mapping, module, &mut result.related_individuals, &mut result.main_individual, key, &self.enum_value_mapping)?;
+                    Self::map_ai_value_to_individual(
+                        value,
+                        prop_mapping,
+                        module,
+                        &mut result.related_individuals,
+                        &mut result.main_individual,
+                        key,
+                        &self.enum_value_mapping,
+                    )?;
                 }
             }
         }

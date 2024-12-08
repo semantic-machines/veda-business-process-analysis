@@ -46,7 +46,6 @@ pub async fn send_comparison_request(
     module: &mut BusinessProcessAnalysisModule,
     parameters: openai_dive::v1::resources::chat::ChatCompletionParameters,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-
     save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "comparison_request", "json")?;
 
     let result = module.default_client.chat().create(parameters).await?;
