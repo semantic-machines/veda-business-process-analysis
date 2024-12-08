@@ -192,6 +192,7 @@ v-bpa:DocumentAnalysisPrompt
   "properties": {
     "sections": {
       "mapping": "v-bpa:hasDocumentSection",
+      "create_new_individuals": true
       "type": "array",
       "items": {
         "type": "object",
@@ -330,12 +331,11 @@ v-bpa:ProcessListExtractionPrompt
 """
 {
   "type": "object",
-  "additional_properties": {
-    "rdf:type": "v-bpa:BusinessProcess"
-  },
   "properties": {
     "processes": {
       "type": "array",
+      "mapping": "v-bpa:hasProcess",
+      "create_new_individuals": true,
       "items": {
         "type": "object",
         "properties": {
@@ -363,8 +363,7 @@ v-bpa:ProcessListExtractionPrompt
             "type": "string",
             "mapping": "v-bpa:processParticipant"
           }
-        },
-        "required": ["label", "description", "department", "laborCosts", "frequency", "participants"]
+        }
       }
     }
   },

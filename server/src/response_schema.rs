@@ -384,7 +384,8 @@ fn process_enum_values(
 
 fn add_additional_properties(obj: &mut Map<String, Value>, additional: &Map<String, Value>) {
     for (key, value) in additional {
-        if !["mapping", "is_multiple", "additional_properties"].contains(&key.as_str()) {
+        // Skip service fields that shouldn't go to AI schema
+        if !["mapping", "additional_properties", "create_new_individuals"].contains(&key.as_str()) {
             obj.insert(key.clone(), value.clone());
         }
     }
@@ -415,19 +416,39 @@ fn convert_property(
     prop: &Property,
     enum_value_mapping: &mut HashMap<String, String>,
 ) -> Result<Value, Box<dyn std::error::Error>> {
-    //info!("json_field_name={}, prop={:?}", json_field_name, prop);
+    info!("json_field_name={}, prop={:?}", json_field_name, prop);
     match &prop.items {
         Some(items) => {
+            // Process items schema first
+            let mut items_schema = convert_property(json_field_name, module, items, enum_value_mapping)?;
+
+            // Add required fields if it's an object
+            if let Some(obj) = items_schema.as_object_mut() {
+                if let Some(props) = obj.get("properties") {
+                    if let Some(props_obj) = props.as_object() {
+                        // Make all properties required
+                        let required: Vec<String> = props_obj.keys().cloned().collect();
+                        obj.insert("required".to_string(), json!(required));
+                    }
+                }
+            }
+
+            // Create array schema
             let mut array_schema = json!({
                 "type": "array",
-                "items": convert_property(json_field_name, module, items, enum_value_mapping)?
+                "items": items_schema
             });
 
-            if let Some(mapping_uri) = &prop.mapping {
-                if let Some((_, enum_values)) = process_property_individual(module, json_field_name, mapping_uri, enum_value_mapping) {
-                    if let Some(items) = array_schema.get_mut("items") {
-                        if let Some(items_obj) = items.as_object_mut() {
-                            items_obj.insert("enum".to_string(), json!(enum_values));
+            // Handle create_new_individuals flag, default to false
+            let create_new = prop.additional.get("create_new_individuals").and_then(|v| v.as_bool()).unwrap_or(false);
+
+            if !create_new {
+                if let Some(mapping_uri) = &prop.mapping {
+                    if let Some((_, enum_values)) = process_property_individual(module, json_field_name, mapping_uri, enum_value_mapping) {
+                        if let Some(items) = array_schema.get_mut("items") {
+                            if let Some(items_obj) = items.as_object_mut() {
+                                items_obj.insert("enum".to_string(), json!(enum_values));
+                            }
                         }
                     }
                 }
