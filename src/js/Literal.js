@@ -14,8 +14,6 @@ function getLiteralValue (model, property) {
 export default class Literal extends Component(HTMLElement) {
   static tag = 'bpa-literal';
 
-  static observedAttributes = ['property', 'max-chars'];
-
   render () {
     const maxChars = Number(this.maxChars) || Infinity;
     const value = safe(getLiteralValue(this.model, this.property));
@@ -28,11 +26,15 @@ export default class Literal extends Component(HTMLElement) {
   }
 
   added () {
+    this.property = this.getAttribute('property');
+    this.maxChars = this.getAttribute('max-chars');
     this.model.on(this.property, this.up);
   }
 
   removed () {
-    this.model.off(this.property, this.up);
+    if (this.model && this.property) {
+      this.model.off(this.property, this.up);
+    }
   }
 }
 

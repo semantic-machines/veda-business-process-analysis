@@ -54,10 +54,10 @@ class ProcessDocumentListModal extends Component(HTMLElement) {
               </div>
               <div property="v-bpa:justificationReason" class="mb-3"></div>
               <div rel="v-bpa:hasProcessDocument">
-                <div class="card mb-3 bg-light border-light">
+                <div class="card mb-3 bg-light border-light" about="{{this.model.id}}">
                   <div class="card-body p-2">
                     <div class="card-title mb-0">
-                      <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" on:click="${(e) => this.parent.previewDocument(e, this.model)}">
+                      <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" on:click="${(e) => this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.previewDocument(e, this.model)}">
                         <i class="fs-4 bi bi-file-earmark-text me-2"></i>
                         <span class="me-2" property="v-bpa:documentName"></span>
                         <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString('ru-RU') }}</span>
@@ -139,7 +139,7 @@ class ProcessDocumentAddModal extends Component(HTMLElement) {
                       <div class="card mb-1 bg-light border-light" about="${id}">
                         <div class="card-body p-2">
                           <div class="card-title mb-0">
-                            <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" style="cursor:pointer" on:click="${(e) => this.parent.previewDocument(e, this.model)}">
+                            <a class="text-dark text-decoration-none d-flex align-items-center" href="#process-document-preview-modal" data-bs-toggle="modal" data-bs-target="#process-document-preview-modal" style="cursor:pointer" on:click="${(e) => this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.previewDocument(e, this.model)}">
                               <i class="fs-4 bi bi-file-earmark-text me-2"></i>
                               <span class="me-2" property="v-bpa:documentName"></span>
                               <span class="text-secondary ms-auto">{{ this.model['v-s:created']?.[0].toLocaleDateString('ru-RU') }}</span>
@@ -174,7 +174,6 @@ class ProcessDocumentPreviewModal extends Component(HTMLElement) {
   static observedAttributes = ['about', 'back'];
 
   async attributeChangedCallback(name, oldValue, newValue) {
-    super.attributeChangedCallback(name, oldValue, newValue);
     if (name === 'about') {
       this.renderDocumentPreview();
     }

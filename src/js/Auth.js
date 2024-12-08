@@ -10,7 +10,7 @@ const hide = (el) => el.style.display = 'none';
 export default class Auth extends Component(HTMLElement) {
   static tag = 'bpa-auth';
 
-  async pre () {
+  async post () {
     this.init();
     try {
       if (await Backend.is_ticket_valid()) {
@@ -20,9 +20,11 @@ export default class Auth extends Component(HTMLElement) {
       }
     } catch (error) {
       this.handleAuthError();
+    } finally {
+      this.lastChild.classList.remove('d-none');
     }
   }
-  
+
   handleAuthSuccess () {
     // Activity handler
     let lastActivity = Date.now();
@@ -71,14 +73,14 @@ export default class Auth extends Component(HTMLElement) {
 
   render () {
     return html`
-      <style scoped>
+      <style>
         #login-form {
           width: 80%;
           max-width: 30em;
           margin: 10% auto 0;
         }
       </style>
-      <form id="login-form" name="login-form" role="form">
+      <form id="login-form" name="login-form" role="form" class="d-none">
         <h3>Войдите / Sign in</h3>
         <div class="fieldset" id="enter-login-password">
           <input class="form-control form-control-lg" id="login" placeholder="Логин / login" type="text" name="login" autofocus="autofocus"/>
@@ -130,7 +132,7 @@ export default class Auth extends Component(HTMLElement) {
       }
     };
 
-    const loginForm = this.root.lastChild;
+    const loginForm = this.lastChild;
     loginForm.addEventListener('submit', (e) => e.preventDefault());
     loginForm.querySelector('#submit-login-password').addEventListener('click', submitLoginPassword);
     loginForm.querySelectorAll('#login, #password').forEach((el) => el.addEventListener('keydown', (e) => {
@@ -151,7 +153,7 @@ export default class Auth extends Component(HTMLElement) {
     const logoutHandler = async (e) => {
       const logoutBtn = e.target.closest('.logout');
       if (!logoutBtn) return;
-      
+
       document.removeEventListener('click', logoutHandler);
       await Backend.logout().catch((error) => console.log('Logout failed', error));
       this.handleAuthError();
@@ -160,7 +162,7 @@ export default class Auth extends Component(HTMLElement) {
   }
 
   handleLoginError (error) {
-    const loginForm = this.root.lastChild;
+    const loginForm = this.lastChild;
     const enterLoginPassword = loginForm.querySelector('#enter-login-password');
     hide(enterLoginPassword);
     const enterNewPassword = loginForm.querySelector('#enter-new-password');
@@ -183,7 +185,7 @@ export default class Auth extends Component(HTMLElement) {
   }
 
   handleLoginSuccess (auth) {
-    const loginForm = this.root.lastChild;
+    const loginForm = this.lastChild;
     const inputs = loginForm.querySelectorAll('input:not(#login)');
     inputs.forEach((input) => input.value = '');
     this.handleAuthSuccess(auth);

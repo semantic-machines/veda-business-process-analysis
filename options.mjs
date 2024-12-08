@@ -43,7 +43,7 @@ const options = {
   loader: {
     '.otf': 'copy',
     '.ttf': 'copy',
-    '.woff': 'copy', 
+    '.woff': 'copy',
     '.woff2': 'copy',
   },
   plugins: [
