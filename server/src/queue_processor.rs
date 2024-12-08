@@ -4,7 +4,9 @@ use crate::business_process_handler::analyze_process_justification;
 use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
 use crate::generic_processing_handler::process_generic_request;
-use crate::pipeline::extraction_partitioning::process_extraction_summarization;
+use crate::pipeline::extraction_partitioning::{create_target_individual, process_extraction_and_partitioning};
+use crate::pipeline::process_extraction;
+use crate::pipeline::process_extraction::process_extraction_pipeline;
 use openai_dive::v1::api::Client;
 use v_common::ft_xapian::xapian_reader::XapianReader;
 use v_common::module::info::ModuleInfo;
@@ -16,10 +18,12 @@ use v_common::onto::parser::parse_raw;
 use v_common::v_api::api_client::IndvOp;
 
 pub struct BusinessProcessAnalysisModule {
-    pub client: Client,
+    pub default_client: Client,
+    pub reasoning_client: Client,
     pub backend: Backend,
     pub xr: XapianReader,
-    pub model: String,
+    pub default_model: String,
+    pub reasoning_model: String,
     pub ticket: String,
     pub module_info: ModuleInfo,
 }
@@ -126,8 +130,26 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
             error!("Error processing generic request: {:?}", e);
         }
 
-        if let Err(e) = process_extraction_summarization(module, &mut new_state) {
+        if let Err(e) = process_extraction_and_partitioning(module, &mut new_state) {
             error!("Error processing extraction and summarization pipeline: {:?}", e);
+        }
+
+        // Run target individual creation pipeline
+        if let Err(e) = create_target_individual(module, &mut new_state) {
+            error!("Error creating target individual: {:?}", e);
+        }
+
+        // Inside prepare_queue_element function, add new condition:
+    } else if new_state.any_exists("rdf:type", &[&"v-bpa:ProcessExtractionPipeline".to_string()]) {
+        if source == "BPA" {
+            return Ok(true);
+        }
+
+        info!("Found process extraction pipeline: {}", new_state.get_id());
+
+        if let Err(e) = process_extraction_pipeline(module, &mut new_state) {
+            error!("Error processing extraction pipeline: {:?}", e);
+            process_extraction::handle_pipeline_error(module, &mut new_state, e);
         }
     }
 

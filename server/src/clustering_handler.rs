@@ -425,7 +425,7 @@ fn compare_processes(module: &mut BusinessProcessAnalysisModule, process1_id: &s
     let comparison_data = prepare_comparison_data(module, &mut process1, &mut process2)?;
     let system_prompt = get_system_prompt(module, "v-bpa:ClusterizeProcessesPrompt")?;
 
-    let parameters = clustering_common::prepare_comparison_parameters(module.model.clone(), system_prompt, comparison_data)?;
+    let parameters = clustering_common::prepare_comparison_parameters(module.default_model.clone(), system_prompt, comparison_data)?;
 
     // Отправляем запрос к AI
     let rt = Runtime::new()?;

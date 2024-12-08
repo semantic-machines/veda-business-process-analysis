@@ -46,7 +46,7 @@ pub async fn send_comparison_request(
     module: &mut BusinessProcessAnalysisModule,
     parameters: openai_dive::v1::resources::chat::ChatCompletionParameters,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-    let result = module.client.chat().create(parameters).await?;
+    let result = module.default_client.chat().create(parameters).await?;
 
     if let Some(usage) = result.usage {
         info!(
@@ -54,7 +54,7 @@ pub async fn send_comparison_request(
             usage.prompt_tokens,
             usage.completion_tokens.unwrap_or(0),
             usage.total_tokens,
-            calculate_cost(usage.total_tokens as f64, &module.model)
+            calculate_cost(usage.total_tokens as f64, &module.default_model)
         );
     }
 

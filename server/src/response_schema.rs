@@ -94,10 +94,10 @@ impl ResponseSchema {
             }
         }
 
-        info!("@A1 self.enum_value_mapping)={:?}", self.enum_value_mapping);
-        info!("@A2 self.properties={:?}", self.properties);
+        //info!("@A1 self.enum_value_mapping)={:?}", self.enum_value_mapping);
+        //info!("@A2 self.properties={:?}", self.properties);
 
-        info!("Generated AI schema: {}", schema.to_string());
+        //info!("Generated AI schema: {}", schema.to_string());
         Ok(schema)
     }
 
@@ -291,7 +291,7 @@ impl ResponseSchema {
                 _ => {
                     if let Some(str_value) = value.as_str() {
                         let enum_key = format!("{}*{}", property, str_value);
-                        info!("Looking up enum key: {} in property_mapping", enum_key);
+                        //info!("Looking up enum key: {} in property_mapping", enum_key);
 
                         if let Some(uri) = enum_value_mapping.get(&enum_key) {
                             //info!("Found URI mapping: {} -> {}", enum_key, uri);
@@ -377,7 +377,7 @@ fn process_enum_values(
             } else {
                 Some(enum_values)
             }
-        }
+        },
         Err(_) => None,
     }
 }
@@ -415,7 +415,7 @@ fn convert_property(
     prop: &Property,
     enum_value_mapping: &mut HashMap<String, String>,
 ) -> Result<Value, Box<dyn std::error::Error>> {
-    info!("json_field_name={}, prop={:?}", json_field_name, prop);
+    //info!("json_field_name={}, prop={:?}", json_field_name, prop);
     match &prop.items {
         Some(items) => {
             let mut array_schema = json!({
