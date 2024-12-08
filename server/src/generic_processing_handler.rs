@@ -1,8 +1,8 @@
 /// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
 /// и заданного типа целевого индивида.
 use crate::common::{
-    convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, send_structured_request_to_ai,
-    set_to_individual_from_ai_response, ClientType,
+    convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, save_to_interaction_file,
+    send_structured_request_to_ai, set_to_individual_from_ai_response, ClientType,
 };
 use crate::extractors::extract_text_from_document;
 use crate::queue_processor::BusinessProcessAnalysisModule;
@@ -82,14 +82,22 @@ fn process_ontology_input(
     // Создаем параметры запроса и получаем маппинг свойств
     let req_to_ai = prepare_request_ai_parameters(module, &prompt_individual.get_id(), analysis_data, property_schema, &mut property_mapping)?;
 
-    info!("@E = req_to_ai={:?}", req_to_ai);
+    if let Ok(request_json) = serde_json::to_string_pretty(&req_to_ai) {
+        if let Ok(path) = save_to_interaction_file(&request_json, "request", "json") {
+            info!("AI request saved to: {}", path);
+        }
+    }
 
     // Отправляем запрос к AI
     info!("Sending request to AI for processing input: {}", raw_input);
     let rt = Runtime::new()?;
     let ai_response = rt.block_on(async { send_structured_request_to_ai(module, req_to_ai, ClientType::Default).await })?;
 
-    info!("@G ai_response={:?}", ai_response);
+    if let Ok(response_json) = serde_json::to_string_pretty(&ai_response) {
+        if let Ok(path) = save_to_interaction_file(&response_json, "response", "json") {
+            info!("AI response saved to: {}", path);
+        }
+    }
 
     if is_structured_input {
         if is_structured_input {

@@ -18,8 +18,9 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
 
     // Update start time and state
     info!("Initializing pipeline state...");
+    let start_time = Utc::now().timestamp();
     pipeline.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionInProgress");
-    pipeline.set_datetime("v-bpa:startDate", Utc::now().timestamp());
+    pipeline.set_datetime("v-bpa:startDate", start_time);
     pipeline.set_uri("v-bpa:processingStatus", "v-bpa:Processing");
 
     // Save initial state
@@ -64,6 +65,13 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
     let mut processed_docs = 0;
     let mut skipped_docs = 0;
     let mut total_processed_sections = 0;
+
+    // Set initial estimated time
+    let initial_estimated_time = calculate_estimated_time(document_ids.len(), processed_docs, 0);
+    pipeline.set_integer("v-bpa:estimatedTime", initial_estimated_time);
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline) {
+        warn!("Failed to update initial estimated time: {:?}", e);
+    }
 
     info!("=== Starting Document Processing ===");
     for (doc_index, doc_id) in document_ids.iter().enumerate() {
@@ -136,6 +144,17 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
             debug!("Document has no matching sections, skipping");
             skipped_docs += 1;
         }
+
+        // Update estimated time after each document
+        let current_time = Utc::now().timestamp();
+        let elapsed_time = current_time - start_time;
+        let estimated_time = calculate_estimated_time(document_ids.len(), processed_docs, elapsed_time);
+
+        pipeline.set_integer("v-bpa:estimatedTime", estimated_time);
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline) {
+            warn!("Failed to update pipeline estimated time: {:?}", e);
+        }
+        debug!("Updated estimated time: {} seconds", estimated_time);
     }
 
     info!("=== Document Processing Statistics ===");
@@ -198,6 +217,21 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
 
     info!("=== Process Extraction Pipeline Completed Successfully ===");
     Ok(())
+}
+
+/// Calculate estimated time based on remaining documents and average processing time
+fn calculate_estimated_time(total_docs: usize, processed_docs: usize, elapsed_time: i64) -> i64 {
+    if processed_docs == 0 {
+        // Initial estimate based on assumption of 1 minute per document
+        return (total_docs as i64) * 60;
+    }
+
+    // Calculate average time per document
+    let avg_time_per_doc = elapsed_time as f64 / processed_docs as f64;
+    let remaining_docs = total_docs - processed_docs;
+
+    // Calculate estimated remaining time
+    (avg_time_per_doc * remaining_docs as f64) as i64
 }
 
 /// Handles errors in pipeline execution

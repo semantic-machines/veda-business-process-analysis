@@ -169,10 +169,18 @@ impl ResponseSchema {
                 }
             },
             _ => {
-                if is_multiple {
-                    individual.add_string(property, &value.to_string(), Lang::none());
+                if let Some(str_val) = value.as_str() {
+                    if is_multiple {
+                        individual.add_string(property, str_val, Lang::none());
+                    } else {
+                        individual.set_string(property, str_val, Lang::none());
+                    }
                 } else {
-                    individual.set_string(property, &value.to_string(), Lang::none());
+                    if is_multiple {
+                        individual.add_string(property, &value.to_string(), Lang::none());
+                    } else {
+                        individual.set_string(property, &value.to_string(), Lang::none());
+                    }
                 }
             },
         }
@@ -416,7 +424,7 @@ fn convert_property(
     prop: &Property,
     enum_value_mapping: &mut HashMap<String, String>,
 ) -> Result<Value, Box<dyn std::error::Error>> {
-    info!("json_field_name={}, prop={:?}", json_field_name, prop);
+    //info!("@ json_field_name={}, prop={:?}", json_field_name, prop);
     match &prop.items {
         Some(items) => {
             // Process items schema first
@@ -469,7 +477,7 @@ fn convert_property(
             if let Some(obj) = props_json.as_object_mut() {
                 let mut properties = Map::new();
                 for (key, value) in props {
-                    info!("Processing nested property: {}", key);
+                    //info!("Processing nested property: {}", key);
                     let mut prop_schema = convert_property(key, module, value, enum_value_mapping)?;
 
                     if let Some(mapping_uri) = &value.mapping {
@@ -501,7 +509,7 @@ fn convert_property(
             if let Some(mapping_uri) = &prop.mapping {
                 if let Some((_, enum_values)) = process_property_individual(module, json_field_name, mapping_uri, enum_value_mapping) {
                     if let Some(obj) = prop_json.as_object_mut() {
-                        info!("@ prop={:?}", prop);
+                        //info!("@ prop={:?}", prop);
                         obj.insert("enum".to_string(), json!(enum_values));
                     }
                 }

@@ -1,12 +1,17 @@
 // common.rs
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::types::{AIResponseValues, PropertyMapping, PropertySchema};
+use chrono::Utc;
 use humantime::format_duration;
 use openai_dive::v1::resources::chat::{
     ChatCompletionParameters, ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder,
 };
 use serde_json::Value;
 use std::collections::HashSet;
+use std::fs;
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
 use std::time::Duration;
 use std::{io, thread, time};
 use v_common::onto::datatype::Lang;
@@ -107,7 +112,7 @@ pub fn get_individuals_by_type(module: &mut BusinessProcessAnalysisModule, type_
             warn!("Failed to load individual {}", id);
         }
     }
-    info!("Successfully found and loaded {} individuals of type {}", individuals.len(), type_uri);
+    //info!("Successfully found and loaded {} individuals of type {}", individuals.len(), type_uri);
 
     Ok(individuals)
 }
@@ -131,7 +136,7 @@ pub fn get_individuals_uris_by_query(module: &mut BusinessProcessAnalysisModule,
     while res.result_code == ResultCode::NotReady || res.result_code == ResultCode::DatabaseModifiedError {
         let ft_query = FTQuery::new_with_user("cfg:VedaSystem", &query);
 
-        info!("Attempting to query individuals of query {} (attempt {})", query, retry_count + 1);
+        //info!("Attempting to query individuals of query {} (attempt {})", query, retry_count + 1);
 
         res = module.xr.query(ft_query, &mut module.backend.storage);
 
@@ -177,7 +182,7 @@ pub fn load_schema(
     Ok(schema)
 }
 
-/// Подготавливает параметры запроса для оптимизации на основе промпта из онтологии
+/// Prepares parameters for AI request based on ontology prompt
 pub fn prepare_request_ai_parameters(
     module: &mut BusinessProcessAnalysisModule,
     system_prompt_id: &str,
@@ -191,14 +196,14 @@ pub fn prepare_request_ai_parameters(
     }
     let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
 
-    // Собираем имена свойств для списка required
+    // Collect property names for required list
     let required: Vec<String> = property_mapping
         .keys()
-        .filter(|k| !k.contains('*')) // Исключаем маппинги для enum значений
+        .filter(|k| !k.contains('*')) // Exclude enum value mappings
         .cloned()
         .collect();
 
-    // Формируем полную схему
+    // Build complete schema
     let schema = serde_json::json!({
         "type": "object",
         "additionalProperties": false,
@@ -213,8 +218,10 @@ pub fn prepare_request_ai_parameters(
         "required": ["result"]
     });
 
-    info!("@A4 property_mapping={:?}", property_mapping);
-    info!("@A5 schema={}", schema.to_string());
+    // Save schema to file
+    let schema_json = serde_json::to_string_pretty(&schema)?;
+    let schema_path = save_to_interaction_file(&schema_json, "schema", "json")?;
+    info!("AI schema saved to: {}", schema_path);
 
     let parameters = ChatCompletionParametersBuilder::default()
         .model(module.default_model.clone())
@@ -234,6 +241,11 @@ pub fn prepare_request_ai_parameters(
         ])
         .response_format(ChatCompletionResponseFormat::JsonSchema(JsonSchemaBuilder::default().name("process_optimization").schema(schema).strict(true).build()?))
         .build()?;
+
+    // Save request parameters to file
+    let request_json = serde_json::to_string_pretty(&parameters)?;
+    let request_path = save_to_interaction_file(&request_json, "request", "json")?;
+    info!("AI request saved to: {}", request_path);
 
     Ok(parameters)
 }
@@ -255,7 +267,7 @@ pub async fn send_structured_request_to_ai(
             usage.prompt_tokens,
             usage.completion_tokens.unwrap_or(0),
             usage.total_tokens,
-            calculate_cost(usage.total_tokens as f64, &module.default_model) // можно добавить логику выбора модели
+            calculate_cost(usage.total_tokens as f64, &module.default_model)
         );
     }
 
@@ -265,8 +277,10 @@ pub async fn send_structured_request_to_ai(
             ..
         } = &choice.message
         {
+            let response_path = save_to_interaction_file(text, "response", "json")?;
+            info!("AI response saved to: {}", response_path);
+
             let response: Value = serde_json::from_str(text)?;
-            info!("@ response text ={}", text);
             let response_object = response.as_object().ok_or("Response is not a JSON object")?;
             let response_values: AIResponseValues = response_object.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
             Ok(response_values)
@@ -739,4 +753,21 @@ pub async fn send_text_request_to_ai(
         error!("No response received from AI");
         Err("No response from AI".into())
     }
+}
+
+/// Saves data to file and returns path
+pub fn save_to_interaction_file(data: &str, prefix: &str, extension: &str) -> Result<String, Box<dyn std::error::Error>> {
+    // Create output directory if it doesn't exist
+    let output_dir = "./ai_interactions";
+    fs::create_dir_all(output_dir)?;
+
+    // Generate unique filename with timestamp and prefix
+    let filename = format!("{}_{}.{}", prefix, Utc::now().format("%Y%m%d_%H%M%S_%3f"), extension);
+    let filepath = Path::new(output_dir).join(&filename);
+
+    // Save data to file
+    let mut file = File::create(&filepath)?;
+    file.write_all(data.as_bytes())?;
+
+    Ok(filepath.to_string_lossy().into_owned())
 }
