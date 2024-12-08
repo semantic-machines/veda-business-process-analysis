@@ -51,7 +51,7 @@ pub struct ParseResult {
 
 impl ResponseSchema {
     pub fn from_json(json: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        info!("Parsing JSON schema: {}", json);
+        //info!("Parsing JSON schema: {}", json);
         let mut schema: ResponseSchema = serde_json::from_str(json)?;
 
         if let Some(additional_props) = schema.additional.get("additional_properties") {
@@ -61,13 +61,13 @@ impl ResponseSchema {
         }
 
         schema.field_order = schema.properties.keys().cloned().collect();
-        info!("Field order: {:?}", schema.field_order);
+        //info!("Field order: {:?}", schema.field_order);
 
         Ok(schema)
     }
 
     pub fn to_ai_schema(&mut self, module: &mut BusinessProcessAnalysisModule) -> Result<Value, Box<dyn std::error::Error>> {
-        info!("Converting schema to AI format");
+        //info!("Converting schema to AI format");
         let mut properties = Map::new();
         let mut enum_mapping = HashMap::new();
 
@@ -187,7 +187,7 @@ impl ResponseSchema {
         Ok(())
     }
 
-    fn process_value(
+    fn map_ai_value_to_individual(
         value: &Value,
         mapping: &Property,
         module: &mut BusinessProcessAnalysisModule,
@@ -213,7 +213,7 @@ impl ResponseSchema {
                     }
 
                     if let Some(item_mapping) = &mapping.items {
-                        Self::process_value(item, item_mapping, module, related_individuals, &mut related, property, enum_value_mapping)?;
+                        Self::map_ai_value_to_individual(item, item_mapping, module, related_individuals, &mut related, property, enum_value_mapping)?;
                     }
 
                     if let Some(mapping_uri) = &mapping.mapping {
@@ -252,7 +252,7 @@ impl ResponseSchema {
                             }
                             Self::set_property_value(parent_individual, mapping_uri, prop_value, &prop_info.property_type, prop_info.is_multiple)?;
                         } else {
-                            Self::process_value(prop_value, prop_mapping, module, related_individuals, parent_individual, key, enum_value_mapping)?;
+                            Self::map_ai_value_to_individual(prop_value, prop_mapping, module, related_individuals, parent_individual, key, enum_value_mapping)?;
                         }
                     }
                 }
@@ -344,7 +344,7 @@ impl ResponseSchema {
             for (key, prop_mapping) in &self.properties {
                 if let Some(value) = obj.get(key) {
                     //info!("Processing field: {} with value: {:?}", key, value);
-                    Self::process_value(value, prop_mapping, module, &mut result.related_individuals, &mut result.main_individual, key, &self.enum_value_mapping)?;
+                    Self::map_ai_value_to_individual(value, prop_mapping, module, &mut result.related_individuals, &mut result.main_individual, key, &self.enum_value_mapping)?;
                 }
             }
         }

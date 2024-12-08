@@ -218,11 +218,6 @@ pub fn prepare_request_ai_parameters(
         "required": ["result"]
     });
 
-    // Save schema to file
-    let schema_json = serde_json::to_string_pretty(&schema)?;
-    let schema_path = save_to_interaction_file(&schema_json, "schema", "json")?;
-    info!("AI schema saved to: {}", schema_path);
-
     let parameters = ChatCompletionParametersBuilder::default()
         .model(module.default_model.clone())
         .messages(vec![
@@ -243,9 +238,7 @@ pub fn prepare_request_ai_parameters(
         .build()?;
 
     // Save request parameters to file
-    let request_json = serde_json::to_string_pretty(&parameters)?;
-    let request_path = save_to_interaction_file(&request_json, "request", "json")?;
-    info!("AI request saved to: {}", request_path);
+    save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "request", "json")?;
 
     Ok(parameters)
 }
@@ -255,15 +248,18 @@ pub async fn send_structured_request_to_ai(
     parameters: ChatCompletionParameters,
     client_type: ClientType,
 ) -> Result<AIResponseValues, Box<dyn std::error::Error>> {
-    // Выбираем нужный клиент в зависимости от переданного типа
+    save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "request", "json")?;
+
+    // Send request to AI
     let result = match client_type {
         ClientType::Default => module.default_client.chat().create(parameters).await?,
         ClientType::Reasoning => module.reasoning_client.chat().create(parameters).await?,
     };
 
+    // Log usage metrics
     if let Some(usage) = result.usage {
         info!(
-            "API usage metrics - Tokens: input={}, output={}, total={}, cost={}$",
+            "API usage metrics - Tokens: input={}, output={}, total={}, cost={:.5}",
             usage.prompt_tokens,
             usage.completion_tokens.unwrap_or(0),
             usage.total_tokens,
@@ -277,8 +273,7 @@ pub async fn send_structured_request_to_ai(
             ..
         } = &choice.message
         {
-            let response_path = save_to_interaction_file(text, "response", "json")?;
-            info!("AI response saved to: {}", response_path);
+            save_to_interaction_file(text, "response", "json")?;
 
             let response: Value = serde_json::from_str(text)?;
             let response_object = response.as_object().ok_or("Response is not a JSON object")?;
@@ -701,6 +696,12 @@ fn shorten_predicate_name(full_name: &str, property_mapping: &mut PropertyMappin
 }
 
 // Helper function to calculate cost based on model and tokens
+// common.rs
+
+// Helper function to calculate cost based on model and tokens
+// common.rs
+
+// Helper function to calculate cost based on model and tokens
 pub fn calculate_cost(tokens: f64, model: &str) -> f64 {
     match model {
         // GPT-4 pricing
@@ -722,6 +723,8 @@ pub async fn send_text_request_to_ai(
     parameters: ChatCompletionParameters,
     client_type: ClientType,
 ) -> Result<String, Box<dyn std::error::Error>> {
+    save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "request", "json")?;
+
     // Используем нужный клиент в зависимости от типа
     let result = match client_type {
         ClientType::Default => module.default_client.chat().create(parameters).await?,
@@ -730,7 +733,7 @@ pub async fn send_text_request_to_ai(
 
     if let Some(usage) = result.usage {
         info!(
-            "API usage metrics - Tokens: input={}, output={}, total={}, cost={}$",
+            "API usage metrics - Tokens: input={}, output={}, total={}, cost={:.5}$",
             usage.prompt_tokens,
             usage.completion_tokens.unwrap_or(0),
             usage.total_tokens,
@@ -744,6 +747,7 @@ pub async fn send_text_request_to_ai(
             ..
         } = &choice.message
         {
+            save_to_interaction_file(text, "response", "txt")?;
             Ok(text.clone())
         } else {
             error!("Unexpected message format in AI response");
@@ -769,5 +773,8 @@ pub fn save_to_interaction_file(data: &str, prefix: &str, extension: &str) -> Re
     let mut file = File::create(&filepath)?;
     file.write_all(data.as_bytes())?;
 
-    Ok(filepath.to_string_lossy().into_owned())
+    let request_path = filepath.to_string_lossy().into_owned();
+    info!("AI request saved to: {}", request_path);
+
+    Ok(request_path)
 }

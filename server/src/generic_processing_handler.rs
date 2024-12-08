@@ -82,22 +82,14 @@ fn process_ontology_input(
     // Создаем параметры запроса и получаем маппинг свойств
     let req_to_ai = prepare_request_ai_parameters(module, &prompt_individual.get_id(), analysis_data, property_schema, &mut property_mapping)?;
 
-    if let Ok(request_json) = serde_json::to_string_pretty(&req_to_ai) {
-        if let Ok(path) = save_to_interaction_file(&request_json, "request", "json") {
-            info!("AI request saved to: {}", path);
-        }
-    }
+    save_to_interaction_file(&serde_json::to_string_pretty(&req_to_ai)?, "request", "json")?;
 
     // Отправляем запрос к AI
     info!("Sending request to AI for processing input: {}", raw_input);
     let rt = Runtime::new()?;
     let ai_response = rt.block_on(async { send_structured_request_to_ai(module, req_to_ai, ClientType::Default).await })?;
 
-    if let Ok(response_json) = serde_json::to_string_pretty(&ai_response) {
-        if let Ok(path) = save_to_interaction_file(&response_json, "response", "json") {
-            info!("AI response saved to: {}", path);
-        }
-    }
+    save_to_interaction_file(&serde_json::to_string_pretty(&ai_response)?, "response", "json")?;
 
     if is_structured_input {
         if is_structured_input {
@@ -181,7 +173,7 @@ fn process_structured_schema(
     let mut schema = ResponseSchema::from_json(&response_schema)?;
     let ai_schema = schema.to_ai_schema(module)?;
 
-    info!("Generated AI schema: {}", serde_json::to_string_pretty(&ai_schema)?);
+    //info!("Generated AI schema: {}", serde_json::to_string_pretty(&ai_schema)?);
 
     let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
 
@@ -244,7 +236,6 @@ fn process_structured_schema(
             .seed(43 as u32)
             .model(module.default_model.clone())
             .max_tokens(16384 as u32)
-            //.max_tokens(100000 as u32)
             .messages(messages)
             .response_format(ChatCompletionResponseFormat::JsonSchema(
                 JsonSchemaBuilder::default().name("document_analysis").schema(ai_schema.clone()).strict(true).build()?,
@@ -255,8 +246,6 @@ fn process_structured_schema(
         info!("Sending request to AI for analyzing content {}", index + 1);
         let rt = Runtime::new()?;
         let ai_response = rt.block_on(async { send_structured_request_to_ai(module, parameters, ClientType::Default).await })?;
-
-        //info!("Received AI response for content {}: {:?}", index + 1, ai_response);
 
         // Convert HashMap to Value and parse response
         let response_value = serde_json::to_value(&ai_response)?;
@@ -286,8 +275,6 @@ fn process_structured_schema(
                     update.apply_predicate_as_add_unique(&predicate, &mut parse_result.main_individual);
                 }
             }
-
-            info!("Adding content update to {}: {:?}", base_result_id, update.get_obj().as_json());
 
             // Update main individual using AddTo
             if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::AddTo, &mut update) {

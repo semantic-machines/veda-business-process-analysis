@@ -1,4 +1,4 @@
-use crate::common::calculate_cost;
+use crate::common::{calculate_cost, save_to_interaction_file};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
 use std::io;
@@ -46,11 +46,14 @@ pub async fn send_comparison_request(
     module: &mut BusinessProcessAnalysisModule,
     parameters: openai_dive::v1::resources::chat::ChatCompletionParameters,
 ) -> Result<bool, Box<dyn std::error::Error>> {
+
+    save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "comparison_request", "json")?;
+
     let result = module.default_client.chat().create(parameters).await?;
 
     if let Some(usage) = result.usage {
         info!(
-            "API usage metrics - Tokens: input={}, output={}, total={}, cost={}$",
+            "API usage metrics - Tokens: input={}, output={}, total={}, cost={:.5}$",
             usage.prompt_tokens,
             usage.completion_tokens.unwrap_or(0),
             usage.total_tokens,
@@ -64,6 +67,8 @@ pub async fn send_comparison_request(
             ..
         } = &choice.message
         {
+            save_to_interaction_file(text, "comparison_response", "json")?;
+
             let response: serde_json::Value = serde_json::from_str(text)?;
             let similarity = response["are_similar"].as_bool().unwrap_or(false);
             Ok(similarity)
