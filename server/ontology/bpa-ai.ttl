@@ -150,3 +150,34 @@ v-bpa:separateResults
   rdfs:range xsd:boolean ;
   rdfs:comment "If true, each processed content will be saved as a separate individual"@en ;
 .
+
+v-bpa:inputTokens
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Входные токены"@ru ;
+  rdfs:label "Input tokens"@en ;
+  rdfs:comment "Количество токенов во входном запросе к AI"@ru ;
+  rdfs:comment "Number of tokens in the input request to AI"@en ;
+  rdfs:domain v-bpa:GenericProcessingResult ;
+  rdfs:range xsd:integer ;
+.
+
+v-bpa:outputTokens
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Выходные токены"@ru ;
+  rdfs:label "Output tokens"@en ;
+  rdfs:comment "Количество токенов в ответе от AI"@ru ;
+  rdfs:comment "Number of tokens in the AI response"@en ;
+  rdfs:domain v-bpa:GenericProcessingResult ;
+  rdfs:range xsd:integer ;
+.
+
+# Add new predicate for linking pipeline stages
+v-bpa:hasNextStage
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Следующий этап"@ru ;
+  rdfs:label "Next stage"@en ;
+  rdfs:domain v-bpa:ProcessExtractionPipeline ;
+  rdfs:range v-bpa:GenericProcessingRequest ;
+  rdfs:comment "Ссылка на следующий этап обработки в пайплайне"@ru ;
+  rdfs:comment "Link to the next processing stage in the pipeline"@en ;
+.
