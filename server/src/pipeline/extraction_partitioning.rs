@@ -50,7 +50,6 @@ pub fn process_extraction_and_partitioning(module: &mut BusinessProcessAnalysisM
 }
 
 /// Creates an individual of target type from document analysis results
-/// Creates an individual of target type from document analysis results
 pub fn create_target_individual(module: &mut BusinessProcessAnalysisModule, request: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     // Check if this is document analysis request
     if !request.any_exists("v-bpa:prompt", &["v-bpa:DocumentAnalysisPrompt"]) {
@@ -73,13 +72,14 @@ pub fn create_target_individual(module: &mut BusinessProcessAnalysisModule, requ
     result_individual.parse_all();
 
     // Get target type
-    let target_type = request.get_first_literal("v-bpa:targetType").ok_or("No target type specified")?;
+    let target_type = result_individual.get_first_literal("v-bpa:targetType").ok_or("No target type specified")?;
 
     // Create new individual of target type
     let target_id = format!("d:{}_{}", target_type.split(':').last().unwrap_or("item"), uuid::Uuid::new_v4());
     let mut target_individual = Individual::new_from_obj(result_individual.get_obj());
     target_individual.set_id(&target_id);
     target_individual.set_uri("rdf:type", &target_type);
+    target_individual.remove("v-bpa:targetType");
 
     // Save target individual
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut target_individual) {

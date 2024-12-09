@@ -186,8 +186,8 @@ v-bpa:DocumentAnalysisPrompt
 """
 {
   "type": "object",
-  "additional_properties": {
-    "rdf:type": "v-bpa:ProcessDocument"
+  "assign_properties": {
+    "v-bpa:targetType" : "v-bpa:ProcessDocument"
   },
   "properties": {
     "sections": {
@@ -262,7 +262,7 @@ v-bpa:ImagesToTextPrompt
 """
 {
   "type": "object",
-  "additional_properties": {
+  "assign_properties": {
     "v-bpa:targetType": "v-bpa:ProcessDocument"
   },
   "properties": {
