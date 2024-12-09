@@ -49,7 +49,7 @@ export default class ClusterList extends Component(HTMLElement) {
         ${ClusterList} #processes-table tbody tr:last-child {
           border-bottom: 1px solid transparent;
         }
-        ${ClusterList} tr {
+        ${ClusterList} tr:not([disabled]) {
           cursor: pointer;
         }
         ${ClusterList} tr.expanded-processes:hover > td {
@@ -77,7 +77,7 @@ export default class ClusterList extends Component(HTMLElement) {
             <tbody>
               ${this.model?.['v-bpa:foundClusters']?.map((cluster) => html`
                 ${(isExpanded = localStorage.getItem(`ClusterList_expanded_${cluster.id}`) === 'true', '')}
-                <tr about="${cluster.id}" class="border-top cluster-row">
+                <tr is="${ClusterRow}" about="${cluster.id}" class="border-top cluster-row">
                   <td class="text-center toggle-processes" data-for="${cluster.id}">
                     <i class="bi bi-chevron-up text-secondary ${isExpanded ? '' : 'd-none'}"></i>
                     <span class="${isExpanded ? 'd-none' : ''}">
@@ -151,3 +151,44 @@ export default class ClusterList extends Component(HTMLElement) {
 }
 
 customElements.define(ClusterList.tag, ClusterList);
+
+class ClusterRow extends Component(HTMLTableRowElement) {
+  static tag = 'bpa-cluster-row';
+
+  random(min, max) {
+    return Math.round(Math.random() * (max - min) + min);
+  }
+
+  render() {
+    if (this.model.hasValue('rdfs:label')) {
+      this.removeAttribute('disabled');
+      return this.template;
+    } else {
+      this.setAttribute('disabled', '');
+      return this.template.replace(/<td[\s\S]*?<\/td>/g, (_, offset) => `
+        <td class="placeholder-glow">
+          ${offset === 0
+            ? `<span class="badge bg-success-subtle text-dark">?</span>`
+            : `<span class="placeholder col-${this.random(6, 12)}"></span>`
+          }
+        </td>
+      `);
+    }
+  }
+
+  up = () => {
+    this.update();
+  }
+
+  added () {
+    this.model.on('modified', this.up);
+  }
+
+  removed () {
+    if (this.model) {
+      this.model.off('modified', this.up);
+    }
+  }
+}
+
+customElements.define(ClusterRow.tag, ClusterRow, { extends: 'tr' });
