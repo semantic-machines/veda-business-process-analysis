@@ -136,37 +136,44 @@ fn process_structured_schema(
     request: &mut Individual,
     prompt_individual: &mut Individual,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Get file extension and process content accordingly
-    let extension = if let Some(file_path) = request.get_first_literal("v-bpa:rawInputPath") {
-        let path = Path::new(&file_path);
-        path.extension().and_then(|ext| ext.to_str()).ok_or("File has no extension")?.to_lowercase()
-    } else {
-        "txt".to_string() // Default to text for raw input
-    };
+    // Get file extension and content from either attachment or raw input
+    let (extension, extracted_contents) = if let Some(attachment_id) = request.get_first_literal("v-s:attachment") {
+        // Load attachment individual
+        let mut attachment = Individual::default();
+        if module.backend.storage.get_individual(&attachment_id, &mut attachment) != ResultCode::Ok {
+            error!("Failed to load attachment {}", attachment_id);
+            return Err(format!("Failed to load attachment {}", attachment_id).into());
+        }
 
-    info!("Processing file with extension: {}", extension);
-    // Get content from file or raw input
-    let extracted_contents = if extension == "txt" {
-        let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
-        vec![raw_input]
-    } else {
-        let file_path = request.get_first_literal("v-bpa:rawInputPath").ok_or("No raw input path provided")?;
-        let path = Path::new(&file_path);
-        info!("Trying to read file from path: {}", path.display());
+        // Get file extension
+        let extension =
+            attachment.get_first_literal("v-s:fileName").ok_or("No filename in attachment")?.split('.').last().ok_or("Invalid filename format")?.to_lowercase();
+
+        info!("Processing attachment with extension: {}", extension);
+
+        // Get file URI and read content
+        let file_uri = attachment.get_first_literal("v-s:fileUri").ok_or("No file URI in attachment")?;
+        let file_path = attachment.get_first_literal("v-s:filePath").ok_or("No file path in attachment")?;
+        let full_path = format!("./data/files/{}/{}", file_path, file_uri);
+        info!("Reading file from path: {}", full_path);
 
         // Check if file exists
-        if !path.exists() {
-            error!("File does not exist: {}", path.display());
+        if !Path::new(&full_path).exists() {
+            error!("File does not exist: {}", full_path);
             return Err("File not found".into());
         }
 
         // Read file content
-        let content = fs::read(path).map_err(|e| {
+        let content = fs::read(&full_path).map_err(|e| {
             error!("Failed to read file: {}", e);
-            format!("Failed to read file {}: {}", file_path, e)
+            format!("Failed to read file {}: {}", full_path, e)
         })?;
 
-        extract_text_from_document(&content, &extension)?
+        (extension.clone(), extract_text_from_document(&content, &extension)?)
+    } else {
+        // No attachment - use raw input
+        let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("Neither attachment nor raw input provided")?;
+        ("txt".to_string(), vec![raw_input])
     };
 
     // Parse schema
