@@ -46,7 +46,7 @@
     }
   },
   "required": ["sections", "key_data", "errors"],
-  "additional_properties": {
+  "assign_properties": {
     "rdf:type": "v-bpa:Document"
   }
 }

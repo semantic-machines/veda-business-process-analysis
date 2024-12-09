@@ -1,0 +1,94 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+
+# Document class
+v-bpa:Document
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Документ"@ru ;
+  rdfs:label "Document"@en ;
+.
+
+# Document section definition
+v-bpa:DocumentSection
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Раздел документа"@ru ;
+  rdfs:label "Document section"@en ;
+.
+
+# Properties for sections
+v-bpa:documentSections
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Разделы документа"@ru ;
+  rdfs:label "Document sections"@en ;
+  rdfs:domain v-bpa:Document ;
+  rdfs:range xsd:string ;
+.
+
+# Base document properties
+v-bpa:documentTitle
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Заголовок документа"@ru ;
+  rdfs:label "Document title"@en ;
+  rdfs:domain v-bpa:Document ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentType
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Тип документа"@ru ;
+  rdfs:label "Document type"@en ;
+  rdfs:domain v-bpa:Document ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentSource
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Источник документа"@ru ;
+  rdfs:label "Document source"@en ;
+  rdfs:domain v-bpa:Document ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentDate
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Дата документа"@ru ;
+  rdfs:label "Document date"@en ;
+  rdfs:domain v-bpa:Document ;
+  rdfs:range xsd:dateTime ;
+.
+
+v-bpa:documentSignedBy
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Подписант документа"@ru ;
+  rdfs:label "Document signed by"@en ;
+  rdfs:domain v-bpa:Document ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:documentErrors
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Ошибки обработки документа"@ru ;
+  rdfs:label "Document processing errors"@en ;
+  rdfs:domain v-bpa:Document ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:hasDepartment
+  rdf:type owl:ObjectProperty ;
+  rdf:type owl:FunctionalProperty ;
+  rdfs:label "Подразделение"@ru ;
+  rdfs:label "Department"@en ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range v-s:Department ;
+.

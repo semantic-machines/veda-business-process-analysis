@@ -26,8 +26,8 @@ pub struct ResponseSchema {
     #[serde(rename = "type")]
     pub type_name: String,
     pub properties: IndexMap<String, Property>,
-    #[serde(rename = "additional_properties")]
-    pub additional_properties: Option<HashMap<String, String>>,
+    #[serde(rename = "assign_properties")]
+    pub assign_properties: Option<HashMap<String, String>>,
     #[serde(flatten)]
     pub additional: Map<String, Value>,
     #[serde(skip)]
@@ -54,9 +54,9 @@ impl ResponseSchema {
         //info!("Parsing JSON schema: {}", json);
         let mut schema: ResponseSchema = serde_json::from_str(json)?;
 
-        if let Some(additional_props) = schema.additional.get("additional_properties") {
+        if let Some(additional_props) = schema.additional.get("assign_properties") {
             if let Some(props_obj) = additional_props.as_object() {
-                schema.additional_properties = Some(props_obj.iter().filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string()))).collect());
+                schema.assign_properties = Some(props_obj.iter().filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string()))).collect());
             }
         }
 
@@ -81,18 +81,18 @@ impl ResponseSchema {
 
         self.enum_value_mapping = enum_mapping;
 
-        let mut schema = json!({
+        let schema = json!({
             "type": self.type_name,
             "additionalProperties": false,
             "properties": properties,
             "required": self.field_order
         });
 
-        if let Some(obj) = schema.as_object_mut() {
-            if let Some(add_props) = &self.additional_properties {
-                obj.insert("additional_properties".to_string(), json!(add_props));
-            }
-        }
+        //if let Some(obj) = schema.as_object_mut() {
+        //    if let Some(add_props) = &self.assign_properties {
+        //        obj.insert("assign_properties".to_string(), json!(add_props));
+        //    }
+        //}
 
         //info!("@A1 self.enum_value_mapping)={:?}", self.enum_value_mapping);
         //info!("@A2 self.properties={:?}", self.properties);
@@ -208,6 +208,19 @@ impl ResponseSchema {
                     let mut related = Individual::default();
                     related.set_id(&format!("d:{}", uuid::Uuid::new_v4()));
 
+                    // Apply assign_properties from items mapping if present
+                    if let Some(items) = &mapping.items {
+                        if let Some(assign_props) = &items.additional.get("assign_properties") {
+                            if let Some(props) = assign_props.as_object() {
+                                for (pred, val) in props {
+                                    if let Some(val_str) = val.as_str() {
+                                        related.set_uri(pred, val_str);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if let Some(range_type) = &prop_info.range_type {
                         related.set_uri("rdf:type", range_type);
                     }
@@ -228,6 +241,17 @@ impl ResponseSchema {
 
         if let Some(properties) = &mapping.properties {
             if let Value::Object(obj) = value {
+                // First apply assign_properties from current level
+                if let Some(assign_props) = mapping.additional.get("assign_properties") {
+                    if let Some(props) = assign_props.as_object() {
+                        for (pred, val) in props {
+                            if let Some(val_str) = val.as_str() {
+                                parent_individual.set_uri(pred, val_str);
+                            }
+                        }
+                    }
+                }
+
                 for (key, prop_mapping) in properties {
                     // Get property value or skip iteration
                     let prop_value = match obj.get(key) {
@@ -344,12 +368,6 @@ impl ResponseSchema {
         info!("Created result ID: {}", result_id);
         result.main_individual.set_id(&result_id);
 
-        if let Some(add_props) = &self.additional_properties {
-            for (predicate, value) in add_props {
-                result.main_individual.set_uri(predicate, value);
-            }
-        }
-
         if let Some(obj) = response.as_object() {
             for (key, prop_mapping) in &self.properties {
                 if let Some(value) = obj.get(key) {
@@ -364,6 +382,13 @@ impl ResponseSchema {
                         &self.enum_value_mapping,
                     )?;
                 }
+            }
+        }
+
+        // TODO это надо переделать, assign_properties должен действовать на каждый вложенные индивид (там где он обьявлен)
+        if let Some(assign_props) = &self.assign_properties {
+            for (pred, val) in assign_props {
+                result.main_individual.set_uri(&pred, &val);
             }
         }
 
@@ -408,10 +433,10 @@ fn process_enum_values(
     }
 }
 
-fn add_additional_properties(obj: &mut Map<String, Value>, additional: &Map<String, Value>) {
+fn add_assign_properties(obj: &mut Map<String, Value>, additional: &Map<String, Value>) {
     for (key, value) in additional {
         // Skip service fields that shouldn't go to AI schema
-        if !["mapping", "additional_properties", "create_new_individuals"].contains(&key.as_str()) {
+        if !["mapping", "assign_properties", "create_new_individuals"].contains(&key.as_str()) {
             obj.insert(key.clone(), value.clone());
         }
     }
@@ -481,7 +506,7 @@ fn convert_property(
             }
 
             if let Some(obj) = array_schema.as_object_mut() {
-                add_additional_properties(obj, &prop.additional);
+                add_assign_properties(obj, &prop.additional);
             }
             Ok(array_schema)
         },
@@ -510,7 +535,7 @@ fn convert_property(
                 }
 
                 obj.insert("properties".to_string(), Value::Object(properties));
-                add_additional_properties(obj, &prop.additional);
+                add_assign_properties(obj, &prop.additional);
 
                 if let Some(required) = prop.additional.get("required") {
                     obj.insert("required".to_string(), required.clone());
@@ -534,7 +559,7 @@ fn convert_property(
             }
 
             if let Some(obj) = prop_json.as_object_mut() {
-                add_additional_properties(obj, &prop.additional);
+                add_assign_properties(obj, &prop.additional);
             }
 
             Ok(prop_json)
