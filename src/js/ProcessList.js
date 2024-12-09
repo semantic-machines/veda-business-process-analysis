@@ -13,7 +13,7 @@ export default class ProcessList extends Component(HTMLElement) {
 
     const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
-    params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
+    params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcessesOrderedByDepartment';
     params['v-s:resultFormat'] = 'rows';
     const {rows: processes} = await Backend.stored_query(params);
     this.processes = processes;
@@ -63,8 +63,21 @@ export default class ProcessList extends Component(HTMLElement) {
     const container = this.querySelector('#filtered-processes');
     const fragment = document.createDocumentFragment();
 
+    let currentDepartment = '';
+
     this.filtered.forEach(([...values]) => {
       const [id, label, description, justification, responsibleDepartment, processParticipant, laborCosts] = values.map(safe);
+
+      if (responsibleDepartment !== currentDepartment) {
+        currentDepartment = responsibleDepartment;
+        const departmentRow = document.createElement('tr');
+        departmentRow.className = 'table-secondary';
+        departmentRow.innerHTML = `
+          <td colspan="5" class="fw-bold text-secondary rounded-bottom">${responsibleDepartment || 'Без отдела'}</td>
+        `;
+        fragment.appendChild(departmentRow);
+      }
+
       const row = document.createElement('tr');
       row.onclick = () => location.hash = `#/ProcessView/${id}`;
       row.innerHTML = `
@@ -118,8 +131,15 @@ export default class ProcessList extends Component(HTMLElement) {
             #processes-table tbody tr:last-child {
               border-bottom: 1px solid transparent;
             }
-            #processes-table tr {
+            #processes-table td {
               cursor: pointer;
+            }
+            #processes-table tr.table-secondary > td {
+              cursor: default;
+              border-bottom: 1px solid transparent;
+            }
+            #processes-table tr.table-secondary:hover > td {
+              box-shadow: none;
             }
           </style>
           <table class="table table-hover mb-0" id="processes-table">
