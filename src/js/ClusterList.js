@@ -167,10 +167,7 @@ class ClusterRow extends Component(HTMLTableRowElement) {
       this.setAttribute('disabled', '');
       return this.template.replace(/<td[\s\S]*?<\/td>/g, (_, offset) => `
         <td class="placeholder-glow">
-          ${offset === 0
-            ? `<span class="placeholder col-1"></span>`
-            : Array(3).fill(0).map(() => `<span class="placeholder col-${this.random(5, 12)}"></span>`).join('<br>')
-          }
+          ${Array(3).fill().map(() => `<span class="placeholder col-${this.random(5, 12)}"></span>`).join('<br>')}
         </td>
       `);
     }
