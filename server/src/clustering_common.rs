@@ -1,4 +1,5 @@
-use crate::common::{calculate_cost, save_to_interaction_file};
+use crate::ai_client::save_to_interaction_file;
+use crate::common::calculate_cost;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder};
 use std::io;
