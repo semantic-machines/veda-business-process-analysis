@@ -1,9 +1,16 @@
 import {Component, html} from 'veda-client';
 import Literal from './Literal.js';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator';
+import ClusterizationButton from './ClusterizationButton.js';
+import Callback from './Callback.js';
 
 export default class ClusterList extends Component(HTMLElement) {
   static tag = 'bpa-cluster-list';
+
+  added() {
+    this.running = this.getAttribute('running');
+    this.callback = this.getAttribute('callback');
+  }
 
   async post () {
     this.addEventListener('click', (e) => {
@@ -50,9 +57,12 @@ export default class ClusterList extends Component(HTMLElement) {
         }
       </style>
       <div class="sheet">
-        <div class="d-flex align-items-center">
-          <i class="bi bi-collection me-3 fs-1"></i>
-          <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-collection me-3 fs-1"></i>
+            <h3 about="v-bpa:ProcessClusters" property="rdfs:label" class="mb-1"></h3>
+          </div>
+          <${ClusterizationButton} ${this.running ? html`about="${this.running}"` : ''} callback="${this.callback}" class="ms-auto"></${ClusterizationButton}>
         </div>
         <div class="table-responsive">
           <table class="table table-hover mb-0 table-borderless" id="clusters-table">

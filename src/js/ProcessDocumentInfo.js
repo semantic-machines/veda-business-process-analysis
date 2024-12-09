@@ -9,10 +9,10 @@ export default class ProcessDocumentInfo extends Component(HTMLElement) {
   async render() {
     return html`
       <a href="#process-document-list-modal" data-bs-toggle="modal" data-bs-target="#process-document-list-modal" class="text-secondary" style="cursor:pointer">
-        <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>:&nbsp;<${Expression} expression="this['v-bpa:hasProcessDocument']?.length || '+'"></${Expression}>
+        <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>:&nbsp;<${Expression} about="${this.model.id}" expression="this.model['v-bpa:hasProcessDocument']?.length || '+'"></${Expression}>
       </a>
-      <${ProcessDocumentListModal}></${ProcessDocumentListModal}>
-      <${ProcessDocumentAddModal}></${ProcessDocumentAddModal}>
+      <${ProcessDocumentListModal} about="${this.model.id}"></${ProcessDocumentListModal}>
+      <${ProcessDocumentAddModal} about="${this.model.id}"></${ProcessDocumentAddModal}>
       <${ProcessDocumentPreviewModal} id="process-document-preview"></${ProcessDocumentPreviewModal}>
     `;
   }

@@ -4,7 +4,7 @@ export default class Expression extends Component(HTMLElement) {
   static tag = 'bpa-expression';
 
   render () {
-    return safe(new Function('return ' + this.expression).call(this.model ?? null));
+    return safe(new Function('return ' + this.expression).call(this));
   }
 
   up = () => {

@@ -1,6 +1,7 @@
 import {Component, html, safe, Backend, Model, timeout} from 'veda-client';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator.js';
 import Literal from './Literal.js';
+import ProcessQuickCreateModal from './ProcessQuickCreateModal.js';
 import InputAudio from './controls/InputAudio.js';
 import {Modal} from 'bootstrap';
 
@@ -232,10 +233,10 @@ customElements.define(ProcessFilters.tag, ProcessFilters);
 export default class ProcessList extends Component(HTMLElement) {
   static tag = 'bpa-process-list';
 
-  poorlyJustified = Number(this.getAttribute('poorly-justified') || 0);
-  noDocument = Number(this.getAttribute('no-document') || 0);
-
   async added() {
+    this.poorlyJustified = Number(this.getAttribute('poorly-justified') || 0);
+    this.noDocument = Number(this.getAttribute('no-document') || 0);
+
     const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcesses';
@@ -329,7 +330,14 @@ export default class ProcessList extends Component(HTMLElement) {
             ? html`<strong class="text-secondary me-2" about="v-bpa:NoDocumentForJustification" property="rdfs:comment"></strong><span class="badge bg-secondary">${this.noDocument}</span>`
             : ''
           }
-          <${ProcessFilters} class="ms-auto"></${ProcessFilters}>
+          <div class="d-flex align-items-center ms-auto">
+            <a href="#process-quick-create-modal" data-bs-toggle="modal" data-bs-target="#process-quick-create-modal" class="btn btn-link text-dark text-decoration-none me-3">
+              <i class="bi bi-plus me-1"></i>
+              <span about="v-bpa:AddProcess" property="rdfs:label"></span>
+            </a>
+            <${ProcessQuickCreateModal}></${ProcessQuickCreateModal}>
+            <${ProcessFilters} class="ms-auto"></${ProcessFilters}>
+          </div>
         </div>
         <div class="table-responsive">
           <style>

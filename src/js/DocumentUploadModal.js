@@ -10,6 +10,12 @@ export default class DocumentUploadModal extends Component(HTMLElement) {
     Modal.getOrCreateInstance(this.firstElementChild).hide();
   }
 
+  post() {
+    this.firstElementChild.addEventListener('shown.bs.modal', () => {
+      this.querySelector('button')?.focus();
+    });
+  }
+
   render() {
     return html`
       <div class="modal fade" id="document-upload-modal" data-bs-keyboard="true">
@@ -77,9 +83,9 @@ class DocumentUpload extends Component(HTMLElement) {
       if (this.uploadedFiles.has(file.name)) continue;
       const fileIndividual = await this.createFileIndividual(file);
       this.uploadedFiles.set(file.name, fileIndividual);
+      this.update();
       await this.createProcessDocumentRequest(fileIndividual);
     }
-    this.update();
   });
 
   async createFileIndividual(file) {
@@ -162,16 +168,14 @@ class DocumentUpload extends Component(HTMLElement) {
               `}
           </div>
         </div>
-        <div class="d-flex justify-content-between">
-          <div class="d-flex gap-2">
-            <button on:click="${(e) => this.upload(e)}" class="btn btn-primary create-button">
-              <span class="spinner-grow spinner-grow-sm me-2 d-none" aria-hidden="true"></span>
-              <span about="v-bpa:Upload" property="rdfs:label"></span>
-            </button>
-            <button on:click="${(e) => this.cancel(e)}" class="btn btn-light">
-              <span about="v-bpa:Close" property="rdfs:label"></span>
-            </button>
-          </div>
+        <div class="d-flex justify-content-between gap-2">
+          <button on:click="${(e) => this.cancel(e)}" class="btn btn-light">
+            <span about="v-bpa:Close" property="rdfs:label"></span>
+          </button>
+          <button on:click="${(e) => this.upload(e)}" class="btn btn-primary create-button">
+            <span class="spinner-grow spinner-grow-sm me-2 d-none" aria-hidden="true"></span>
+            <span about="v-bpa:Upload" property="rdfs:label"></span>
+          </button>
         </div>
         <style>
           .drop-zone {

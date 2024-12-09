@@ -2,10 +2,7 @@ import {Component, html, Model, Backend, timeout} from 'veda-client';
 import ProcessList from './ProcessList.js';
 import DocumentList from './DocumentList.js';
 import ClusterList from './ClusterList.js';
-import ClusterizationButton from './ClusterizationButton.js';
 import Callback from './Callback.js';
-import ProcessQuickCreateModal from './ProcessQuickCreate.js';
-import DocumentUploadModal from './DocumentUploadModal.js';
 
 export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
@@ -94,26 +91,16 @@ export default class ProcessOverview extends Component(HTMLElement) {
             </button>
           </li>
         </ul>
-        ${this.activeTab === 'clusters'
-          ? html`<${ClusterizationButton} ${this.running ? html`about="${this.running.id}"` : ''} callback="${Callback.getName(this.setRunning)}" class="ms-auto"></${ClusterizationButton}>`
-          : this.activeTab === 'processes'
-          ? html`
-            <a href="#process-quick-create-modal" data-bs-toggle="modal" data-bs-target="#process-quick-create-modal" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
-              <i class="bi bi-plus me-1"></i>
-              <span about="v-bpa:AddProcess" property="rdfs:label"></span>
-            </a>
-            <${ProcessQuickCreateModal}></${ProcessQuickCreateModal}>
-            `
-          : html`
-            <a href="#document-upload-modal" data-bs-toggle="modal" data-bs-target="#document-upload-modal" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
-              <i class="bi bi-plus me-1"></i>
-              <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
-            </a>
-            <${DocumentUploadModal}></${DocumentUploadModal}>`
-        }
       </div>
       ${this.activeTab === 'clusters'
-        ? html`<${ClusterList} ${this.completed ? html`about="${this.completed.id}"` : ''}></${ClusterList}>`
+        ? html`
+            <${ClusterList}
+              ${this.completed ? html`about="${this.completed.id}"` : ''}
+              ${this.running ? html`running="${this.running.id}"` : ''}
+              callback="${Callback.getName(this.setRunning)}"
+            >
+            </${ClusterList}>
+          `
         : this.activeTab === 'processes'
         ? html`<${ProcessList} poorly-justified="${this.processesPoorlyJustifiedCount}" no-document="${this.processesNoDocumentCount}"></${ProcessList}>`
         : html`<${DocumentList}></${DocumentList}>`
