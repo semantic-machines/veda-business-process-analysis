@@ -160,7 +160,7 @@ class ClusterRow extends Component(HTMLTableRowElement) {
   }
 
   render() {
-    if (this.model.hasValue('rdfs:label')) {
+    if (!this.model.hasValue('rdfs:label')) {
       this.removeAttribute('disabled');
       return this.template;
     } else {
@@ -169,7 +169,7 @@ class ClusterRow extends Component(HTMLTableRowElement) {
         <td class="placeholder-glow">
           ${offset === 0
             ? `<span class="badge bg-secondary-subtle text-dark">?</span>`
-            : `<span class="placeholder fs-5 col-${this.random(4, 10)}"></span>`
+            : Array(3).fill(0).map(() => `<span class="placeholder col-${this.random(5, 12)}"></span>`).join('<br>')
           }
         </td>
       `);
