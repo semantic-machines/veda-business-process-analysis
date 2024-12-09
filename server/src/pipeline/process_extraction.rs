@@ -1,10 +1,9 @@
 use crate::common::{get_prompt_text, send_text_request_to_ai, ClientType};
+use crate::generic_processing_handler::process_generic_request;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use chrono::Utc;
 use openai_dive::v1::resources::chat::{ChatCompletionParametersBuilder, ChatMessage, ChatMessageContent};
 use serde_json::json;
-use std::fs::File;
-use std::io::Write;
 use tokio::runtime::Runtime;
 use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
@@ -169,24 +168,12 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
         "documents": documents_data
     });
 
-    // Create output directory
-    info!("Creating output directory...");
-    let output_dir = "./extracted_processes";
-    if let Err(e) = std::fs::create_dir_all(output_dir) {
-        error!("Failed to create output directory: {}", e);
-        return Err(e.into());
-    }
-
-    // Save input data
-    let input_filename = format!("{}/input_data_{}_{}.json", output_dir, department.split(':').last().unwrap_or("unknown"), Utc::now().format("%Y%m%d_%H%M%S"));
-    info!("Writing input data to file: {}", input_filename);
-    let mut input_file = File::create(&input_filename)?;
     let input_json_string = serde_json::to_string_pretty(&input_json)?;
-    input_file.write_all(input_json_string.as_bytes())?;
 
     // Prepare parameters for reasoning model
     let parameters = ChatCompletionParametersBuilder::default()
         .model(module.reasoning_model.clone())
+        .seed(43u32)
         .messages(vec![ChatMessage::User {
             content: ChatMessageContent::Text(input_json_string),
             name: None,
@@ -196,14 +183,13 @@ pub fn process_extraction_pipeline(module: &mut BusinessProcessAnalysisModule, p
     // Send request to reasoning model
     info!("Sending request to reasoning model...");
     let rt = Runtime::new()?;
-    let ai_response_txt = rt.block_on(async { send_text_request_to_ai(module, parameters, ClientType::Reasoning).await })?;
+    let ai_response = rt.block_on(async { send_text_request_to_ai(module, parameters, ClientType::Reasoning).await })?;
 
-    // Generate output filename and save AI response
-    let response_filename = format!("{}/ai_response_{}_{}.txt", output_dir, department.split(':').last().unwrap_or("unknown"), Utc::now().format("%Y%m%d_%H%M%S"));
-    info!("Writing AI response to file: {}", response_filename);
+    // Extract text from response and save it
+    let response_text = ai_response.get("result").and_then(|v| v.as_str()).ok_or("Failed to get text from AI response")?;
 
-    let mut response_file = File::create(&response_filename)?;
-    response_file.write_all(ai_response_txt.as_bytes())?;
+    // Process extracted text through ProcessListExtractionPrompt
+    create_and_process_extraction_request(module, response_text, pipeline)?;
 
     // Update pipeline status
     info!("Updating pipeline completion status...");
@@ -250,4 +236,48 @@ pub(crate) fn handle_pipeline_error(module: &mut BusinessProcessAnalysisModule, 
         error!("Additional error occurred while handling original error");
     }
     error!("=== Pipeline Error Handling Completed ===");
+}
+
+/// Creates and processes a request to extract business processes from text
+/// Creates and processes a request to extract business processes from text
+fn create_and_process_extraction_request(
+    module: &mut BusinessProcessAnalysisModule,
+    response_text: &str,
+    pipeline: &mut Individual,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!("Creating process extraction request...");
+
+    // Create request individual
+    let mut request = Individual::default();
+    let request_id = format!("d:request_{}", uuid::Uuid::new_v4());
+    request.set_id(&request_id);
+    request.set_uri("rdf:type", "v-bpa:GenericProcessingRequest");
+    request.set_uri("v-bpa:prompt", "v-bpa:ProcessListExtractionPrompt");
+    request.set_string("v-bpa:rawInput", response_text, Lang::none());
+    request.set_string("v-bpa:targetType", "v-bpa:BusinessProcess", Lang::none());
+    request.set_uri("v-bpa:processingStatus", "v-bpa:Processing");
+
+    // Add link to pipeline source
+    request.set_uri("v-s:hasParentLink", pipeline.get_id());
+
+    // Save request to storage
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut request) {
+        error!("Failed to create extraction request: {:?}", e);
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to create request, err={:?}", e))));
+    }
+
+    info!("Created process extraction request: {}", request_id);
+
+    // Process the request using generic handler
+    if let Err(e) = process_generic_request(module, &mut request) {
+        error!("Failed to process extraction request: {:?}", e);
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to process request, err={:?}", e))));
+    }
+
+    info!("Successfully processed extraction request: {}", request_id);
+
+    // Link pipeline to next stage instead of result
+    pipeline.add_uri("v-bpa:hasNextStage", &request_id);
+
+    Ok(())
 }

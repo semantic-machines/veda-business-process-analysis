@@ -43,17 +43,19 @@ fn prepare_analysis_data(raw_input: &str, target_type_def: &mut Individual, inpu
     Ok(data)
 }
 
+/// Process ontology input and create result individual
 fn process_ontology_input(
     module: &mut BusinessProcessAnalysisModule,
     request: &mut Individual,
     prompt_individual: &mut Individual,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Получаем пользовательский ввод
+    // Get user input
     let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
 
-    // Получаем тип целевого индивида
+    // Get target individual type
     let target_type = prompt_individual.get_first_literal("v-bpa:targetType").ok_or("No target type specified")?;
-    // Загружаем определение целевого типа из онтологии
+
+    // Load target type definition from ontology
     let mut target_type_def = Individual::default();
     if module.backend.storage.get_individual(&target_type, &mut target_type_def) != ResultCode::Ok {
         return Err(format!("Failed to load target type definition: {}", target_type).into());
@@ -63,7 +65,7 @@ fn process_ontology_input(
     let mut property_mapping = PropertyMapping::new();
     let property_schema = load_schema(module, &prompt_individual.get_id(), None, &mut property_mapping)?;
 
-    // Обрабатываем входные данные, если они есть
+    // Process input data if available
     let structured_input = if let Some(input_str) = request.get_first_literal("v-bpa:structuredInput") {
         info!("Processing additional input data: {}", input_str);
         let parsed_input: Value = serde_json::from_str(&input_str)?;
@@ -76,15 +78,16 @@ fn process_ontology_input(
     let is_structured_input = structured_input.is_some();
 
     info!("@B structured_input={:?}", structured_input);
-    // Подготавливаем данные для анализа
+
+    // Prepare data for analysis
     let analysis_data = prepare_analysis_data(&raw_input, &mut target_type_def, structured_input)?;
 
-    // Создаем параметры запроса и получаем маппинг свойств
+    // Create request parameters and get property mapping
     let req_to_ai = prepare_request_ai_parameters(module, &prompt_individual.get_id(), analysis_data, property_schema, &mut property_mapping)?;
 
     save_to_interaction_file(&serde_json::to_string_pretty(&req_to_ai)?, "request", "json")?;
 
-    // Отправляем запрос к AI
+    // Send request to AI
     info!("Sending request to AI for processing input: {}", raw_input);
     let rt = Runtime::new()?;
     let ai_response = rt.block_on(async { send_structured_request_to_ai(module, req_to_ai, ClientType::Default).await })?;
@@ -92,15 +95,13 @@ fn process_ontology_input(
     save_to_interaction_file(&serde_json::to_string_pretty(&ai_response)?, "response", "json")?;
 
     if is_structured_input {
-        if is_structured_input {
-            if let Some(result) = ai_response.get("result") {
-                // Преобразуем короткие имена и человекочитаемые значения обратно в URI
-                let mapped_result = convert_short_to_full_predicates(result, &property_mapping)?;
-                request.set_string("v-bpa:structuredOutput", &mapped_result.to_string(), Lang::none());
-            }
+        if let Some(result) = ai_response.get("result") {
+            // Convert short names and human-readable values back to URIs
+            let mapped_result = convert_short_to_full_predicates(result, &property_mapping)?;
+            request.set_string("v-bpa:structuredOutput", &mapped_result.to_string(), Lang::none());
         }
     } else {
-        // Создаем новый индивид целевого типа для сохранения результата
+        // Create new result individual
         let result_id = format!("d:generic_result_{}", uuid::Uuid::new_v4());
         let mut result_individual = Individual::default();
         result_individual.set_id(&result_id);
@@ -110,13 +111,13 @@ fn process_ontology_input(
         // Сохраняем результат анализа AI, включая очищенный текст
         set_to_individual_from_ai_response(module, &mut result_individual, &ai_response, &property_mapping)?;
 
-        // Сохраняем обновленный индивид
+        // Save updated individual
         if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut result_individual) {
             error!("Failed to update individual {}: {:?}", result_individual.get_id(), e);
             return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
         }
 
-        // Обновляем исходный запрос, добавляя ссылку на созданный результат
+        // Update original request with reference to created result
         request.set_uri("v-bpa:hasResult", &result_id);
     }
 
@@ -172,8 +173,6 @@ fn process_structured_schema(
     let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
     let mut schema = ResponseSchema::from_json(&response_schema)?;
     let ai_schema = schema.to_ai_schema(module)?;
-
-    //info!("Generated AI schema: {}", serde_json::to_string_pretty(&ai_schema)?);
 
     let prompt_text = prompt_individual.get_first_literal("v-bpa:promptText").ok_or("Prompt text not found")?;
 
@@ -243,12 +242,12 @@ fn process_structured_schema(
             .build()?;
 
         // Send request to AI
-        info!("Sending request to AI for analyzing content {}", index + 1);
+        //info!("Sending request to AI for analyzing content {}", index + 1);
         let rt = Runtime::new()?;
         let ai_response = rt.block_on(async { send_structured_request_to_ai(module, parameters, ClientType::Default).await })?;
 
         // Convert HashMap to Value and parse response
-        let response_value = serde_json::to_value(&ai_response)?;
+        let response_value = ai_response.to_json_value();
         let mut parse_result = schema.parse_ai_response(&response_value, module)?;
 
         if separate_results {

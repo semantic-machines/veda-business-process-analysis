@@ -7,7 +7,7 @@ use openai_dive::v1::resources::chat::{
     ChatCompletionParameters, ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder,
 };
 use serde_json::Value;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -256,16 +256,13 @@ pub async fn send_structured_request_to_ai(
         ClientType::Reasoning => module.reasoning_client.chat().create(parameters).await?,
     };
 
-    // Log usage metrics
-    if let Some(usage) = result.usage {
-        info!(
-            "API usage metrics - Tokens: input={}, output={}, total={}, cost={:.5}",
-            usage.prompt_tokens,
-            usage.completion_tokens.unwrap_or(0),
-            usage.total_tokens,
-            calculate_cost(usage.total_tokens as f64, &module.default_model)
-        );
-    }
+    // Get token usage
+    let (input_tokens, output_tokens) = if let Some(usage) = result.usage {
+        info!("API usage metrics - Tokens: input={}, output={}, total={}", usage.prompt_tokens, usage.completion_tokens.unwrap_or(0), usage.total_tokens,);
+        (usage.prompt_tokens as usize, usage.completion_tokens.unwrap_or(0) as usize)
+    } else {
+        (0, 0)
+    };
 
     if let Some(choice) = result.choices.first() {
         if let ChatMessage::Assistant {
@@ -277,8 +274,10 @@ pub async fn send_structured_request_to_ai(
 
             let response: Value = serde_json::from_str(text)?;
             let response_object = response.as_object().ok_or("Response is not a JSON object")?;
-            let response_values: AIResponseValues = response_object.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
-            Ok(response_values)
+
+            let data: HashMap<String, Value> = response_object.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+
+            Ok(AIResponseValues::new(data, input_tokens, output_tokens))
         } else {
             error!("Unexpected message format in AI response");
             Err("Unexpected message format".into())
@@ -441,7 +440,7 @@ pub fn collect_define_from_schema(
         property_mapping.insert(short_name.clone(), full_prop.clone());
 
         let property_def = if !range.starts_with("xsd:") {
-            info!("@A2 Processing class range: {} for property {}", range, full_prop);
+            //info!("@A2 Processing class range: {} for property {}", range, full_prop);
 
             match get_individuals_by_type(module, &range) {
                 Ok(mut instances) => {
@@ -463,7 +462,7 @@ pub fn collect_define_from_schema(
                         })
                         .collect::<Vec<_>>();
 
-                    info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
+                    //info!("@A3 Found enum values for {}: {:?}", full_prop, enum_values);
 
                     if !enum_values.is_empty() {
                         if is_functional_property {
@@ -696,12 +695,6 @@ fn shorten_predicate_name(full_name: &str, property_mapping: &mut PropertyMappin
 }
 
 // Helper function to calculate cost based on model and tokens
-// common.rs
-
-// Helper function to calculate cost based on model and tokens
-// common.rs
-
-// Helper function to calculate cost based on model and tokens
 pub fn calculate_cost(tokens: f64, model: &str) -> f64 {
     match model {
         // GPT-4 pricing
@@ -717,29 +710,26 @@ pub fn calculate_cost(tokens: f64, model: &str) -> f64 {
     }
 }
 
-/// Sends request to AI and gets text response
+/// Sends request to AI and gets response as AIResponseValues
 pub async fn send_text_request_to_ai(
     module: &mut BusinessProcessAnalysisModule,
     parameters: ChatCompletionParameters,
     client_type: ClientType,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> Result<AIResponseValues, Box<dyn std::error::Error>> {
     save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "request", "json")?;
 
-    // Используем нужный клиент в зависимости от типа
+    // Choose client based on type
     let result = match client_type {
         ClientType::Default => module.default_client.chat().create(parameters).await?,
         ClientType::Reasoning => module.reasoning_client.chat().create(parameters).await?,
     };
 
-    if let Some(usage) = result.usage {
-        info!(
-            "API usage metrics - Tokens: input={}, output={}, total={}, cost={:.5}$",
-            usage.prompt_tokens,
-            usage.completion_tokens.unwrap_or(0),
-            usage.total_tokens,
-            calculate_cost(usage.total_tokens as f64, &module.default_model)
-        );
-    }
+    let (input_tokens, output_tokens) = if let Some(usage) = result.usage {
+        info!("API usage metrics - Tokens: input={}, output={}, total={}", usage.prompt_tokens, usage.completion_tokens.unwrap_or(0), usage.total_tokens);
+        (usage.prompt_tokens as usize, usage.completion_tokens.unwrap_or(0) as usize)
+    } else {
+        (0, 0)
+    };
 
     if let Some(choice) = result.choices.first() {
         if let ChatMessage::Assistant {
@@ -748,7 +738,8 @@ pub async fn send_text_request_to_ai(
         } = &choice.message
         {
             save_to_interaction_file(text, "response", "txt")?;
-            Ok(text.clone())
+
+            Ok(AIResponseValues::from_text(text.clone(), input_tokens, output_tokens))
         } else {
             error!("Unexpected message format in AI response");
             Err("Unexpected message format".into())
