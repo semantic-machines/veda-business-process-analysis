@@ -7,17 +7,21 @@ export default class DocumentUploadModal extends Component(HTMLElement) {
 
 
   hideModal() {
-    Modal.getOrCreateInstance(this.firstElementChild).hide();
+    Modal.getOrCreateInstance(this.lastElementChild).hide();
   }
 
   post() {
-    this.firstElementChild.addEventListener('shown.bs.modal', () => {
+    this.lastElementChild.addEventListener('shown.bs.modal', () => {
       this.querySelector('button')?.focus();
     });
   }
 
   render() {
     return html`
+      <a href="#document-upload-modal" data-bs-toggle="modal" data-bs-target="#document-upload-modal" class="btn btn-link text-dark text-decoration-none me-3">
+        <i class="bi bi-plus me-1"></i>
+        <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
+      </a>
       <div class="modal fade" id="document-upload-modal" data-bs-keyboard="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">

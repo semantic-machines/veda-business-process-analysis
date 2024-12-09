@@ -84,10 +84,6 @@ export default class DocumentList extends Component(HTMLElement) {
           <i class="bi bi-file-earmark-text ms-2 me-3 fs-1"></i>
           <h3 class="mb-1" about="v-bpa:ProcessDocuments" property="rdfs:label"></h3>
           <div class="d-flex align-items-center ms-auto">
-            <a href="#document-upload-modal" data-bs-toggle="modal" data-bs-target="#document-upload-modal" class="btn btn-link text-dark text-decoration-none me-3">
-              <i class="bi bi-plus me-1"></i>
-              <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
-            </a>
             <${DocumentUploadModal}></${DocumentUploadModal}>
             <${DocumentFiltersModal}></${DocumentFiltersModal}>
           </div>
