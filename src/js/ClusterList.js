@@ -160,7 +160,7 @@ class ClusterRow extends Component(HTMLTableRowElement) {
   }
 
   render() {
-    if (!this.model.hasValue('rdfs:label')) {
+    if (this.model.hasValue('rdfs:label')) {
       this.removeAttribute('disabled');
       return this.template;
     } else {
