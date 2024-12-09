@@ -168,7 +168,7 @@ class ClusterRow extends Component(HTMLTableRowElement) {
       return this.template.replace(/<td[\s\S]*?<\/td>/g, (_, offset) => `
         <td class="placeholder-glow">
           ${offset === 0
-            ? `<span class="badge bg-success-subtle text-dark">?</span>`
+            ? `<span class="badge bg-secondary-subtle text-dark">?</span>`
             : `<span class="placeholder col-${this.random(6, 12)}"></span>`
           }
         </td>
