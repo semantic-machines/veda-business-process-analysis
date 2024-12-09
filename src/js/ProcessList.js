@@ -71,7 +71,7 @@ export default class ProcessList extends Component(HTMLElement) {
       if (responsibleDepartment !== currentDepartment) {
         currentDepartment = responsibleDepartment;
         const departmentRow = document.createElement('tr');
-        departmentRow.className = 'table-secondary';
+        departmentRow.className = 'table-light';
         departmentRow.innerHTML = `
           <td colspan="5" class="text-uppercase text-secondary rounded-bottom"><small>${responsibleDepartment || 'Без отдела'}</small></td>
         `;
@@ -134,11 +134,12 @@ export default class ProcessList extends Component(HTMLElement) {
             #processes-table td {
               cursor: pointer;
             }
-            #processes-table tr.table-secondary > td {
+            #processes-table tr.table-light > td {
+              background-color: #f4f4f4;
               cursor: default;
               border-bottom: 1px solid transparent;
             }
-            #processes-table tr.table-secondary:hover > td {
+            #processes-table tr.table-light:hover > td {
               box-shadow: none;
             }
           </style>
