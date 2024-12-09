@@ -2,7 +2,7 @@ import {Component, html} from 'veda-client';
 import Literal from './Literal.js';
 import ProcessJustificationIndicator from './ProcessJustificationIndicator';
 import ClusterizationButton from './ClusterizationButton.js';
-import Callback from './Callback.js';
+import PlaceholderRow from './PlaceholderRow.js';
 
 export default class ClusterList extends Component(HTMLElement) {
   static tag = 'bpa-cluster-list';
@@ -77,7 +77,7 @@ export default class ClusterList extends Component(HTMLElement) {
             <tbody>
               ${this.model?.['v-bpa:foundClusters']?.map((cluster) => html`
                 ${(isExpanded = localStorage.getItem(`ClusterList_expanded_${cluster.id}`) === 'true', '')}
-                <tr is="${ClusterRow}" about="${cluster.id}" class="border-top cluster-row">
+                <tr about="${cluster.id}" class="border-top cluster-row" is="${PlaceholderRow}" when="!this.model.hasValue('rdfs:label')" rows="3">
                   <td class="text-center toggle-processes" data-for="${cluster.id}">
                     <i class="bi bi-chevron-up text-secondary ${isExpanded ? '' : 'd-none'}"></i>
                     <span class="${isExpanded ? 'd-none' : ''}">
@@ -151,41 +151,3 @@ export default class ClusterList extends Component(HTMLElement) {
 }
 
 customElements.define(ClusterList.tag, ClusterList);
-
-class ClusterRow extends Component(HTMLTableRowElement) {
-  static tag = 'bpa-cluster-row';
-
-  random(min, max) {
-    return Math.round(Math.random() * (max - min) + min);
-  }
-
-  render() {
-    if (this.model.hasValue('rdfs:label')) {
-      this.removeAttribute('disabled');
-      return this.template;
-    } else {
-      this.setAttribute('disabled', '');
-      return this.template.replace(/<td[\s\S]*?<\/td>/g, (_, offset) => `
-        <td class="placeholder-glow">
-          ${Array(3).fill().map(() => `<span class="placeholder col-${this.random(5, 12)}"></span>`).join('<br>')}
-        </td>
-      `);
-    }
-  }
-
-  up = () => {
-    this.update();
-  }
-
-  added () {
-    this.model.on('modified', this.up);
-  }
-
-  removed () {
-    if (this.model) {
-      this.model.off('modified', this.up);
-    }
-  }
-}
-
-customElements.define(ClusterRow.tag, ClusterRow, { extends: 'tr' });
