@@ -1,4 +1,5 @@
-use crate::common::{get_prompt_text, send_text_request_to_ai, ClientType};
+use crate::ai_client::send_text_request_to_ai;
+use crate::common::{get_prompt_text, ClientType};
 use crate::generic_processing_handler::process_generic_request;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use chrono::Utc;

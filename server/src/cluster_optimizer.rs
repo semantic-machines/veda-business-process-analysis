@@ -1,4 +1,5 @@
-use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, send_structured_request_to_ai, set_to_individual_from_ai_response, ClientType};
+use crate::ai_client::send_structured_request_to_ai;
+use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, set_to_individual_from_ai_response, ClientType};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::types::PropertyMapping;
 use serde_json;

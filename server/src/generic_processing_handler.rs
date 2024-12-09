@@ -1,8 +1,7 @@
 /// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
 /// и заданного типа целевого индивида.
 use crate::common::{
-    convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, save_to_interaction_file,
-    send_structured_request_to_ai, set_to_individual_from_ai_response, ClientType,
+    convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, set_to_individual_from_ai_response, ClientType,
 };
 use crate::extractors::extract_text_from_document;
 use crate::queue_processor::BusinessProcessAnalysisModule;
@@ -13,6 +12,7 @@ use openai_dive::v1::resources::chat::{
     ChatMessageTextContentPart, ImageUrlDetail, ImageUrlType, JsonSchemaBuilder,
 };
 
+use crate::ai_client::{save_to_interaction_file, send_structured_request_to_ai};
 use serde_json::Value;
 use std::fs;
 use std::path::Path;

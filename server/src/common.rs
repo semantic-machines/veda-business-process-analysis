@@ -1,17 +1,13 @@
 // common.rs
+use crate::ai_client::{save_to_interaction_file, AIResponseValues};
 use crate::queue_processor::BusinessProcessAnalysisModule;
-use crate::types::{AIResponseValues, PropertyMapping, PropertySchema};
-use chrono::Utc;
+use crate::types::{PropertyMapping, PropertySchema};
 use humantime::format_duration;
 use openai_dive::v1::resources::chat::{
     ChatCompletionParameters, ChatCompletionParametersBuilder, ChatCompletionResponseFormat, ChatMessage, ChatMessageContent, JsonSchemaBuilder,
 };
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
-use std::fs;
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
+use std::collections::HashSet;
 use std::time::Duration;
 use std::{io, thread, time};
 use v_common::onto::datatype::Lang;
@@ -241,51 +237,6 @@ pub fn prepare_request_ai_parameters(
     save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "request", "json")?;
 
     Ok(parameters)
-}
-
-pub async fn send_structured_request_to_ai(
-    module: &mut BusinessProcessAnalysisModule,
-    parameters: ChatCompletionParameters,
-    client_type: ClientType,
-) -> Result<AIResponseValues, Box<dyn std::error::Error>> {
-    save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "request", "json")?;
-
-    // Send request to AI
-    let result = match client_type {
-        ClientType::Default => module.default_client.chat().create(parameters).await?,
-        ClientType::Reasoning => module.reasoning_client.chat().create(parameters).await?,
-    };
-
-    // Get token usage
-    let (input_tokens, output_tokens) = if let Some(usage) = result.usage {
-        info!("API usage metrics - Tokens: input={}, output={}, total={}", usage.prompt_tokens, usage.completion_tokens.unwrap_or(0), usage.total_tokens,);
-        (usage.prompt_tokens as usize, usage.completion_tokens.unwrap_or(0) as usize)
-    } else {
-        (0, 0)
-    };
-
-    if let Some(choice) = result.choices.first() {
-        if let ChatMessage::Assistant {
-            content: Some(ChatMessageContent::Text(text)),
-            ..
-        } = &choice.message
-        {
-            save_to_interaction_file(text, "response", "json")?;
-
-            let response: Value = serde_json::from_str(text)?;
-            let response_object = response.as_object().ok_or("Response is not a JSON object")?;
-
-            let data: HashMap<String, Value> = response_object.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
-
-            Ok(AIResponseValues::new(data, input_tokens, output_tokens))
-        } else {
-            error!("Unexpected message format in AI response");
-            Err("Unexpected message format".into())
-        }
-    } else {
-        error!("No response received from AI");
-        Err("No response from AI".into())
-    }
 }
 
 /// Сохраняет результаты запроса к AI в индивид
@@ -708,64 +659,4 @@ pub fn calculate_cost(tokens: f64, model: &str) -> f64 {
         // Default case
         _ => 0.0,
     }
-}
-
-/// Sends request to AI and gets response as AIResponseValues
-pub async fn send_text_request_to_ai(
-    module: &mut BusinessProcessAnalysisModule,
-    parameters: ChatCompletionParameters,
-    client_type: ClientType,
-) -> Result<AIResponseValues, Box<dyn std::error::Error>> {
-    save_to_interaction_file(&serde_json::to_string_pretty(&parameters)?, "request", "json")?;
-
-    // Choose client based on type
-    let result = match client_type {
-        ClientType::Default => module.default_client.chat().create(parameters).await?,
-        ClientType::Reasoning => module.reasoning_client.chat().create(parameters).await?,
-    };
-
-    let (input_tokens, output_tokens) = if let Some(usage) = result.usage {
-        info!("API usage metrics - Tokens: input={}, output={}, total={}", usage.prompt_tokens, usage.completion_tokens.unwrap_or(0), usage.total_tokens);
-        (usage.prompt_tokens as usize, usage.completion_tokens.unwrap_or(0) as usize)
-    } else {
-        (0, 0)
-    };
-
-    if let Some(choice) = result.choices.first() {
-        if let ChatMessage::Assistant {
-            content: Some(ChatMessageContent::Text(text)),
-            ..
-        } = &choice.message
-        {
-            save_to_interaction_file(text, "response", "txt")?;
-
-            Ok(AIResponseValues::from_text(text.clone(), input_tokens, output_tokens))
-        } else {
-            error!("Unexpected message format in AI response");
-            Err("Unexpected message format".into())
-        }
-    } else {
-        error!("No response received from AI");
-        Err("No response from AI".into())
-    }
-}
-
-/// Saves data to file and returns path
-pub fn save_to_interaction_file(data: &str, prefix: &str, extension: &str) -> Result<String, Box<dyn std::error::Error>> {
-    // Create output directory if it doesn't exist
-    let output_dir = "./ai_interactions";
-    fs::create_dir_all(output_dir)?;
-
-    // Generate unique filename with timestamp and prefix
-    let filename = format!("{}_{}.{}", prefix, Utc::now().format("%Y%m%d_%H%M%S_%3f"), extension);
-    let filepath = Path::new(output_dir).join(&filename);
-
-    // Save data to file
-    let mut file = File::create(&filepath)?;
-    file.write_all(data.as_bytes())?;
-
-    let request_path = filepath.to_string_lossy().into_owned();
-    info!("AI request saved to: {}", request_path);
-
-    Ok(request_path)
 }
