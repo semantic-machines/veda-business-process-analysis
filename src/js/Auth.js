@@ -26,7 +26,7 @@ export default class Auth extends Component(HTMLElement) {
   }
 
   handleAuthSuccess () {
-    document.cookie = `ticket=${localStorage.ticket}; expires=${localStorage.expires}; path=/; secure; httponly`;
+    document.cookie = `ticket=${localStorage.ticket}; expires=${localStorage.expires}; path=/; secure;`;
     // Activity handler
     let lastActivity = Date.now();
     const activityHandler = () => {
