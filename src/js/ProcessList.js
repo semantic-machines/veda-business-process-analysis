@@ -73,7 +73,7 @@ export default class ProcessList extends Component(HTMLElement) {
         const departmentRow = document.createElement('tr');
         departmentRow.className = 'table-secondary';
         departmentRow.innerHTML = `
-          <td colspan="5" class="fw-bold text-secondary rounded-bottom">${responsibleDepartment || 'Без отдела'}</td>
+          <td colspan="5" class="text-uppercase text-secondary rounded-bottom"><small>${responsibleDepartment || 'Без отдела'}</small></td>
         `;
         fragment.appendChild(departmentRow);
       }
