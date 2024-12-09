@@ -114,7 +114,7 @@ class DocumentUpload extends Component(HTMLElement) {
   async createProcessDocumentRequest(fileIndividual) {
     const request = new Model;
     request['rdf:type'] = 'v-bpa:GenericProcessingRequest';
-    request['v-bpa:prompt'] = 'v-bpa:DocumentAnalysisPrompt';
+    request['v-bpa:prompt'] = 'v-bpa:ImagesToTextPrompt';
     request['v-s:attachment'] = fileIndividual;
     return request.save();
   }
