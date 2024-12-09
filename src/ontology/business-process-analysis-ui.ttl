@@ -149,6 +149,14 @@ v-bpa:ProcessQuickCreate
   rdfs:comment "Describe the business process in free form, the process will be created automatically"@en ;
 .
 
+v-bpa:DocumentUpload
+  rdf:type rdfs:Resource ;
+  rdfs:label "Загрузить документ"@ru ;
+  rdfs:label "Document upload"@en ;
+  rdfs:comment "Загрузите документ, он будет автоматически обработан"@ru ;
+  rdfs:comment "Upload a document, it will be processed automatically"@en ;
+.
+
 v-bpa:ManualCreate
   rdf:type rdfs:Resource ;
   rdfs:label "Заполнить вручную"@ru ;
@@ -227,4 +235,22 @@ v-bpa:Close
   rdf:type rdfs:Resource ;
   rdfs:label "Закрыть"@ru ;
   rdfs:label "Close"@en ;
+.
+
+v-bpa:Upload
+  rdf:type rdfs:Resource ;
+  rdfs:label "Загрузить"@ru ;
+  rdfs:label "Upload"@en ;
+.
+
+v-bpa:DragAndDrop
+  rdf:type rdfs:Resource ;
+  rdfs:label "Перетащите файлы сюда или"@ru ;
+  rdfs:label "Drag and drop files here or"@en ;
+.
+
+v-bpa:ChooseFiles
+  rdf:type rdfs:Resource ;
+  rdfs:label "Выберите файлы"@ru ;
+  rdfs:label "Choose files"@en ;
 .

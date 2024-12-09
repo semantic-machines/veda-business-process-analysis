@@ -5,6 +5,7 @@ import ClusterList from './ClusterList.js';
 import ClusterizationButton from './ClusterizationButton.js';
 import Callback from './Callback.js';
 import ProcessQuickCreateModal from './ProcessQuickCreate.js';
+import DocumentUploadModal from './DocumentUploadModal.js';
 
 export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
@@ -70,6 +71,12 @@ export default class ProcessOverview extends Component(HTMLElement) {
       <div class="mb-3 ms-3 d-flex justify-content-between align-items-center">
         <ul class="nav nav-underline">
           <li class="nav-item">
+            <button id="documents" on:click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'documents' ? 'active disabled' : 'text-secondary-emphasis'}">
+              <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>
+              <!--span class="align-top badge bg-secondary">${this.documentsCount}</span-->
+            </button>
+          </li>
+          <li class="nav-item">
             <button id="processes" on:click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'processes' ? 'active disabled' : 'text-secondary-emphasis'}">
               <span class="me-1" about="v-bpa:ShowProcesses" property="rdfs:label"></span>
               ${this.processesPoorlyJustifiedCount
@@ -78,12 +85,6 @@ export default class ProcessOverview extends Component(HTMLElement) {
                 ? html`<span class="align-top badge bg-secondary">${this.processesNoDocumentCount}</span>`
                 : ''
               }
-            </button>
-          </li>
-          <li class="nav-item">
-            <button id="documents" on:click="${(e) => this.toggleView(e)}" class="nav-link ${this.activeTab === 'documents' ? 'active disabled' : 'text-secondary-emphasis'}">
-              <span about="v-bpa:ProcessDocuments" property="rdfs:label"></span>
-              <!--span class="align-top badge bg-secondary">${this.documentsCount}</span-->
             </button>
           </li>
           <li class="nav-item">
@@ -104,10 +105,11 @@ export default class ProcessOverview extends Component(HTMLElement) {
             <${ProcessQuickCreateModal}></${ProcessQuickCreateModal}>
             `
           : html`
-            <a href="#/DocumentEdit" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
+            <a href="#document-upload-modal" data-bs-toggle="modal" data-bs-target="#document-upload-modal" class="btn btn-link text-dark text-decoration-none ms-auto me-3">
               <i class="bi bi-plus me-1"></i>
               <span about="v-bpa:AddProcessDocument" property="rdfs:label"></span>
-            </a>`
+            </a>
+            <${DocumentUploadModal}></${DocumentUploadModal}>`
         }
       </div>
       ${this.activeTab === 'clusters'

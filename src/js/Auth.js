@@ -26,6 +26,7 @@ export default class Auth extends Component(HTMLElement) {
   }
 
   handleAuthSuccess () {
+    document.cookie = `ticket=${localStorage.ticket}; expires=${localStorage.expires}; path=/; secure; httponly`;
     // Activity handler
     let lastActivity = Date.now();
     const activityHandler = () => {
@@ -67,6 +68,7 @@ export default class Auth extends Component(HTMLElement) {
   }
 
   handleAuthError () {
+    document.cookie = `ticket=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     document.querySelector(`${App}`).removeAttribute('authenticated');
     this.handleLoginError();
   }

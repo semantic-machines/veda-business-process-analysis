@@ -15,7 +15,7 @@ class Spinner extends Component(HTMLElement) {
       <style>
         ${Spinner} .overlay {
           position: fixed;
-          z-index: 1000;
+          z-index: 9999;
           top: 0;
           left: 0;
           bottom: 0;
@@ -38,7 +38,7 @@ class Spinner extends Component(HTMLElement) {
           </div>
         </div>
       </div>
-    ` 
+    `
   }
 }
 
