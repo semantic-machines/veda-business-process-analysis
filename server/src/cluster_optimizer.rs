@@ -60,7 +60,7 @@ pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, 
     let rt = Runtime::new()?;
     let optimization_result = rt.block_on(async { send_structured_request_to_ai(module, parameters, ClientType::Default).await })?;
 
-    info!("@ optimization_result={:?}", optimization_result);
+    //info!("@ optimization_result={:?}", optimization_result);
 
     let mut cluster_indv = Individual::default();
     if module.backend.storage.get_individual(cluster_id, &mut cluster_indv) != ResultCode::Ok {

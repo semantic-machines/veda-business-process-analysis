@@ -247,3 +247,52 @@ v-bpa:SectionJobDutiesAndObligations
   rdfs:label "Должностные обязанности и функции"@ru ;
   rdfs:label "Job Duties and Obligations"@en ;
 .
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+
+# Tag class for document status
+v-bpa:DocumentStatusTag
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Document status tag"@en ;
+  rdfs:label "Тег состояния документа"@ru ;
+.
+
+# New document tag
+v-bpa:NewDocumentTag
+  rdf:type v-bpa:DocumentStatusTag ;
+  rdfs:label "new"@en ;
+  rdfs:label "новый"@ru ;
+  v-s:shortLabel "N"@en ;
+  v-s:shortLabel "Н"@ru ;
+  rdfs:comment "Tag for newly created documents"@en ;
+  rdfs:comment "Тег для новых документов"@ru ;
+.
+
+# Modified document tag
+v-bpa:ModifiedDocumentTag
+  rdf:type v-bpa:DocumentStatusTag ;
+  rdfs:label "modified"@en ;
+  rdfs:label "изменен"@ru ;
+  v-s:shortLabel "M"@en ;
+  v-s:shortLabel "И"@ru ;
+  rdfs:comment "Tag for modified documents"@en ;
+  rdfs:comment "Тег для измененных документов"@ru ;
+.
+
+# Property for linking document with tags
+v-bpa:hasStatusTag
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Has status tag"@en ;
+  rdfs:label "Имеет тег статуса"@ru ;
+  rdfs:domain v-bpa:ProcessDocument ;
+  rdfs:range v-bpa:DocumentStatusTag ;
+  rdfs:comment "Links document with its status tags"@en ;
+  rdfs:comment "Связывает документ с тегами статуса"@ru ;
+.
+

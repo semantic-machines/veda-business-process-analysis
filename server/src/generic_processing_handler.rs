@@ -310,6 +310,26 @@ fn process_structured_schema(
             error!("Failed to update request status: {:?}", e);
             return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request status: {:?}", e))));
         }
+
+        if status == "v-bpa:Completed" {
+            // Check if request has parent and notify completion
+            if let Some(parent_link) = request.get_first_literal("v-s:hasParentLink") {
+                let mut parent = Individual::default();
+                if module.backend.storage.get_individual(&parent_link, &mut parent) == ResultCode::Ok {
+                    info!("Updating parent with request completion: {}", parent_link);
+
+                    // Create update to set request status in parent
+                    let mut update = Individual::default();
+                    update.set_id(&parent_link);
+                    update.set_uri("v-bpa:hasCompletedRequest", request.get_id());
+
+                    // Send update to parent
+                    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "", IndvOp::SetIn, &mut update) {
+                        error!("Failed to update parent with completion status: {:?}", e);
+                    }
+                }
+            }
+        }
     }
 
     // Final update of request

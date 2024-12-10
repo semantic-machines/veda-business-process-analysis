@@ -4,9 +4,9 @@ use crate::business_process_handler::analyze_process_justification;
 use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
 use crate::generic_processing_handler::process_generic_request;
-use crate::pipeline::extraction_partitioning::{create_target_individual, process_extraction_and_partitioning};
 use crate::pipeline::process_extraction;
 use crate::pipeline::process_extraction::process_extraction_pipeline;
+use crate::pipeline::raw_document_extracting_and_structuring::raw_document_extracting_and_structuring;
 use openai_dive::v1::api::Client;
 use v_common::ft_xapian::xapian_reader::XapianReader;
 use v_common::module::info::ModuleInfo;
@@ -130,14 +130,14 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
             error!("Error processing generic request: {:?}", e);
         }
 
-        if let Err(e) = process_extraction_and_partitioning(module, &mut new_state) {
-            error!("Error processing extraction and summarization pipeline: {:?}", e);
-        }
+        //if let Err(e) = process_extraction_and_partitioning(module, &mut new_state) {
+        //    error!("Error processing extraction and summarization pipeline: {:?}", e);
+        //}
 
         // Run target individual creation pipeline
-        if let Err(e) = create_target_individual(module, &mut new_state) {
-            error!("Error creating target individual: {:?}", e);
-        }
+        //if let Err(e) = create_target_individual(module, &mut new_state) {
+        //    error!("Error creating target individual: {:?}", e);
+        //}
 
         // Inside prepare_queue_element function, add new condition:
     } else if new_state.any_exists("rdf:type", &[&"v-bpa:ProcessExtractionPipeline".to_string()]) {
@@ -150,6 +150,16 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         if let Err(e) = process_extraction_pipeline(module, &mut new_state) {
             error!("Error processing extraction pipeline: {:?}", e);
             process_extraction::handle_pipeline_error(module, &mut new_state, e);
+        }
+    } else if new_state.any_exists("rdf:type", &[&"v-bpa:RawDocumentExtractingAndStructuringPipeline".to_string()]) {
+        if source == "BPA" {
+            return Ok(true);
+        }
+
+        info!("Found document processing pipeline: {}", new_state.get_id());
+        if let Err(e) = raw_document_extracting_and_structuring(module, &mut new_state) {
+            error!("Error processing document pipeline: {:?}", e);
+            // Handle error...
         }
     }
 
