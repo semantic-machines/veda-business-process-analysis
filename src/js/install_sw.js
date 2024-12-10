@@ -13,12 +13,26 @@ if ('serviceWorker' in navigator) {
   wrapper.innerHTML = HTML;
   document.body.insertBefore(wrapper, document.body.firstChild);
 
+
   // Install SW
   navigator.serviceWorker.register('ServiceWorker.js', {scope: window.location})
     .then((registration) => {
       console.log('Service worker registered:', registration.scope);
+
+      // Обработка обновления service worker
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Есть новое обновление
+            if (confirm('Доступно обновление приложения. Обновить сейчас?')) {
+              window.location.reload();
+            }
+          }
+        });
+      });
     })
-    .catch((error) => console.error('Service worker registration failed'));
+    .catch((error) => console.error('Service worker registration failed', error));
 
   // Install application prompt
   const showAddToHomeScreen = () => {
