@@ -113,7 +113,7 @@ export default class ClusterView extends Component(HTMLElement) {
                 <div class="mb-3">
                   <p class="mb-0 text-muted" about="v-bpa:BusinessProcess" property="rdfs:label"></p>
                   <h3 class="mb-0">
-                    <i class="bi bi-diagram-3 me-2"></i>
+                    <i class="bi bi-gear me-2"></i>
                     <span class="me-3" property="v-bpa:proposedClusterName"></span>
                   </h3>
                   <${ProcessJustificationIndicator} about="v-bpa:CompletelyJustified" property="rdfs:comment"></${ProcessJustificationIndicator}>

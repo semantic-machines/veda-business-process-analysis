@@ -110,7 +110,7 @@ export default class ProcessList extends Component(HTMLElement) {
     return html`
       <div class="sheet">
         <div class="d-flex align-items-center">
-          <i class="bi bi-diagram-3 ms-2 me-3 fs-1"></i>
+          <i class="bi bi-gear ms-2 me-3 fs-1"></i>
           <h3 class="mb-1 me-5" about="v-bpa:BusinessProcesses" property="rdfs:label"></h3>
           ${this.poorlyJustified
             ? html`<strong class="text-danger me-2" about="v-bpa:PoorlyJustified" property="rdfs:comment"></strong><span class="badge bg-danger">${this.poorlyJustified}</span>`

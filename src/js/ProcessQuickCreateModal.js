@@ -120,7 +120,7 @@ export default class ProcessQuickCreateModal extends Component(HTMLElement) {
             <div class="modal-body">
               <div class="d-flex justify-content-between">
                 <h3 class="mb-1">
-                  <i class="bi bi-diagram-3 me-2"></i>
+                  <i class="bi bi-gear me-2"></i>
                   <span about="v-bpa:ProcessQuickCreate" property="rdfs:label"></span>
                 </h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

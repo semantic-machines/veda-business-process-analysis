@@ -26,7 +26,7 @@ export default class ProcessEdit extends Component(HTMLElement) {
     return html`
       <div class="sheet">
         <h3 class="mb-1">
-          <i class="bi bi-diagram-3 me-2"></i>
+          <i class="bi bi-gear me-2"></i>
           <span about="v-bpa:BusinessProcess" property="rdfs:label"></span>
         </h3>
         <div class="row">

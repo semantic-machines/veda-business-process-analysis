@@ -53,6 +53,8 @@ v-bpa:documentType
   rdf:type owl:FunctionalProperty ;
   rdfs:label "Тип документа"@ru ;
   rdfs:label "Document type"@en ;
+  rdfs:comment "Тип"@ru ;
+  rdfs:comment "Type"@en ;
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
 .
@@ -62,6 +64,8 @@ v-bpa:documentSource
   rdf:type owl:FunctionalProperty ;
   rdfs:label "Источник документа"@ru ;
   rdfs:label "Document source"@en ;
+  rdfs:comment "Источник"@ru ;
+  rdfs:comment "Source"@en ;
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
 .
@@ -69,6 +73,7 @@ v-bpa:documentSource
 v-bpa:documentDepartment
   rdf:type owl:DatatypeProperty ;
   rdf:type owl:FunctionalProperty ;
+  rdfs:label "Подразделение"@ru ;
   rdfs:label "Department"@en ;
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
@@ -79,6 +84,8 @@ v-bpa:documentSignedDate
   rdf:type owl:FunctionalProperty ;
   rdfs:label "Дата подписи документа"@ru ;
   rdfs:label "Document signed date"@en ;
+  rdfs:comment "Дата"@ru ;
+  rdfs:comment "Date"@en ;
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:dateTime ;
 .
@@ -88,6 +95,8 @@ v-bpa:documentDate
   rdf:type owl:FunctionalProperty ;
   rdfs:label "Дата документа"@ru ;
   rdfs:label "Document date"@en ;
+  rdfs:comment "Дата"@ru ;
+  rdfs:comment "Date"@en ;
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:dateTime ;
 .
@@ -97,6 +106,8 @@ v-bpa:documentSignedBy
   rdf:type owl:FunctionalProperty ;
   rdfs:label "Подписант"@ru ;
   rdfs:label "Signed by"@en ;
+  rdfs:comment "Подписант"@ru ;
+  rdfs:comment "Signed by"@en ;
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
 .
@@ -105,6 +116,8 @@ v-bpa:documentErrors
   rdf:type owl:DatatypeProperty ;
   rdfs:label "Ошибки обработки документа"@ru ;
   rdfs:label "Document processing errors"@en ;
+  rdfs:comment "Ошибки"@ru ;
+  rdfs:comment "Errors"@en ;
   rdfs:domain v-bpa:ProcessDocument ;
   rdfs:range xsd:string ;
 .

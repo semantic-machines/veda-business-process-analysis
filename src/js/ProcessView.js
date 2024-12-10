@@ -32,11 +32,11 @@ export default class ProcessView extends Component(HTMLElement) {
     return html`
       <div class="sheet">
         <div class="row">
-          <div class="col-12 col-md-8">
+          <div class="col-12 col-md-9">
             <div class="mb-3">
               <p class="mb-0 text-muted" about="v-bpa:BusinessProcess" property="rdfs:label"></p>
               <h3 class="mb-0">
-                <i class="bi bi-diagram-3 me-2"></i>
+                <i class="bi bi-gear me-2"></i>
                 <span class="me-3" property="rdfs:label"></span>
               </h3>
               <span class="me-3 align-middle" rel="v-bpa:hasProcessJustification">
@@ -47,7 +47,7 @@ export default class ProcessView extends Component(HTMLElement) {
             <p class="mb-0 text-muted" about="v-bpa:processDescription" property="rdfs:label"></p>
             <p property="v-bpa:processDescription"></p>
           </div>
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-3">
             <div class="accordion" id="ProcessViewAccordion">
               <style>
                 #ProcessViewAccordion .accordion-button:after {
@@ -57,7 +57,7 @@ export default class ProcessView extends Component(HTMLElement) {
                   border-color: #aaa;
                 }
               </style>
-              <div class="accordion-item" style="padding:1rem 1.25rem;>
+              <div class="accordion-item" style="padding:1rem 1.25rem;">
                 <h5 class="accordion-header">
                   <p class="mb-0 text-muted" about="v-bpa:responsibleDepartment" property="rdfs:comment"></p>
                   <p class="mb-0 fw-bold" property="v-bpa:responsibleDepartment"></p>
