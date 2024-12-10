@@ -28,6 +28,8 @@ mod extractors;
 mod generic_processing_handler;
 mod pipeline;
 
+mod document_status_handler;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct ApiConfig {
     api_key: String,

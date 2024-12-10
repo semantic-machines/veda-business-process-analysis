@@ -3,6 +3,7 @@
 use crate::business_process_handler::analyze_process_justification;
 use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
+use crate::document_status_handler::handle_document_status;
 use crate::generic_processing_handler::process_generic_request;
 use crate::pipeline::process_extraction;
 use crate::pipeline::process_extraction::process_extraction_pipeline;
@@ -169,6 +170,15 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
                     warn!("Unknown pipeline type: {}", pipeline_type);
                 },
             }
+        }
+    } else if new_state.any_exists("rdf:type", &["v-bpa:ProcessDocument"]) {
+        if source == "BPA" {
+            return Ok(true);
+        }
+
+        info!("Processing document status for {}", new_state.get_id());
+        if let Err(e) = handle_document_status(module, &mut new_state) {
+            error!("Error handling document status: {:?}", e);
         }
     }
 
