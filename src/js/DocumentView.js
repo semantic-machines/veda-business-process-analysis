@@ -81,7 +81,7 @@ export default class DocumentView extends Component(HTMLElement) {
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="false" aria-controls="collapse1">
-                    <div class="me-auto fw-bold" about="v-bpa:documentSource" property="rdfs:comment"></div>
+                    <div class="me-3 fw-bold" about="v-bpa:documentSource" property="rdfs:comment"></div>
                     <div class="ms-auto">
                       <span property="v-bpa:documentSource"></span>
                     </div>
