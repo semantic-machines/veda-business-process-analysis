@@ -7,6 +7,57 @@ use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
+// Stage weights for progress calculation
+const TEXT_EXTRACTION_WEIGHT: f32 = 0.4; // 40% for text extraction
+const DOCUMENT_ANALYSIS_WEIGHT: f32 = 0.6; // 60% for document analysis
+
+/// Gets progress from child process
+fn get_child_progress(module: &mut BusinessProcessAnalysisModule, child_id: &str) -> f32 {
+    if let Some(mut child) = module.backend.get_individual_s(child_id) {
+        if let Some(progress) = child.get_first_integer("v-bpa:percentComplete") {
+            return progress as f32 / 100.0;
+        }
+    }
+    0.0
+}
+
+/// Updates pipeline progress including child process progress
+fn update_pipeline_progress(
+    module: &mut BusinessProcessAnalysisModule,
+    pipeline: &mut Individual,
+    current_stage: &str,
+    stage_progress: f32,
+    child_id: Option<&str>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Get child progress if available
+    let child_progress = if let Some(id) = child_id {
+        get_child_progress(module, id)
+    } else {
+        stage_progress
+    };
+
+    // Calculate total progress based on stage weights and current progress
+    let total_progress = match current_stage {
+        "text_extraction" => child_progress * TEXT_EXTRACTION_WEIGHT,
+        "document_analysis" => TEXT_EXTRACTION_WEIGHT + (child_progress * DOCUMENT_ANALYSIS_WEIGHT),
+        _ => 0.0,
+    };
+
+    // Convert to percentage (0-100) and round to integer
+    let progress_percent = (total_progress * 100.0).round() as i64;
+
+    // Update pipeline progress
+    pipeline.set_integer("v-bpa:percentComplete", progress_percent);
+
+    // Save updated progress
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline) {
+        error!("Failed to update pipeline progress: {:?}", e);
+        return Err(format!("Failed to update pipeline progress: {:?}", e).into());
+    }
+
+    Ok(())
+}
+
 pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnalysisModule, pipeline: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     info!("=== Starting Document Processing Pipeline ===");
     info!("Pipeline request ID: {}", pipeline.get_id());
@@ -43,6 +94,9 @@ pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnaly
             pipeline.set_uri("v-bpa:hasNextStage", &request_id);
             pipeline.set_datetime("v-bpa:startDate", Utc::now().timestamp());
 
+            // Set initial progress
+            update_pipeline_progress(module, pipeline, "text_extraction", 0.0, None)?;
+
             if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, pipeline.get_id(), "", IndvOp::SetIn, pipeline) {
                 error!("Failed to update pipeline status: {:?}", e);
                 return Err(format!("Failed to update pipeline: {:?}", e).into());
@@ -55,6 +109,9 @@ pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnaly
                 if module.backend.storage.get_individual(&next_stage_id, &mut next_stage) != ResultCode::Ok {
                     return Err(format!("Failed to load next stage: {}", next_stage_id).into());
                 }
+
+                // Update progress based on extraction status and child progress
+                update_pipeline_progress(module, pipeline, "text_extraction", 0.0, Some(&next_stage_id))?;
 
                 if next_stage.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
                     // Create document analysis request
@@ -98,6 +155,9 @@ pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnaly
                 if module.backend.storage.get_individual(&next_stage_id, &mut next_stage) != ResultCode::Ok {
                     return Err(format!("Failed to load next stage: {}", next_stage_id).into());
                 }
+
+                // Update progress based on analysis status and child progress
+                update_pipeline_progress(module, pipeline, "document_analysis", 0.0, Some(&next_stage_id))?;
 
                 if next_stage.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
                     info!("Document analysis completed, finalizing pipeline...");

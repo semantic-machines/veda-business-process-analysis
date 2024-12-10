@@ -30,6 +30,8 @@ mod pipeline;
 
 mod document_status_handler;
 
+mod process_structured_schema;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct ApiConfig {
     api_key: String,
