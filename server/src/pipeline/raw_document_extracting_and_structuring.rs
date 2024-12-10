@@ -8,7 +8,7 @@ use v_common::v_api::obj::ResultCode;
 
 pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnalysisModule, pipeline: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
     info!("=== Starting Document Processing Pipeline ===");
-    info!("Pipeline ID: {}", pipeline.get_id());
+    info!("Pipeline request ID: {}", pipeline.get_id());
 
     // Get current stage
     let current_stage = pipeline.get_first_literal("v-bpa:currentStage").unwrap_or_default();

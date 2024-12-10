@@ -151,15 +151,24 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
             error!("Error processing extraction pipeline: {:?}", e);
             process_extraction::handle_pipeline_error(module, &mut new_state, e);
         }
-    } else if new_state.any_exists("rdf:type", &[&"v-bpa:RawDocumentExtractingAndStructuringPipeline".to_string()]) {
+    } else if new_state.any_exists("rdf:type", &["v-bpa:PipelineRequest"]) {
         if source == "BPA" {
             return Ok(true);
         }
 
-        info!("Found document processing pipeline: {}", new_state.get_id());
-        if let Err(e) = raw_document_extracting_and_structuring(module, &mut new_state) {
-            error!("Error processing document pipeline: {:?}", e);
-            // Handle error...
+        // Проверяем тип запрашиваемого пайплайна
+        if let Some(pipeline_type) = new_state.get_first_literal("v-bpa:pipeline") {
+            match pipeline_type.as_str() {
+                "v-bpa:RawDocumentExtractingAndStructuringPipeline" => {
+                    info!("Processing raw document pipeline request: {}", new_state.get_id());
+                    if let Err(e) = raw_document_extracting_and_structuring(module, &mut new_state) {
+                        error!("Error processing raw document pipeline request: {:?}", e);
+                    }
+                },
+                _ => {
+                    warn!("Unknown pipeline type: {}", pipeline_type);
+                },
+            }
         }
     }
 

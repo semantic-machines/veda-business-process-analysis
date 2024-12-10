@@ -1,0 +1,120 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix v-s: <http://semantic-machines.com/veda/veda-schema/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix v-bpa: <http://semantic-machines.com/veda/veda-business-process-analysis/> .
+@prefix d: <http://semantic-machines.com/veda/veda-data/> .
+
+v-bpa:Pipeline
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Pipeline"@en ;
+  rdfs:label "Пайплайн"@ru ;
+  rdfs:comment "Base class for all pipeline types"@en ;
+  rdfs:comment "Базовый класс для всех пайплайнов"@ru ;
+.
+
+# Pipeline request class
+v-bpa:PipelineRequest
+  rdf:type owl:Class ;
+  rdfs:subClassOf v-s:UserThing ;
+  rdfs:label "Pipeline Request"@en ;
+  rdfs:label "Запрос на выполнение пайплайна"@ru ;
+  rdfs:comment "Request for executing pipeline with specific input data"@en ;
+  rdfs:comment "Запрос на выполнение пайплайна с конкретными входными данными"@ru ;
+.
+
+# Pipeline reference
+v-bpa:pipeline
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Pipeline"@en ;
+  rdfs:label "Пайплайн"@ru ;
+  rdfs:domain v-bpa:PipelineRequest ;
+  rdfs:range v-bpa:Pipeline ;
+  rdfs:comment "Reference to pipeline to execute"@en ;
+  rdfs:comment "Ссылка на пайплайн для выполнения"@ru ;
+.
+
+# Common pipeline properties
+v-bpa:hasExecutionState
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Execution state"@en ;
+  rdfs:label "Состояние выполнения"@ru ;
+  rdfs:domain v-bpa:BasePipeline ;
+  rdfs:range v-bpa:ExecutionState ;
+.
+
+v-bpa:hasNextStage
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Next stage request"@en ;
+  rdfs:label "Запрос следующего этапа"@ru ;
+  rdfs:domain v-bpa:BasePipeline ;
+  rdfs:range v-bpa:GenericProcessingRequest ;
+.
+
+v-bpa:currentStage
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Current stage"@en ;
+  rdfs:label "Текущий этап"@ru ;
+  rdfs:domain v-bpa:BasePipeline ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:startDate
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Start date"@en ;
+  rdfs:label "Дата начала"@ru ;
+  rdfs:domain v-bpa:BasePipeline ;
+  rdfs:range xsd:dateTime ;
+.
+
+v-bpa:endDate
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "End date"@en ;
+  rdfs:label "Дата окончания"@ru ;
+  rdfs:domain v-bpa:BasePipeline ;
+  rdfs:range xsd:dateTime ;
+.
+
+v-bpa:percentComplete
+  rdf:type owl:DatatypeProperty ;
+  rdf:type owl:FunctionalProperty ;  
+  rdfs:label "Percent complete"@en ;
+  rdfs:label "Процент выполнения"@ru ;
+  rdfs:domain v-bpa:BasePipeline ;
+  rdfs:range xsd:integer ;
+  rdfs:comment "Pipeline completion percentage from 0 to 100"@en ;
+  rdfs:comment "Процент выполнения пайплайна от 0 до 100"@ru ;
+.
+
+v-bpa:pipeline
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Pipeline type"@en ;
+  rdfs:label "Тип пайплайна"@ru ;
+  rdfs:domain v-bpa:PipelineRequest ;
+  rdfs:range owl:Class ;
+  rdfs:comment "Type of pipeline to execute"@en ;
+  rdfs:comment "Тип пайплайна для выполнения"@ru ;
+.
+
+v-bpa:hasCreatedPipeline
+  rdf:type owl:ObjectProperty ;
+  rdfs:label "Created pipeline"@en ;
+  rdfs:label "Созданный пайплайн"@ru ;
+  rdfs:domain v-bpa:PipelineRequest ;
+  rdfs:range v-bpa:BasePipeline ;
+  rdfs:comment "Reference to created pipeline instance"@en ;
+  rdfs:comment "Ссылка на созданный экземпляр пайплайна"@ru ;
+.
+
+# ----------
+
+# Pipeline instances
+v-bpa:RawDocumentExtractingAndStructuringPipeline
+  rdf:type v-bpa:Pipeline ;
+  rdfs:label "Raw Document Extracting and Structuring Pipeline"@en ;
+  rdfs:label "Пайплайн извлечения и структурирования сырых документов"@ru ;
+  rdfs:comment "Extracts text from raw documents and converts them into structured ProcessDocument"@en ;
+  rdfs:comment "Извлекает текст из сырых документов и преобразует их в структурированный ProcessDocument"@ru ;
+.
