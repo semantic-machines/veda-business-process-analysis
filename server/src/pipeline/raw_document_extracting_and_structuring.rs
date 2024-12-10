@@ -1,3 +1,4 @@
+use crate::document_status_handler::reset_document_status;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use chrono::Utc;
 use uuid::Uuid;
@@ -115,6 +116,11 @@ pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnaly
                     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline) {
                         error!("Failed to update pipeline status: {:?}", e);
                         return Err(format!("Failed to update pipeline: {:?}", e).into());
+                    }
+
+                    // Reset status tags as document was processed
+                    if let Err(e) = reset_document_status(module, &result_id) {
+                        warn!("Failed to reset document status: {:?}", e);
                     }
 
                     info!("Pipeline completed successfully");
