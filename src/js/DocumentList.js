@@ -81,6 +81,10 @@ export default class DocumentList extends Component(HTMLElement) {
     this.querySelector(`${DocumentFiltersModal}`).addEventListener('filters-changed', this.handleFiltersChange);
   }
 
+  removed () {
+    this.querySelector(`${DocumentFiltersModal}`).removeEventListener('filters-changed', this.handleFiltersChange);
+  }
+
   render() {
     return html`
       <div class="sheet">

@@ -106,6 +106,10 @@ export default class ProcessList extends Component(HTMLElement) {
     this.querySelector(`${ProcessFiltersModal}`).addEventListener('filters-changed', this.handleFiltersChange);
   }
 
+  removed () {
+    this.querySelector(`${ProcessFiltersModal}`).removeEventListener('filters-changed', this.handleFiltersChange);
+  }
+
   render() {
     return html`
       <div class="sheet">
