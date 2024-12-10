@@ -211,11 +211,12 @@ v-bpa:AllProcessDocuments
   v-s:queryString """
     SELECT
       id,
-      arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_documentName_str)) as "v-bpa:documentName",
-      arrayFirst(x -> x is NOT null,  arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_documentContent_str)) as "v-bpa:documentContent",
+      arrayFirst(x -> x is NOT null, arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_documentTitle_str)) as "v-bpa:documentTitle",
+      v_bpa_documentType_str[1] as "v-bpa:documentType",
+      v_bpa_hasDepartment_str[1] as "v-bpa:hasDepartment",
       v_s_created_date[1] as "v-s:created"
     FROM veda_tt."v-bpa:ProcessDocument" FINAL
-    ORDER BY "v-bpa:documentName" ASC
+    ORDER BY "v-bpa:hasDepartment" ASC, "v-bpa:documentTitle" ASC
   """ ;
 .
 

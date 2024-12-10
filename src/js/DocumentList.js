@@ -1,6 +1,7 @@
 import {Component, html, safe, Backend, Model} from 'veda-client';
 import DocumentFiltersModal from './DocumentFiltersModal.js';
 import DocumentUploadModal from './DocumentUploadModal.js';
+import Literal from './Literal.js';
 
 export default class DocumentList extends Component(HTMLElement) {
   static tag = 'bpa-document-list';
@@ -59,11 +60,14 @@ export default class DocumentList extends Component(HTMLElement) {
     const container = this.querySelector('#filtered-documents');
     const fragment = document.createDocumentFragment();
     this.filtered.forEach(([...values]) => {
-      const [id, name, content, created] = safe(values);
+      const [id, title, type, department, created] = safe(values);
       const row = document.createElement('tr');
       row.onclick = () => location.hash = `#/DocumentView/${id}`;
+      row.setAttribute('about', id);
       row.innerHTML = `
-        <td class="align-middle"><h5 class="mb-0">${name}</h5><p class="text-muted mb-0">${content && content.length > 120 ? content.slice(0, 120) + '...' : content}</p></td>
+        <td class="align-middle"><h5 class="mb-0">${title}</h5></td>
+        <td class="align-middle">${type}</td>
+        <td class="align-middle"><${Literal} about="${department}" property="rdfs:label"></${Literal}></td>
         <td class="align-middle text-end">${new Date(created).toLocaleDateString('ru-RU')}</td>
       `;
       fragment.appendChild(row);
@@ -100,7 +104,9 @@ export default class DocumentList extends Component(HTMLElement) {
           <table class="table table-hover mb-0" id="documents-table">
             <thead>
               <tr>
-                <th width="100%" class="text-secondary fw-normal" about="v-bpa:documentName" property="rdfs:label"></th>
+                <th width="50%" class="text-secondary fw-normal" about="v-bpa:documentTitle" property="rdfs:label"></th>
+                <th width="25%" class="text-secondary fw-normal text-nowrap" about="v-bpa:documentType" property="rdfs:label"></th>
+                <th width="25%" class="text-secondary fw-normal text-nowrap" about="v-bpa:hasDepartment" property="rdfs:label"></th>
                 <th class="text-secondary fw-normal text-end text-nowrap" about="v-s:created" property="rdfs:label"></th>
               </tr>
             </thead>

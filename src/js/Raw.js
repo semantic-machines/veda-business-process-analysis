@@ -132,48 +132,6 @@ export default class Raw extends Component(HTMLElement) {
 
 customElements.define(Raw.tag, Raw);
 
-const handleMouseMove = (e) => {
-  if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    document.querySelectorAll('[about]').forEach(el => {
-      el.style.outline = '';
-      el.removeAttribute('title');
-    });
-
-    const target = e.target.closest('[about]');
-    if (target) {
-      target.style.outline = '2px solid #007bff';
-      target.style.outlineOffset = '2px';
-      target.title = target.getAttribute('about');
-    }
-  }
-};
-
-const handleClick = (e) => {
-  if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
-    e.preventDefault();
-    const target = e.target.closest('[about]');
-    if (target) {
-      location.hash = `#/Raw/${target.getAttribute('about')}`;
-    }
-  }
-};
-
-const handleKeyUp = (e) => {
-  if (['Alt','Control','Meta'].includes(e.key)) {
-    document.querySelectorAll('[about]').forEach(el => {
-      el.style.outline = '';
-      el.removeAttribute('title');
-    });
-  }
-};
-
-document.addEventListener('mousemove', handleMouseMove, true);
-document.addEventListener('click', handleClick, true);
-document.addEventListener('keyup', handleKeyUp);
-
 function toJSON(model) {
   return safe(JSON.stringify(model, null, 2))
 }
@@ -192,3 +150,59 @@ function toTurtle(model) {
       }).join('\n');
     }).filter(Boolean).join('\n');
 }
+
+const setOutline = (e) => {
+  if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const about = e.target.closest('[about]');
+    if (about) {
+      about.style.outline = '2px solid #007bff';
+      about.title = about.getAttribute('about');
+      about.classList.add('outlined');
+    }
+  }
+}
+
+const removeOutline = (e) => {
+  if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const about = e.target.closest('.outlined[about]');
+    if (about) {
+      about.style.outline = '';
+      about.title = '';
+      about.classList.remove('outlined');
+    }
+  }
+}
+
+const handleKeyUp = (e) => {
+  if (['Alt','Control','Meta'].includes(e.key)) {
+    Array.from(document.querySelectorAll('.outlined[about]')).forEach(about => {
+      about.style.outline = '';
+      about.title = '';
+      about.classList.remove('outlined');
+    });
+  }
+};
+
+const handleClick = (e) => {
+  if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const about = e.target.closest('[about]');
+    if (about) {
+      location.hash = `#/Raw/${about.getAttribute('about')}`;
+    }
+  }
+};
+
+document.addEventListener('mouseover', setOutline, true);
+document.addEventListener('mouseout', removeOutline, true);
+document.addEventListener('keyup', handleKeyUp, true);
+document.addEventListener('click', handleClick, true);
