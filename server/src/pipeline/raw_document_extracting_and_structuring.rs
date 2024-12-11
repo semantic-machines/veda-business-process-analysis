@@ -243,6 +243,16 @@ fn raw_document_extracting_and_structuring_internal(
                 }
 
                 if !request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
+                    // Check for failed status
+                    if request.any_exists("v-bpa:processingStatus", &["v-bpa:Failed"]) {
+                        if let Some(error) = request.get_first_literal("v-bpa:lastError") {
+                            error!("Pipeline [{}]: request [{}] failed with error: {}", pipeline.get_id(), request_id, error);
+                            return Err(format!("Content recognition failed: {}", error).into());
+                        } else {
+                            error!("Pipeline [{}]: request [{}] failed without error details", pipeline.get_id(), request_id);
+                            return Err("Content recognition failed without details".into());
+                        }
+                    }
                     all_completed = false;
                     continue;
                 }
@@ -311,8 +321,19 @@ fn raw_document_extracting_and_structuring_internal(
             let stage_progress = if request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
                 1.0
             } else {
+                // Check for failed status
+                if request.any_exists("v-bpa:processingStatus", &["v-bpa:Failed"]) {
+                    if let Some(error) = request.get_first_literal("v-bpa:lastError") {
+                        error!("Pipeline [{}]: document analysis request [{}] failed with error: {}", pipeline.get_id(), request_id, error);
+                        return Err(format!("Document analysis failed: {}", error).into());
+                    } else {
+                        error!("Pipeline [{}]: document analysis request [{}] failed without error details", pipeline.get_id(), request_id);
+                        return Err("Document analysis failed without details".into());
+                    }
+                }
                 0.0
             };
+
             update_pipeline_progress(module, &mut pipeline, "document_analysis", stage_progress, None)?;
 
             if !request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
