@@ -21,8 +21,13 @@ export default class ProcessView extends Component(HTMLElement) {
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:ProcessInLastAttemptClusters';
     params['v-bpa:hasProcess'] = this.model.id;
-    const {id: [cluster]} = await Backend.stored_query(params);
-    this.cluster = cluster;
+    try {
+      const {id: [cluster]} = await Backend.stored_query(params);
+      this.cluster = cluster;
+    } catch (e) {
+      console.error('Ошибка при запросе кластеров процесса', e);
+      this.cluster = null;
+    }
   }
 
   render() {

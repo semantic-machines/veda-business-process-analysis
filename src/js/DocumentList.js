@@ -11,8 +11,13 @@ export default class DocumentList extends Component(HTMLElement) {
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:AllProcessDocuments';
     params['v-s:resultFormat'] = 'rows';
-    const {rows: documents} = await Backend.stored_query(params);
-    this.documents = documents;
+    try {
+      const {rows: documents} = await Backend.stored_query(params);
+      this.documents = documents;
+    } catch (e) {
+      console.error('Error querying documents', e);
+      this.documents = [];
+    }
     this.filtersData = null;
     this.filtered = this.documents;
   }
@@ -27,15 +32,20 @@ export default class DocumentList extends Component(HTMLElement) {
     if (!this.filtersData) {
       this.filtered = this.documents;
     } else {
-      this.filtered = this.documents.filter(([id, name, content, created]) => {
-        // Фильтр по названию
-        if (this.filtersData['v-bpa:documentName_filter'] && this.filtersData['v-bpa:documentName_filter'][0] &&
-            !name.toLowerCase().includes(this.filtersData['v-bpa:documentName_filter'][0].toLowerCase())) {
+      this.filtered = this.documents.filter(([id, title, type, department, created]) => {
+        // Фильтр по названию документа
+        if (this.filtersData['v-bpa:documentTitle_filter'] && this.filtersData['v-bpa:documentTitle_filter'][0] &&
+            !title.toLowerCase().includes(this.filtersData['v-bpa:documentTitle_filter'][0].toLowerCase())) {
           return false;
         }
-        // Фильтр по содержанию
-        if (this.filtersData['v-bpa:documentContent_filter'] && this.filtersData['v-bpa:documentContent_filter'][0] &&
-            !content.toLowerCase().includes(this.filtersData['v-bpa:documentContent_filter'][0].toLowerCase())) {
+        // Фильтр по типу документа
+        if (this.filtersData['v-bpa:documentType_filter'] && this.filtersData['v-bpa:documentType_filter'][0] &&
+            !type.toLowerCase().includes(this.filtersData['v-bpa:documentType_filter'][0].toLowerCase())) {
+          return false;
+        }
+        // Фильтр по отделу
+        if (this.filtersData['v-bpa:hasDepartment_filter'] && this.filtersData['v-bpa:hasDepartment_filter'][0] &&
+            !department.toLowerCase().includes(this.filtersData['v-bpa:hasDepartment_filter'][0].toLowerCase())) {
           return false;
         }
         // Фильтр по дате создания
@@ -108,10 +118,10 @@ export default class DocumentList extends Component(HTMLElement) {
           <table class="table table-hover mb-0" id="documents-table">
             <thead>
               <tr>
-                <th width="50%" class="text-secondary fw-normal" about="v-bpa:documentTitle" property="rdfs:label"></th>
-                <th width="25%" class="text-secondary fw-normal text-nowrap" about="v-bpa:documentType" property="rdfs:label"></th>
-                <th width="25%" class="text-secondary fw-normal text-nowrap" about="v-bpa:hasDepartment" property="rdfs:label"></th>
-                <th class="text-secondary fw-normal text-end text-nowrap" about="v-s:created" property="rdfs:label"></th>
+                <th width="55%" class="text-secondary fw-normal" about="v-bpa:documentTitle" property="rdfs:label"></th>
+                <th width="15%" class="text-secondary fw-normal text-nowrap" about="v-bpa:documentType" property="rdfs:label"></th>
+                <th width="15%" class="text-secondary fw-normal text-nowrap" about="v-bpa:hasDepartment" property="rdfs:label"></th>
+                <th width="15%" class="text-secondary fw-normal text-end text-nowrap" about="v-s:created" property="rdfs:label"></th>
               </tr>
             </thead>
             <tbody id="filtered-documents"></tbody>

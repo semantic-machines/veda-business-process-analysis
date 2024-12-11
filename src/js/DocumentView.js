@@ -32,8 +32,13 @@ export default class DocumentView extends Component(HTMLElement) {
     params['v-s:storedQuery'] = 'v-bpa:DocumentInProcess';
     params['v-bpa:hasProcessDocument'] = this.model.id;
     params['v-s:resultFormat'] = 'rows';
-    const {rows: processes} = await Backend.stored_query(params);
-    this.processes = processes;
+    try {
+      const {rows: processes} = await Backend.stored_query(params);
+      this.processes = processes;
+    } catch (e) {
+      console.error('Ошибка при запросе процессов документа', e);
+      this.processes = [];
+    }
   }
 
   render() {

@@ -1,8 +1,9 @@
 import {Component, html, Model, Backend, timeout} from 'veda-client';
+import Callback from './Callback.js';
+import ClusterList from './ClusterList.js';
 import ProcessList from './ProcessList.js';
 import DocumentList from './DocumentList.js';
-import ClusterList from './ClusterList.js';
-import Callback from './Callback.js';
+import DocumentProcessingPipelinesList from './DocumentProcessingPipelinesList.js';
 
 export default class ProcessOverview extends Component(HTMLElement) {
   static tag = 'bpa-process-overview';
@@ -103,7 +104,10 @@ export default class ProcessOverview extends Component(HTMLElement) {
           `
         : this.activeTab === 'processes'
         ? html`<${ProcessList} poorly-justified="${this.processesPoorlyJustifiedCount}" no-document="${this.processesNoDocumentCount}"></${ProcessList}>`
-        : html`<${DocumentList}></${DocumentList}>`
+        : html`
+            <${DocumentProcessingPipelinesList}></${DocumentProcessingPipelinesList}>
+            <${DocumentList}></${DocumentList}>
+          `
       }
     `;
   }

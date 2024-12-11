@@ -15,8 +15,13 @@ export default class ProcessList extends Component(HTMLElement) {
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:AllBusinessProcessesOrderedByDepartment';
     params['v-s:resultFormat'] = 'rows';
-    const {rows: processes} = await Backend.stored_query(params);
-    this.processes = processes;
+    try {
+      const {rows: processes} = await Backend.stored_query(params);
+      this.processes = processes;
+    } catch (e) {
+      console.error('Ошибка при запросе бизнес-процессов', e);
+      this.processes = [];
+    }
     this.filtersData = null;
     this.filtered = this.processes;
   }

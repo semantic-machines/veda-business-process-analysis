@@ -97,8 +97,13 @@ class ProcessDocumentAdd extends Component(HTMLElement) {
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:AllProcessDocuments';
     params['v-s:resultFormat'] = 'rows';
-    const {rows: documents} = await Backend.stored_query(params);
-    return documents;
+    try {
+      const {rows: documents} = await Backend.stored_query(params);
+      return documents;
+    } catch (e) {
+      console.error('Ошибка при запросе документов', e);
+      return [];
+    }
   }
 
   async submit(e) {

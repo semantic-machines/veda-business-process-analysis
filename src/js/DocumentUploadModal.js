@@ -1,6 +1,7 @@
 import {Component, html, Model, genUri, guid, decorator, Backend} from 'veda-client';
 import {Modal} from 'bootstrap';
 import spinnerDecorator from './Spinner';
+import state from './State.js';
 
 export default class DocumentUploadModal extends Component(HTMLElement) {
   static tag = 'bpa-document-upload-modal';
@@ -90,6 +91,7 @@ class DocumentUpload extends Component(HTMLElement) {
       this.update();
       await this.createProcessDocumentRequest(fileIndividual);
     }
+    this.dispatchEvent(new CustomEvent('uploaded'));
   });
 
   async createFileIndividual(file) {
@@ -116,7 +118,8 @@ class DocumentUpload extends Component(HTMLElement) {
     request['rdf:type'] = 'v-bpa:PipelineRequest';
     request['v-bpa:pipeline'] = 'v-bpa:RawDocumentExtractingAndStructuringPipeline';
     request['v-s:attachment'] = fileIndividual;
-    return request.save();
+    await request.save();
+    state.documentProcessingPipelines = [...state.documentProcessingPipelines, request.id];
   }
 
   cancel() {

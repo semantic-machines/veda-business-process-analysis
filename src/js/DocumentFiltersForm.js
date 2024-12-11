@@ -18,8 +18,9 @@ export default class DocumentFiltersForm extends Component(HTMLElement) {
     this.data = {};
     const formData = new FormData(this.firstElementChild);
     const formKeys = {
-      'v-bpa:documentName_filter': String,
-      'v-bpa:documentContent_filter': String,
+      'v-bpa:documentTitle_filter': String,
+      'v-bpa:documentType_filter': String,
+      'v-bpa:hasDepartment_filter': String,
       'v-s:created_filter': Array,
       'v-bpa:rawInput': String
     }
@@ -121,12 +122,16 @@ export default class DocumentFiltersForm extends Component(HTMLElement) {
     return html`
       <form on:submit="${(e) => this.submit(e)}" on:reset="${() => this.reset()}">
         <div class="mb-3">
-          <label for="name" class="form-label" about="v-bpa:documentName" property="rdfs:label"></label>
-          <input type="text" class="form-control" id="name" name="v-bpa:documentName_filter" value="${this.data['v-bpa:documentName_filter']?.[0] || ''}">
+          <label for="title" class="form-label" about="v-bpa:documentTitle" property="rdfs:label"></label>
+          <input type="text" class="form-control" id="title" name="v-bpa:documentTitle_filter" value="${this.data['v-bpa:documentTitle_filter']?.[0] || ''}">
         </div>
         <div class="mb-3">
-          <label for="content" class="form-label" about="v-bpa:documentContent" property="rdfs:label"></label>
-          <input type="text" class="form-control" id="content" name="v-bpa:documentContent_filter" value="${this.data['v-bpa:documentContent_filter']?.[0] || ''}">
+          <label for="type" class="form-label" about="v-bpa:documentType" property="rdfs:label"></label>
+          <input type="text" class="form-control" id="type" name="v-bpa:documentType_filter" value="${this.data['v-bpa:documentType_filter']?.[0] || ''}">
+        </div>
+        <div class="mb-3">
+          <label for="department" class="form-label" about="v-bpa:hasDepartment" property="rdfs:label"></label>
+          <input type="text" class="form-control" id="department" name="v-bpa:hasDepartment_filter" value="${this.data['v-bpa:hasDepartment_filter']?.[0] || ''}">
         </div>
         <div class="mb-3">
           <label class="form-label me-2" about="v-s:created" property="rdfs:label"></label>

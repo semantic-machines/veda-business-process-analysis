@@ -69,3 +69,7 @@ h6 {
   padding: 20px;
   margin-bottom: 20px;
 }
+
+table tbody tr:last-child {
+  border-bottom: 1px solid transparent;
+}
