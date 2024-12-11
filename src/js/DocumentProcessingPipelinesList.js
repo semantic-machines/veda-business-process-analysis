@@ -31,6 +31,9 @@ export default class DocumentProcessingPipelinesList extends Component(HTMLEleme
   }
 
   render() {
+    if (!this.pipelines?.length) {
+      return html`<div></div>`;
+    }
     return html`
       <div class="sheet">
         <h3>
