@@ -148,6 +148,29 @@ fn create_processing_request(
 }
 
 pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnalysisModule, pipeline_in_queue: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
+    if let Err(e) = raw_document_extracting_and_structuring_internal(module, pipeline_in_queue) {
+        error!("Processing failed: {:?}", e);
+
+        // Set error status and details
+        pipeline_in_queue.set_uri("v-bpa:processingStatus", "v-bpa:Failed");
+        pipeline_in_queue.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
+
+        // Save error status
+        if let Err(update_err) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline_in_queue) {
+            error!("Failed to update pipeline error status: {:?}", update_err);
+            return Err(format!("Failed to update pipeline: {:?}", update_err).into());
+        }
+
+        return Err(e);
+    }
+
+    Ok(())
+}
+
+fn raw_document_extracting_and_structuring_internal(
+    module: &mut BusinessProcessAnalysisModule,
+    pipeline_in_queue: &mut Individual,
+) -> Result<(), Box<dyn std::error::Error>> {
     info!("=== Pipeline [{}] ===", pipeline_in_queue.get_id());
 
     // reread current state piprline

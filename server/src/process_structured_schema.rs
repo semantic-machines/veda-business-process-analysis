@@ -12,12 +12,13 @@ use openai_dive::v1::resources::chat::{
 use std::fs;
 use std::path::Path;
 use tokio::runtime::Runtime;
+use v_common::onto::datatype::Lang;
 use v_common::onto::individual::Individual;
 use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
-/// Process structured schema data with support for text and image file references
-pub fn process_structured_schema(
+/// Internal implementation of structured schema processing
+fn process_structured_schema_internal(
     module: &mut BusinessProcessAnalysisModule,
     request: &mut Individual,
     prompt_individual: &mut Individual,
@@ -34,7 +35,6 @@ pub fn process_structured_schema(
         // Load attachment individual
         let mut attachment = Individual::default();
         if module.backend.storage.get_individual(&attachment_id, &mut attachment) != ResultCode::Ok {
-            error!("Failed to load attachment {}", attachment_id);
             return Err(format!("Failed to load attachment {}", attachment_id).into());
         }
 
@@ -43,29 +43,21 @@ pub fn process_structured_schema(
 
         info!("Processing attachment with extension: {}", extension);
 
-        // Get file URI and read content
+        // Get file path and read content
         let file_uri = attachment.get_first_literal("v-s:fileUri").ok_or("No file URI in attachment")?;
         let file_path = attachment.get_first_literal("v-s:filePath").ok_or("No file path in attachment")?;
         let full_path = format!("{}/{}", file_path, file_uri);
-        info!("Reading file from path: {}", full_path);
 
-        // Check if file exists
         if !Path::new(&full_path).exists() {
-            error!("File does not exist: {}", full_path);
-            return Err("File not found".into());
+            return Err(format!("File not found: {}", full_path).into());
         }
 
-        // Read file content
-        let content = fs::read(&full_path).map_err(|e| {
-            error!("Failed to read file: {}", e);
-            format!("Failed to read file {}: {}", full_path, e)
-        })?;
+        let content = fs::read(&full_path)?;
+        let encoded = STANDARD.encode(&content);
 
-        let res = STANDARD.encode(&content);
-
-        (extension.clone(), res)
+        (extension, encoded)
     } else {
-        // No attachment - use raw input
+        // Use raw input
         let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("Neither attachment nor raw input provided")?;
         ("txt".to_string(), raw_input)
     };
@@ -169,6 +161,32 @@ fn trigger_parent_processing(module: &mut BusinessProcessAnalysisModule, parent_
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "trigger", IndvOp::SetIn, &mut update) {
         error!("Failed to trigger parent processing: {:?}", e);
         return Err(format!("Failed to trigger processing: {:?}", e).into());
+    }
+
+    Ok(())
+}
+
+/// Main entry point for structured schema processing
+pub fn process_structured_schema(
+    module: &mut BusinessProcessAnalysisModule,
+    request: &mut Individual,
+    prompt_individual: &mut Individual,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Execute main processing logic and handle any errors
+    if let Err(e) = process_structured_schema_internal(module, request, prompt_individual) {
+        error!("Processing failed: {:?}", e);
+
+        // Set error status and details
+        request.set_uri("v-bpa:processingStatus", "v-bpa:Failed");
+        request.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
+
+        // Save error status
+        if let Err(update_err) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, request) {
+            error!("Failed to update request error status: {:?}", update_err);
+            return Err(format!("Failed to update request: {:?}", update_err).into());
+        }
+
+        return Err(e);
     }
 
     Ok(())
