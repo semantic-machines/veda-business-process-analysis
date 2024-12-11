@@ -1,5 +1,9 @@
 import {Emitter, Observable} from 'veda-client';
 
-const state = new (Observable(Emitter(Object)));
+const State = Observable(Emitter(Object));
+const state = new State();
 
 export default state;
+
+state.documentProcessingPipelines = [];
+

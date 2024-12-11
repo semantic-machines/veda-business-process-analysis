@@ -1,4 +1,4 @@
-import {Component, html, Backend, Model} from 'veda-client';
+import {Component, html, Backend, Model, timeout} from 'veda-client';
 import Literal from './Literal.js';
 import state from './State.js';
 
@@ -40,7 +40,7 @@ export default class DocumentProcessingPipelinesList extends Component(HTMLEleme
           <table class="table mb-0">
             <tbody>
               ${this.pipelines?.map(id => html`
-                <tr about="${id}">
+                <tr about="${id}" is="${PipelineRow}">
                   <td width="55%">
                     <div class="d-flex align-items-center">
                       <i class="bi bi-file-earmark-text me-2"></i>
@@ -49,14 +49,20 @@ export default class DocumentProcessingPipelinesList extends Component(HTMLEleme
                       </span>
                     </div>
                   </td>
-                  <td width="15%">
-                    <${Literal} about="${id}" property="v-bpa:currentStage"></${Literal}>
+                  <td width="15%" class="align-middle">
+                    <div class="progress border border-tertiary-subtle" style="height: 16px;">
+                      <div class="progress-bar fw-bold progress-bar-striped progress-bar-animated bg-success"
+                        role="progressbar"
+                        style="width:{{this.model?.['v-bpa:percentComplete']?.[0] || 0}}%"
+                        aria-valuenow="{{this.model?.['v-bpa:percentComplete']?.[0] || 0}}"
+                        aria-valuemin="0"
+                        aria-valuemax="100">
+                        {{this.model?.['v-bpa:percentComplete']?.[0] || 0}}%
+                      </div>
+                    </div>
                   </td>
                   <td width="30%" class="text-end" about="${id}" rel="v-bpa:hasExecutionState">
-                    <div class="d-flex align-items-center justify-content-end">
-                      <div class="spinner-grow spinner-grow-sm text-secondary me-2" role="status"></div>
-                      <span property="rdfs:label"></span>
-                    </div>
+                    <span property="rdfs:label"></span>
                   </td>
                 </tr>
               `).join('')}
@@ -67,5 +73,27 @@ export default class DocumentProcessingPipelinesList extends Component(HTMLEleme
     `;
   }
 }
-
 customElements.define(DocumentProcessingPipelinesList.tag, DocumentProcessingPipelinesList);
+
+class PipelineRow extends Component(HTMLTableRowElement) {
+  static tag = 'bpa-pipeline-row';
+
+  async added() {
+    this.model.on('modified', this.handler);
+  }
+
+  handler = async () => {
+    this.update();
+    if (this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionCompleted')) {
+      state.emit('document-processing-pipeline-completed', this.model.id);
+      // await timeout(5000);
+      // state.documentProcessingPipelines = state.documentProcessingPipelines.filter(id => id !== this.model.id);
+    }
+  }
+
+  removed() {
+    this.model.off('modified', this.onCompleted);
+  }
+}
+customElements.define(PipelineRow.tag, PipelineRow, {extends: 'tr'});
+

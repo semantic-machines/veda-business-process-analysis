@@ -2,11 +2,18 @@ import {Component, html, safe, Backend, Model} from 'veda-client';
 import DocumentFiltersModal from './DocumentFiltersModal.js';
 import DocumentUploadModal from './DocumentUploadModal.js';
 import Literal from './Literal.js';
+import state from './State.js';
 
 export default class DocumentList extends Component(HTMLElement) {
   static tag = 'bpa-document-list';
 
   async added() {
+    state.on('document-processing-pipeline-completed', this.onPipelineCompleted);
+  }
+
+  onPipelineCompleted = () => this.update();
+
+  async pre() {
     const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:AllProcessDocuments';
@@ -93,6 +100,7 @@ export default class DocumentList extends Component(HTMLElement) {
 
   removed () {
     this.querySelector(`${DocumentFiltersModal}`).removeEventListener('filters-changed', this.handleFiltersChange);
+    state.off('document-processing-pipeline-completed', this.onPipelineCompleted);
   }
 
   render() {
