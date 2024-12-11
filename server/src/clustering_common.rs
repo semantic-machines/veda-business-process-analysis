@@ -83,8 +83,8 @@ pub async fn send_comparison_request(
 }
 
 /// Вспомогательная функция для сохранения изменений в индивиде
-pub fn update_individual(module: &mut BusinessProcessAnalysisModule, individual: &mut Individual, cmd: IndvOp) -> Result<(), Box<dyn std::error::Error>> {
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", cmd, individual) {
+pub fn update_individual(module: &mut BusinessProcessAnalysisModule, individual: &mut Individual, cmd: IndvOp, event_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", cmd, individual) {
         error!("Failed to update individual {}: {:?}", individual.get_id(), e);
         return Err(std::io::Error::new(io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e)).into());
     }

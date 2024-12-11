@@ -1,3 +1,4 @@
+use crate::common::generate_event_id;
 use crate::document_status_handler::reset_document_status;
 use crate::extractors::extract_texts_or_images_from_document;
 use crate::extractors::types::ExtractedContent;
@@ -29,6 +30,7 @@ fn get_child_progress(module: &mut BusinessProcessAnalysisModule, child_id: &str
 
 /// Updates pipeline progress including child process progress
 fn update_pipeline_progress(
+    event_id: &str,
     module: &mut BusinessProcessAnalysisModule,
     pipeline: &mut Individual,
     current_stage: &str,
@@ -57,7 +59,7 @@ fn update_pipeline_progress(
     pipeline.set_integer("v-bpa:percentComplete", progress_percent);
 
     // Save updated progress
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::SetIn, pipeline) {
         error!("Pipeline [{}]: failed to update progress to {}%: {:?}", pipeline.get_id(), progress_percent, e);
         return Err(format!("Failed to update pipeline progress: {:?}", e).into());
     }
@@ -100,6 +102,7 @@ fn read_attachment_content(module: &mut BusinessProcessAnalysisModule, attachmen
 
 /// Creates a new processing request with progress tracking
 fn create_processing_request(
+    event_id: &str,
     module: &mut BusinessProcessAnalysisModule,
     pipeline: &mut Individual,
     prompt_id: &str,
@@ -127,7 +130,7 @@ fn create_processing_request(
             attachment.set_string("v-s:filePath", &path, Lang::none());
             attachment.set_string("v-s:fileUri", &name, Lang::none());
 
-            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, pipeline.get_id(), "PIPELINE", IndvOp::Put, &mut attachment) {
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "PIPELINE", IndvOp::Put, &mut attachment) {
                 error!("Pipeline [{}]: failed to create request [{}] with prompt [{}]: {:?}", pipeline.get_id(), request_id, prompt_id, e);
                 return Err(format!("Failed to create attachment: {:?}", e).into());
             }
@@ -138,7 +141,7 @@ fn create_processing_request(
 
     request.set_uri("v-s:hasParentLink", pipeline.get_id());
 
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, pipeline.get_id(), "PIPELINE", IndvOp::Put, &mut request) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "PIPELINE", IndvOp::Put, &mut request) {
         error!("Pipeline [{}]: failed to create request [{}] with prompt [{}]: {:?}", pipeline.get_id(), request_id, prompt_id, e);
         return Err(format!("Failed to create request: {:?}", e).into());
     }
@@ -147,16 +150,25 @@ fn create_processing_request(
     Ok(request_id)
 }
 
-pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnalysisModule, pipeline_in_queue: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
-    if let Err(e) = raw_document_extracting_and_structuring_internal(module, pipeline_in_queue) {
+pub fn raw_document_extracting_and_structuring(
+    module: &mut BusinessProcessAnalysisModule,
+    pipeline_in_queue: &mut Individual,
+    in_event_id: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let event_id = match generate_event_id("RDEASP", pipeline_in_queue.get_id(), in_event_id) {
+        Some(s) => s,
+        None => return Ok(()),
+    };
+
+    if let Err(e) = raw_document_extracting_and_structuring_internal(module, pipeline_in_queue, &event_id) {
         error!("Processing failed: {:?}", e);
 
         // Set error status and details
-        pipeline_in_queue.set_uri("v-bpa:processingStatus", "v-bpa:Failed");
+        pipeline_in_queue.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionError");
         pipeline_in_queue.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
 
         // Save error status
-        if let Err(update_err) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline_in_queue) {
+        if let Err(update_err) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, pipeline_in_queue) {
             error!("Failed to update pipeline error status: {:?}", update_err);
             return Err(format!("Failed to update pipeline: {:?}", update_err).into());
         }
@@ -170,6 +182,7 @@ pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnaly
 fn raw_document_extracting_and_structuring_internal(
     module: &mut BusinessProcessAnalysisModule,
     pipeline_in_queue: &mut Individual,
+    event_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!("=== Pipeline [{}] ===", pipeline_in_queue.get_id());
 
@@ -205,7 +218,7 @@ fn raw_document_extracting_and_structuring_internal(
             // Create recognition requests for each content part
             let mut request_ids = Vec::new();
             for (idx, content) in extracted_contents.iter().enumerate() {
-                let request_id = create_processing_request(module, &mut pipeline, "v-bpa:ImagesToTextPrompt", content.clone())?;
+                let request_id = create_processing_request(event_id, module, &mut pipeline, "v-bpa:ImagesToTextPrompt", content.clone())?;
                 info!("Pipeline [{}]: created recognition request [{}] for part {}/{}", pipeline.get_id(), request_id, idx + 1, extracted_contents.len());
                 request_ids.push(request_id);
             }
@@ -220,13 +233,13 @@ fn raw_document_extracting_and_structuring_internal(
             pipeline.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionInProgress");
             pipeline.set_datetime("v-bpa:startDate", Utc::now().timestamp());
 
-            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, &pipeline) {
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::SetIn, &pipeline) {
                 error!("Pipeline [{}]: failed to update status: {:?}", pipeline.get_id(), e);
                 return Err(format!("Failed to update pipeline: {:?}", e).into());
             }
 
             info!("Pipeline [{}]: initialized with {} recognition requests", pipeline.get_id(), request_ids.len());
-            update_pipeline_progress(module, &mut pipeline, "initial_processing", 1.0, None)?;
+            update_pipeline_progress(event_id, module, &mut pipeline, "initial_processing", 1.0, None)?;
         },
         "content_recognize" => {
             let request_ids = pipeline.get_literals("v-bpa:hasStageRequest").unwrap_or_default();
@@ -277,7 +290,7 @@ fn raw_document_extracting_and_structuring_internal(
                 completed_count as f32 / request_ids.len() as f32
             };
 
-            update_pipeline_progress(module, &mut pipeline, "text_extraction", stage_progress, None)?;
+            update_pipeline_progress(event_id, module, &mut pipeline, "text_extraction", stage_progress, None)?;
 
             if !all_completed {
                 info!("Pipeline [{}]: content recognition in progress, {}/{} requests completed", pipeline.get_id(), completed_count, request_ids.len());
@@ -288,6 +301,7 @@ fn raw_document_extracting_and_structuring_internal(
 
             pipeline.remove("v-bpa:hasStageRequest");
             let request_id = create_processing_request(
+                event_id,
                 module,
                 &mut pipeline,
                 "v-bpa:DocumentAnalysisPrompt",
@@ -298,7 +312,7 @@ fn raw_document_extracting_and_structuring_internal(
             pipeline.add_uri("v-bpa:hasStageRequest", &request_id);
             pipeline.set_string("v-bpa:currentStage", "document_analysis", Lang::none());
 
-            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, &pipeline) {
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::SetIn, &pipeline) {
                 error!("Pipeline [{}]: failed to update status after recognition: {:?}", pipeline.get_id(), e);
                 return Err(format!("Failed to update pipeline: {:?}", e).into());
             }
@@ -334,7 +348,7 @@ fn raw_document_extracting_and_structuring_internal(
                 0.0
             };
 
-            update_pipeline_progress(module, &mut pipeline, "document_analysis", stage_progress, None)?;
+            update_pipeline_progress(event_id, module, &mut pipeline, "document_analysis", stage_progress, None)?;
 
             if !request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
                 info!("Pipeline [{}]: document analysis request [{}] in progress", pipeline.get_id(), request_id);
@@ -357,7 +371,7 @@ fn raw_document_extracting_and_structuring_internal(
                 result_doc.set_uri("rdf:type", &target_type);
                 result_doc.set_uri("v-s:attachment", &pipeline.get_first_literal("v-s:attachment").ok_or("fail read attachment")?);
                 result_doc.remove("v-bpa:targetType");
-                if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &result_doc) {
+                if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::Put, &result_doc) {
                     error!("Pipeline [{}]: failed to update result document: {:?}", result_doc_id, e);
                     return Err(format!("Failed to update result document: {:?}", e).into());
                 }
@@ -369,12 +383,12 @@ fn raw_document_extracting_and_structuring_internal(
                 pipeline.remove("v-bpa:currentStage");
                 pipeline.remove("v-bpa:hasStageRequest");
 
-                if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, &pipeline) {
+                if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::SetIn, &pipeline) {
                     error!("Pipeline [{}]: failed to update final status: {:?}", pipeline.get_id(), e);
                     return Err(format!("Failed to update pipeline: {:?}", e).into());
                 }
 
-                if let Err(e) = reset_document_status(module, &result_id) {
+                if let Err(e) = reset_document_status(module, &result_id, event_id) {
                     warn!("Pipeline [{}]: failed to reset status for document [{}]: {:?}", pipeline.get_id(), result_id, e);
                 }
 

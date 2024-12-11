@@ -2,7 +2,8 @@ use crate::ai_client::{save_to_interaction_file, send_structured_request_to_ai};
 /// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
 /// и заданного типа целевого индивида.
 use crate::common::{
-    convert_full_to_short_predicates, convert_short_to_full_predicates, load_schema, prepare_request_ai_parameters, set_to_individual_from_ai_response, ClientType,
+    convert_full_to_short_predicates, convert_short_to_full_predicates, generate_event_id, load_schema, prepare_request_ai_parameters,
+    set_to_individual_from_ai_response, ClientType,
 };
 use crate::process_structured_schema;
 use crate::queue_processor::BusinessProcessAnalysisModule;
@@ -40,6 +41,7 @@ fn process_ontology_input(
     module: &mut BusinessProcessAnalysisModule,
     request: &mut Individual,
     prompt_individual: &mut Individual,
+    event_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Get user input
     let raw_input = request.get_first_literal("v-bpa:rawInput").ok_or("No raw input provided")?;
@@ -104,7 +106,7 @@ fn process_ontology_input(
         set_to_individual_from_ai_response(module, &mut result_individual, &ai_response, &property_mapping)?;
 
         // Save updated individual
-        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut result_individual) {
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::Put, &mut result_individual) {
             error!("Failed to update individual {}: {:?}", result_individual.get_id(), e);
             return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
         }
@@ -115,7 +117,7 @@ fn process_ontology_input(
 
     request.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
 
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::Put, request) {
         error!("Failed to update request {}: {:?}", request.get_id(), e);
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request, err={:?}", e))));
     }
@@ -124,7 +126,11 @@ fn process_ontology_input(
 
 /// Обработчик для выполнения произвольных операций с индивидами на основе пользовательского ввода
 /// и заданного типа целевого индивида.
-pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, request: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
+pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, request: &mut Individual, in_event_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let event_id = match generate_event_id("PGR", request.get_id(), in_event_id) {
+        Some(s) => s,
+        None => return Ok(()),
+    };
     // Check processing status
     if request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
         return Ok(());
@@ -141,9 +147,9 @@ pub fn process_generic_request(module: &mut BusinessProcessAnalysisModule, reque
     }
 
     if prompt_individual.is_exists("v-bpa:responseSchema") {
-        process_structured_schema::process_structured_schema(module, request, &mut prompt_individual)?;
+        process_structured_schema::process_structured_schema(module, request, &mut prompt_individual, &event_id)?;
     } else {
-        process_ontology_input(module, request, &mut prompt_individual)?;
+        process_ontology_input(module, request, &mut prompt_individual, &event_id)?;
     }
 
     info!("Successfully processed generic request {} ", request.get_id());

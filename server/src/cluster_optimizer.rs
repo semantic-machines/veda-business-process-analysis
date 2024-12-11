@@ -1,5 +1,5 @@
 use crate::ai_client::send_structured_request_to_ai;
-use crate::common::{extract_process_json, load_schema, prepare_request_ai_parameters, set_to_individual_from_ai_response, ClientType};
+use crate::common::{extract_process_json, generate_event_id, load_schema, prepare_request_ai_parameters, set_to_individual_from_ai_response, ClientType};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::types::PropertyMapping;
 use serde_json;
@@ -9,7 +9,11 @@ use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
 /// Анализирует кластер процессов и предлагает оптимизацию
-pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, cluster_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, cluster_id: &str, in_event_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let event_id = match generate_event_id("AAOC", cluster_id, in_event_id) {
+        Some(s) => s,
+        None => return Ok(()),
+    };
     info!("Starting cluster optimization analysis for cluster: {}", cluster_id);
 
     // Загружаем кластер
@@ -73,7 +77,7 @@ pub fn analyze_and_optimize_cluster(module: &mut BusinessProcessAnalysisModule, 
     set_to_individual_from_ai_response(module, &mut cluster_indv, &optimization_result, &property_mapping)?;
 
     // Сохраняем обновленный индивид
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut cluster_indv) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::Put, &mut cluster_indv) {
         error!("Failed to update individual {}: {:?}", cluster_indv.get_id(), e);
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update individual, err={:?}", e))));
     }

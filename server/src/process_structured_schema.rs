@@ -1,5 +1,5 @@
 use crate::ai_client::send_structured_request_to_ai;
-use crate::common::ClientType;
+use crate::common::{generate_event_id, ClientType};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use crate::response_schema::ResponseSchema;
 use base64::engine::general_purpose::STANDARD;
@@ -22,6 +22,7 @@ fn process_structured_schema_internal(
     module: &mut BusinessProcessAnalysisModule,
     request: &mut Individual,
     prompt_individual: &mut Individual,
+    event_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Parse schema
     let response_schema = prompt_individual.get_first_literal("v-bpa:responseSchema").ok_or("No response schema found")?;
@@ -102,14 +103,14 @@ fn process_structured_schema_internal(
     parse_result.main_individual.set_id(&result_id);
 
     // Save main individual
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut parse_result.main_individual) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::Put, &mut parse_result.main_individual) {
         error!("Failed to save individual {}: {:?}", result_id, e);
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save individual, err={:?}", e))));
     }
 
     // Save related individuals
     for mut related in parse_result.related_individuals {
-        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut related) {
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::Put, &mut related) {
             error!("Failed to save related individual: {:?}", e);
             return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save related individual: {:?}", e))));
         }
@@ -122,10 +123,10 @@ fn process_structured_schema_internal(
 
     // Handle parent processing if needed
     if let Some(parent_id) = request.get_first_literal("v-s:hasParentLink") {
-        trigger_parent_processing(module, &parent_id)?;
+        trigger_parent_processing(module, &parent_id, event_id)?;
     }
 
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, request) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::Put, request) {
         error!("Failed to update request: {:?}", e);
         return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to update request: {:?}", e))));
     }
@@ -151,14 +152,14 @@ fn prepare_content_for_ai(format: &str, content: String) -> Result<ChatMessageCo
 }
 
 /// Trigger processing update for parent object
-fn trigger_parent_processing(module: &mut BusinessProcessAnalysisModule, parent_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn trigger_parent_processing(module: &mut BusinessProcessAnalysisModule, parent_id: &str, event_id: &str) -> Result<(), Box<dyn std::error::Error>> {
     info!("Triggering processing for parent object: {}", parent_id);
 
     let mut update = Individual::default();
     update.set_id(parent_id);
     update.set_datetime("v-s:modified", Utc::now().timestamp());
 
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "trigger", IndvOp::SetIn, &mut update) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "trigger", IndvOp::SetIn, &mut update) {
         error!("Failed to trigger parent processing: {:?}", e);
         return Err(format!("Failed to trigger processing: {:?}", e).into());
     }
@@ -171,9 +172,15 @@ pub fn process_structured_schema(
     module: &mut BusinessProcessAnalysisModule,
     request: &mut Individual,
     prompt_individual: &mut Individual,
+    in_event_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let event_id = match generate_event_id("PSS", request.get_id(), in_event_id) {
+        Some(s) => s,
+        None => return Ok(()),
+    };
+
     // Execute main processing logic and handle any errors
-    if let Err(e) = process_structured_schema_internal(module, request, prompt_individual) {
+    if let Err(e) = process_structured_schema_internal(module, request, prompt_individual, &event_id) {
         error!("Processing failed: {:?}", e);
 
         // Set error status and details
@@ -181,7 +188,7 @@ pub fn process_structured_schema(
         request.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
 
         // Save error status
-        if let Err(update_err) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, request) {
+        if let Err(update_err) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, request) {
             error!("Failed to update request error status: {:?}", update_err);
             return Err(format!("Failed to update request: {:?}", update_err).into());
         }

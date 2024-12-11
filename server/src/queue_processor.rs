@@ -61,6 +61,7 @@ impl VedaQueueModule for BusinessProcessAnalysisModule {
 }
 
 fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_element: &mut Individual) -> Result<bool, PrepareError> {
+    let event_id = queue_element.get_first_literal("event_id").unwrap_or_default();
     let source = queue_element.get_first_literal("src").unwrap_or_default();
 
     let cmd = IndvOp::from_i64(queue_element.get_first_integer("cmd").unwrap_or(IndvOp::None.to_i64()));
@@ -98,7 +99,7 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         info!("Found a saved object of type 'v-bpa:BusinessProcess' with ID: {}", new_state.get_id());
 
         // Анализируем обоснованность бизнес-процесса
-        if let Err(e) = analyze_process_justification(module, &mut new_state) {
+        if let Err(e) = analyze_process_justification(module, &mut new_state, &event_id) {
             error!("Error analyzing business process justification: {:?}", e);
         }
     } else if new_state.any_exists("rdf:type", &[&"v-bpa:ClusterizationAttempt".to_string()]) {
@@ -109,7 +110,7 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         info!("Found a saved object of type 'v-bpa:ClusterizationAttempt' with ID: {}:{}", new_state.get_id(), counter);
 
         // Выполняем шаг кластеризации
-        if let Err(e) = analyze_process_clusters(module, &mut new_state) {
+        if let Err(e) = analyze_process_clusters(module, &mut new_state, &event_id) {
             error!("Error analyzing process clusters: {:?}", e);
         }
     } else if new_state.any_exists("rdf:type", &[&"v-bpa:ProcessCluster".to_string()]) {
@@ -118,7 +119,7 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         }
 
         info!("Found new process cluster: {}", new_state.get_id());
-        if let Err(e) = analyze_and_optimize_cluster(module, new_state.get_id()) {
+        if let Err(e) = analyze_and_optimize_cluster(module, new_state.get_id(), &event_id) {
             error!("Error analyze and_optimize cluster: {:?}", e);
         }
     } else if new_state.any_exists("rdf:type", &[&"v-bpa:GenericProcessingRequest".to_string()]) {
@@ -127,18 +128,9 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         }
 
         info!("Found generic processing request: {}", new_state.get_id());
-        if let Err(e) = process_generic_request(module, &mut new_state) {
+        if let Err(e) = process_generic_request(module, &mut new_state, &event_id) {
             error!("Error processing generic request: {:?}", e);
         }
-
-        //if let Err(e) = process_extraction_and_partitioning(module, &mut new_state) {
-        //    error!("Error processing extraction and summarization pipeline: {:?}", e);
-        //}
-
-        // Run target individual creation pipeline
-        //if let Err(e) = create_target_individual(module, &mut new_state) {
-        //    error!("Error creating target individual: {:?}", e);
-        //}
 
         // Inside prepare_queue_element function, add new condition:
     } else if new_state.any_exists("rdf:type", &[&"v-bpa:ProcessExtractionPipeline".to_string()]) {
@@ -148,9 +140,9 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
 
         info!("Found process extraction pipeline: {}", new_state.get_id());
 
-        if let Err(e) = process_extraction_pipeline(module, &mut new_state) {
+        if let Err(e) = process_extraction_pipeline(module, &mut new_state, &event_id) {
             error!("Error processing extraction pipeline: {:?}", e);
-            process_extraction::handle_pipeline_error(module, &mut new_state, e);
+            process_extraction::handle_pipeline_error(module, &mut new_state, &event_id, e);
         }
     } else if new_state.any_exists("rdf:type", &["v-bpa:PipelineRequest"]) {
         if source == "BPA" {
@@ -161,8 +153,7 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         if let Some(pipeline_type) = new_state.get_first_literal("v-bpa:pipeline") {
             match pipeline_type.as_str() {
                 "v-bpa:RawDocumentExtractingAndStructuringPipeline" => {
-                    info!("Processing raw document pipeline request: {}", new_state.get_id());
-                    if let Err(e) = raw_document_extracting_and_structuring(module, &mut new_state) {
+                    if let Err(e) = raw_document_extracting_and_structuring(module, &mut new_state, &event_id) {
                         error!("Error processing raw document pipeline request: {:?}", e);
                     }
                 },
@@ -172,12 +163,11 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
             }
         }
     } else if new_state.any_exists("rdf:type", &["v-bpa:ProcessDocument"]) {
-        if source == "BPA" {
-            return Ok(true);
-        }
+        //if source == "BPA" {
+        //    return Ok(true);
+        //}
 
-        info!("Processing document status for {}", new_state.get_id());
-        if let Err(e) = handle_document_status(module, &mut new_state) {
+        if let Err(e) = handle_document_status(module, &mut new_state, &event_id) {
             error!("Error handling document status: {:?}", e);
         }
     }

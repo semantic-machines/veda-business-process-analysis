@@ -660,3 +660,21 @@ pub fn calculate_cost(tokens: f64, model: &str) -> f64 {
         _ => 0.0,
     }
 }
+
+pub fn generate_event_id(event_name: &str, doc_id: &str, in_event_id: &str) -> Option<String> {
+    // Check current chain length by counting delimiters
+    let chain_length = in_event_id.matches(';').count() + 1;
+    const MAX_CHAIN_LENGTH: usize = 100;
+
+    // If chain length exceeds limit, log error and return None
+    if chain_length >= MAX_CHAIN_LENGTH {
+        error!("Event chain length ({}) exceeds maximum allowed ({}). Document: {}, Event: {}", chain_length, MAX_CHAIN_LENGTH, doc_id, event_name);
+        return None;
+    }
+
+    let event_id = format!("{}+{}", doc_id, event_name);
+    if in_event_id.starts_with(&event_id) {
+        return None;
+    }
+    Some(format!("{};{}", event_id, in_event_id))
+}
