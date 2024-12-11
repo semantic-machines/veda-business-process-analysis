@@ -1,6 +1,4 @@
-// extractors/docx_extractor.rs
-
-use super::DocumentExtractor;
+use super::types::{DocumentExtractor, ExtractedContent, ExtractorConfig};
 use docx_rs::{DocumentChild, ParagraphChild, RunChild};
 use log::info;
 
@@ -8,7 +6,7 @@ use log::info;
 pub struct DocxExtractor;
 
 impl DocumentExtractor for DocxExtractor {
-    fn extract(&self, content: &[u8]) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    fn extract(&self, content: &[u8], _config: &ExtractorConfig) -> Result<Vec<ExtractedContent>, Box<dyn std::error::Error>> {
         info!("Starting DOCX text extraction");
         let docx = docx_rs::read_docx(content)?;
 
@@ -56,10 +54,35 @@ impl DocumentExtractor for DocxExtractor {
         text = text.lines().map(|line| line.trim()).filter(|line| !line.is_empty()).collect::<Vec<_>>().join("\n");
 
         info!("DOCX text extraction completed");
-        Ok(vec![text])
+        Ok(vec![ExtractedContent::Text(text)])
     }
 
     fn get_supported_extensions(&self) -> Vec<&'static str> {
-        vec!["docx"]
+        vec!["docx", "doc"]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_docx_extractor_extensions() {
+        let extractor = DocxExtractor;
+        assert_eq!(extractor.get_supported_extensions(), vec!["docx", "doc"]);
+    }
+
+    #[test]
+    fn test_empty_document() {
+        let extractor = DocxExtractor;
+        let config = ExtractorConfig {
+            output_dir: PathBuf::from("test_output"),
+            image_quality: 85,
+            max_image_dimension: 2048,
+        };
+
+        let result = extractor.extract(&[], &config);
+        assert!(result.is_err());
     }
 }

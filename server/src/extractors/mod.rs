@@ -1,20 +1,17 @@
 // extractors/mod.rs
 
 mod docx_extractor;
-mod jpeg_extractor;
+//mod jpeg_extractor;
 mod pdf_extractor;
-mod xlsx_extractor;
+//mod xlsx_extractor;
+
+pub mod types;
 
 pub use docx_extractor::DocxExtractor;
-pub use jpeg_extractor::JpegExtractor;
+//pub use jpeg_extractor::JpegExtractor;
 pub use pdf_extractor::PdfExtractor;
-pub use xlsx_extractor::XlsxExtractor;
-
-/// Common trait for all document extractors
-pub trait DocumentExtractor {
-    fn extract(&self, content: &[u8]) -> Result<Vec<String>, Box<dyn std::error::Error>>;
-    fn get_supported_extensions(&self) -> Vec<&'static str>;
-}
+//pub use xlsx_extractor::XlsxExtractor;
+use crate::extractors::types::{DocumentExtractor, ExtractedContent};
 
 /// Factory for creating document extractors based on file extension
 pub struct DocumentExtractorFactory {
@@ -28,8 +25,8 @@ impl Default for DocumentExtractorFactory {
         };
         factory.extractors.push(Box::new(PdfExtractor));
         factory.extractors.push(Box::new(DocxExtractor));
-        factory.extractors.push(Box::new(XlsxExtractor));
-        factory.extractors.push(Box::new(JpegExtractor::default()));
+        //factory.extractors.push(Box::new(XlsxExtractor));
+        //factory.extractors.push(Box::new(JpegExtractor::default()));
         factory
     }
 }
@@ -41,11 +38,11 @@ impl DocumentExtractorFactory {
 }
 
 /// Main function to extract text from any supported document type
-pub fn extract_text_from_document(content: &[u8], extension: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+pub fn extract_texts_or_images_from_document(content: &[u8], extension: &str) -> Result<Vec<ExtractedContent>, Box<dyn std::error::Error>> {
     let factory = DocumentExtractorFactory::default();
 
     if let Some(extractor) = factory.get_extractor(extension) {
-        extractor.extract(content)
+        extractor.extract(content, &Default::default())
     } else {
         Err(format!("Unsupported file format: {}", extension).into())
     }

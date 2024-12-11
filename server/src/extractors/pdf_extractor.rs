@@ -1,89 +1,85 @@
-use super::DocumentExtractor;
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine;
+use super::types::{DocumentExtractor, ExtractedContent, ExtractorConfig};
 use image::codecs::jpeg::JpegEncoder;
 use log::{info, warn};
 use pdf2image::{Pages, RenderOptionsBuilder, Scale, PDF};
 use std::fs;
-use std::path::Path;
+use uuid::Uuid;
 
 pub struct PdfExtractor;
 
 impl DocumentExtractor for PdfExtractor {
-    fn extract(&self, content: &[u8]) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    fn extract(&self, content: &[u8], config: &ExtractorConfig) -> Result<Vec<ExtractedContent>, Box<dyn std::error::Error>> {
         info!("Starting PDF to images conversion");
 
-        let pdf = PDF::from_bytes(content.to_vec())?;
+        // Create output directory if it doesn't exist
+        fs::create_dir_all(&config.output_dir)?;
 
-        let render_options = RenderOptionsBuilder::default().scale(Scale::Uniform(2048)).build()?;
+        let pdf = PDF::from_bytes(content.to_vec())?;
+        let render_options = RenderOptionsBuilder::default().scale(Scale::Uniform(config.max_image_dimension)).build()?;
 
         let all_pages = pdf.render(Pages::All, render_options)?;
         let real_page_count = all_pages.len();
-        info!("PDF document has {} pages (reported by page_count) and {} actual pages", pdf.page_count(), real_page_count);
+
+        info!("PDF document has {} pages", real_page_count);
 
         if real_page_count == 0 {
             return Err("PDF document has no pages".into());
         }
 
-        let mut base64_pages = Vec::with_capacity(real_page_count);
-        let debug_dir = Path::new("debug_images");
-        if !debug_dir.exists() {
-            fs::create_dir(debug_dir)?;
-        }
-
-        let mut last_page_hash = None;
+        let mut extracted_contents = Vec::with_capacity(real_page_count);
+        let mut last_image_hash = None;
 
         for (page_num, page) in all_pages.into_iter().enumerate() {
             info!("Processing page {}/{}", page_num + 1, real_page_count);
 
-            let mut buffer = Vec::new();
-
             let rgb = page.to_rgb8();
             let (width, height) = (rgb.width(), rgb.height());
-            info!("Page {} dimensions: {}x{}", page_num + 1, width, height);
 
             if width == 0 || height == 0 {
                 warn!("Page {} has invalid dimensions", page_num + 1);
                 continue;
             }
 
-            let pixels_sum: u32 = rgb.pixels().map(|p| p[0] as u32 + p[1] as u32 + p[2] as u32).sum();
-            let avg_brightness = pixels_sum as f32 / (width as f32 * height as f32 * 3.0);
-            info!("Page {} average brightness: {:.2}", page_num + 1, avg_brightness);
-
+            let mut buffer = Vec::new();
             {
-                let mut encoder = JpegEncoder::new_with_quality(&mut buffer, 100);
+                let mut encoder = JpegEncoder::new_with_quality(&mut buffer, config.image_quality);
                 encoder.encode(&rgb, width, height, image::ColorType::Rgb8)?;
             }
 
-            let buffer_size = buffer.len();
-            info!("Page {} encoded JPEG size: {} bytes", page_num + 1, buffer_size);
+            // Generate simple hash for duplicate detection
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::{Hash, Hasher};
+            let mut hasher = DefaultHasher::new();
+            buffer.hash(&mut hasher);
+            let image_hash = hasher.finish();
 
-            // Calculate page hash
-            let current_page_hash = STANDARD.encode(&buffer);
-
-            // Check for duplicate page
-            if let Some(last_hash) = &last_page_hash {
-                if *last_hash == current_page_hash {
+            // Skip duplicate pages
+            if let Some(last_hash) = last_image_hash {
+                if last_hash == image_hash {
                     warn!("Page {} appears to be identical to previous page, skipping", page_num + 1);
                     continue;
                 }
             }
+            last_image_hash = Some(image_hash);
 
-            // Save debug image and update hash only for non-duplicate pages
-            let debug_path = debug_dir.join(format!("page_{}.jpg", page_num + 1));
-            fs::write(&debug_path, &buffer)?;
-            info!("Saved debug image for page {} to {:?}", page_num + 1, debug_path);
+            // Create unique filename with page number
+            let filename = format!("page_{}_{}.jpg", page_num + 1, Uuid::new_v4());
+            let full_file_path = config.output_dir.join(&filename);
 
-            info!("Page {} base64 length: {}", page_num + 1, current_page_hash.len());
+            // Save the image
+            fs::write(&full_file_path, &buffer)?;
+            info!("Saved page {} to {:?}", page_num + 1, &full_file_path);
 
-            base64_pages.push(current_page_hash.clone());
-            last_page_hash = Some(current_page_hash);
+            extracted_contents.push(ExtractedContent::ImageFile {
+                path: config.output_dir.to_str().ok_or("P1284")?.to_string(),
+                name: filename,
+                format: "jpeg".to_string(),
+                dimensions: Some((width, height)),
+            });
         }
 
-        info!("Successfully processed {} pages", base64_pages.len());
-
-        Ok(base64_pages)
+        info!("Successfully processed {} pages", extracted_contents.len());
+        Ok(extracted_contents)
     }
 
     fn get_supported_extensions(&self) -> Vec<&'static str> {

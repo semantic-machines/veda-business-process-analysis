@@ -1,5 +1,7 @@
 use crate::document_status_handler::reset_document_status;
-use crate::extractors::extract_text_from_document;
+use crate::extractors::extract_texts_or_images_from_document;
+use crate::extractors::types::ExtractedContent;
+use crate::extractors::types::ExtractedContent::Text;
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use chrono::Utc;
 use std::fs;
@@ -56,10 +58,11 @@ fn update_pipeline_progress(
 
     // Save updated progress
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline) {
-        error!("Failed to update pipeline progress: {:?}", e);
+        error!("Pipeline [{}]: failed to update progress to {}%: {:?}", pipeline.get_id(), progress_percent, e);
         return Err(format!("Failed to update pipeline progress: {:?}", e).into());
     }
 
+    info!("Pipeline [{}]: progress updated to {}%", pipeline.get_id(), progress_percent);
     Ok(())
 }
 
@@ -68,8 +71,8 @@ fn read_attachment_content(module: &mut BusinessProcessAnalysisModule, attachmen
     // Load attachment individual
     let mut attachment = Individual::default();
     if module.backend.storage.get_individual(attachment_id, &mut attachment) != ResultCode::Ok {
-        error!("Failed to load attachment {}", attachment_id);
-        return Err(format!("Failed to load attachment {}", attachment_id).into());
+        error!("Failed to load attachment [{}]", attachment_id);
+        return Err(format!("Failed to load attachment [{}]", attachment_id).into());
     }
 
     // Get file extension
@@ -82,15 +85,16 @@ fn read_attachment_content(module: &mut BusinessProcessAnalysisModule, attachmen
     let full_path = format!("./data/files/{}/{}", file_path, file_uri);
 
     if !Path::new(&full_path).exists() {
-        error!("File does not exist: {}", full_path);
-        return Err("File not found".into());
+        error!("Attachment [{}]: file does not exist at path [{}]", attachment_id, full_path);
+        return Err(format!("File not found: [{}]", full_path).into());
     }
 
     let content = fs::read(&full_path).map_err(|e| {
-        error!("Failed to read file: {}", e);
-        format!("Failed to read file {}: {}", full_path, e)
+        error!("Attachment [{}]: failed to read file [{}]: {}", attachment_id, full_path, e);
+        format!("Failed to read file [{}]: {}", full_path, e)
     })?;
 
+    info!("Attachment [{}]: successfully read file [{}], size={} bytes", attachment_id, filename, content.len());
     Ok((content, extension))
 }
 
@@ -99,117 +103,242 @@ fn create_processing_request(
     module: &mut BusinessProcessAnalysisModule,
     pipeline: &mut Individual,
     prompt_id: &str,
-    raw_input: String,
+    content: ExtractedContent,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut request = Individual::default();
     let request_id = format!("d:request_{}", Uuid::new_v4());
     request.set_id(&request_id);
     request.set_uri("rdf:type", "v-bpa:GenericProcessingRequest");
     request.set_uri("v-bpa:prompt", prompt_id);
-    request.set_string("v-bpa:rawInput", &raw_input, Lang::none());
+
+    match content {
+        ExtractedContent::Text(t) => {
+            request.set_string("v-bpa:rawInput", &t, Lang::none());
+        },
+        ExtractedContent::ImageFile {
+            path,
+            name,
+            ..
+        } => {
+            let mut attachment = Individual::default();
+            let attachment_id = format!("d:attachment_{}", Uuid::new_v4());
+            attachment.set_id(&attachment_id);
+            attachment.set_uri("rdf:type", "v-s:File");
+            attachment.set_string("v-s:filePath", &path, Lang::none());
+            attachment.set_string("v-s:fileUri", &name, Lang::none());
+
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, pipeline.get_id(), "PIPELINE", IndvOp::Put, &mut attachment) {
+                error!("Pipeline [{}]: failed to create request [{}] with prompt [{}]: {:?}", pipeline.get_id(), request_id, prompt_id, e);
+                return Err(format!("Failed to create attachment: {:?}", e).into());
+            }
+
+            request.add_uri("v-s:attachment", &attachment_id);
+        },
+    }
+
     request.set_uri("v-s:hasParentLink", pipeline.get_id());
 
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, pipeline.get_id(), "PIPELINE", IndvOp::Put, &mut request) {
-        error!("Failed to create processing request: {:?}", e);
+        error!("Pipeline [{}]: failed to create request [{}] with prompt [{}]: {:?}", pipeline.get_id(), request_id, prompt_id, e);
         return Err(format!("Failed to create request: {:?}", e).into());
     }
 
+    info!("Pipeline [{}]: created request [{}] with prompt [{}]", pipeline.get_id(), request_id, prompt_id);
     Ok(request_id)
 }
 
-pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnalysisModule, pipeline: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
-    info!("=== Starting Document Processing Pipeline ===");
-    info!("Pipeline request ID: {}", pipeline.get_id());
+pub fn raw_document_extracting_and_structuring(module: &mut BusinessProcessAnalysisModule, pipeline_in_queue: &mut Individual) -> Result<(), Box<dyn std::error::Error>> {
+    info!("=== Pipeline [{}] ===", pipeline_in_queue.get_id());
+
+    // reread current state piprline
+    let mut pipeline = Individual::default();
+    if module.backend.storage.get_individual(&pipeline_in_queue.get_id(), &mut pipeline) != ResultCode::Ok {
+        error!("Pipeline [{}]: failed to load", pipeline.get_id());
+        return Err(format!("Failed to load pipeline [{}]", pipeline.get_id()).into());
+    }
 
     // Get current stage
     let current_stage = pipeline.get_first_literal("v-bpa:currentStage").unwrap_or_default();
 
     match current_stage.as_str() {
         "" => {
-            // Initial stage - create text extraction request
-            info!("Starting document processing...");
-            // Get attachment
             let attachment_id = pipeline.get_first_literal("v-s:attachment").ok_or("No attachment found in pipeline")?;
+            let mut attachment = Individual::default();
+            if module.backend.storage.get_individual(&attachment_id, &mut attachment) != ResultCode::Ok {
+                error!("Pipeline [{}]: failed to load attachment [{}]", pipeline.get_id(), attachment_id);
+                return Err(format!("Failed to load attachment [{}]", attachment_id).into());
+            }
+
+            let filename = attachment.get_first_literal("v-s:fileName").unwrap_or_default();
+            info!("Pipeline [{}]: start processing document [{}] ({})", pipeline.get_id(), filename, attachment_id);
 
             // Read file content
             let (content, extension) = read_attachment_content(module, &attachment_id)?;
-            info!("Successfully read file content, extension: {}", extension);
 
-            // Extract text from document
-            let extracted_contents = extract_text_from_document(&content, &extension)?;
-            info!("Successfully extracted text from document");
+            // Extract text or images from document
+            let extracted_contents = extract_texts_or_images_from_document(&content, &extension)?;
+            info!("Pipeline [{}]: extracted {} content parts from document [{}]", pipeline.get_id(), extracted_contents.len(), attachment_id);
 
-            // Create intermediate result with extracted text
-            let mut text_result = Individual::default();
-            let result_id = format!("d:text_result_{}", Uuid::new_v4());
-            text_result.set_id(&result_id);
-            text_result.set_uri("rdf:type", "v-bpa:ExtractedTextResult");
-
-            // Join all extracted text parts
-            let combined_text = extracted_contents.join("\n\n");
-            text_result.set_string("v-bpa:extractedText", &combined_text, Lang::none());
-
-            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &mut text_result) {
-                error!("Failed to save extracted text result: {:?}", e);
-                return Err(format!("Failed to save text result: {:?}", e).into());
+            // Create recognition requests for each content part
+            let mut request_ids = Vec::new();
+            for (idx, content) in extracted_contents.iter().enumerate() {
+                let request_id = create_processing_request(module, &mut pipeline, "v-bpa:ImagesToTextPrompt", content.clone())?;
+                info!("Pipeline [{}]: created recognition request [{}] for part {}/{}", pipeline.get_id(), request_id, idx + 1, extracted_contents.len());
+                request_ids.push(request_id);
             }
 
-            // Create document analysis request
-            let request_id = create_processing_request(module, pipeline, "v-bpa:DocumentAnalysisPrompt", combined_text)?;
+            // Save request IDs to pipeline
+            for request_id in &request_ids {
+                pipeline.add_uri("v-bpa:hasStageRequest", request_id);
+            }
 
-            // Update pipeline status
-            pipeline.set_string("v-bpa:currentStage", "document_analysis", Lang::none());
+            // Update pipeline stage
+            pipeline.set_string("v-bpa:currentStage", "content_recognize", Lang::none());
             pipeline.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionInProgress");
-            pipeline.set_uri("v-bpa:hasNextStage", &request_id);
             pipeline.set_datetime("v-bpa:startDate", Utc::now().timestamp());
 
-            update_pipeline_progress(module, pipeline, "document_analysis", 0.0, None)?;
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, &pipeline) {
+                error!("Pipeline [{}]: failed to update status: {:?}", pipeline.get_id(), e);
+                return Err(format!("Failed to update pipeline: {:?}", e).into());
+            }
 
-            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline) {
-                error!("Failed to update pipeline status: {:?}", e);
+            info!("Pipeline [{}]: initialized with {} recognition requests", pipeline.get_id(), request_ids.len());
+            update_pipeline_progress(module, &mut pipeline, "initial_processing", 1.0, None)?;
+        },
+        "content_recognize" => {
+            let request_ids = pipeline.get_literals("v-bpa:hasStageRequest").unwrap_or_default();
+
+            let mut all_completed = true;
+            let mut combined_text = String::new();
+            let mut completed_count = 0;
+
+            for request_id in &request_ids {
+                let mut request = Individual::default();
+                if module.backend.storage.get_individual(request_id, &mut request) != ResultCode::Ok {
+                    error!("Pipeline [{}]: failed to load request [{}]", pipeline.get_id(), request_id);
+                    return Err(format!("Failed to load request [{}]", request_id).into());
+                }
+
+                if !request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
+                    all_completed = false;
+                    continue;
+                }
+
+                completed_count += 1;
+
+                if let Some(result_id) = request.get_first_literal("v-bpa:hasResult") {
+                    let mut result = Individual::default();
+                    if module.backend.storage.get_individual(&result_id, &mut result) == ResultCode::Ok {
+                        if let Some(text) = result.get_first_literal("v-bpa:extractedText") {
+                            info!("Pipeline [{}]: got extracted text from result [{}], length={}", pipeline.get_id(), result_id, text.len());
+                            combined_text.push_str(&text);
+                            combined_text.push('\n');
+                        }
+                    }
+                }
+            }
+
+            let stage_progress = if request_ids.is_empty() {
+                0.0
+            } else {
+                completed_count as f32 / request_ids.len() as f32
+            };
+
+            update_pipeline_progress(module, &mut pipeline, "text_extraction", stage_progress, None)?;
+
+            if !all_completed {
+                info!("Pipeline [{}]: content recognition in progress, {}/{} requests completed", pipeline.get_id(), completed_count, request_ids.len());
+                return Ok(());
+            }
+
+            info!("Pipeline [{}]: all {} recognition requests completed", pipeline.get_id(), request_ids.len());
+
+            pipeline.remove("v-bpa:hasStageRequest");
+            let request_id = create_processing_request(
+                module,
+                &mut pipeline,
+                "v-bpa:DocumentAnalysisPrompt",
+                Text {
+                    0: combined_text,
+                },
+            )?;
+            pipeline.add_uri("v-bpa:hasStageRequest", &request_id);
+            pipeline.set_string("v-bpa:currentStage", "document_analysis", Lang::none());
+
+            if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, &pipeline) {
+                error!("Pipeline [{}]: failed to update status after recognition: {:?}", pipeline.get_id(), e);
                 return Err(format!("Failed to update pipeline: {:?}", e).into());
             }
         },
         "document_analysis" => {
-            // Check if document analysis completed
-            if let Some(next_stage_id) = pipeline.get_first_literal("v-bpa:hasNextStage") {
-                let mut next_stage = Individual::default();
-                if module.backend.storage.get_individual(&next_stage_id, &mut next_stage) != ResultCode::Ok {
-                    return Err(format!("Failed to load next stage: {}", next_stage_id).into());
+            let request_ids = pipeline.get_literals("v-bpa:hasStageRequest").unwrap_or_default();
+
+            if request_ids.is_empty() {
+                error!("Pipeline [{}]: no stage requests found for analysis stage", pipeline.get_id());
+                return Err("Missing stage requests".into());
+            }
+
+            let request_id = &request_ids[0];
+            let mut request = Individual::default();
+            if module.backend.storage.get_individual(request_id, &mut request) != ResultCode::Ok {
+                error!("Pipeline [{}]: failed to load analysis request [{}]", pipeline.get_id(), request_id);
+                return Err(format!("Failed to load request [{}]", request_id).into());
+            }
+
+            let stage_progress = if request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
+                1.0
+            } else {
+                0.0
+            };
+            update_pipeline_progress(module, &mut pipeline, "document_analysis", stage_progress, None)?;
+
+            if !request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
+                info!("Pipeline [{}]: document analysis request [{}] in progress", pipeline.get_id(), request_id);
+                return Ok(());
+            }
+
+            if let Some(result_id) = request.get_first_literal("v-bpa:hasResult") {
+                info!("Pipeline [{}]: analysis completed, result document [{}]", pipeline.get_id(), result_id);
+
+                let mut result_doc = Individual::default();
+                if module.backend.storage.get_individual(&result_id, &mut result_doc) != ResultCode::Ok {
+                    error!("Result doc [{}]: failed to load", result_id);
+                    return Err(format!("Failed to load result doc [{}]", result_id).into());
+                }
+                result_doc.parse_all(); // по умолчанию и для экономии ресурсов, парсятся в individual не все поля, если нужны все поля сразу то, для парсинга всего что есть надо выполнить parse_all
+                let target_type = result_doc.get_first_literal("v-bpa:targetType").ok_or("fail read target type")?;
+
+                let result_doc_id = format!("d:doc_{}", Uuid::new_v4());
+                result_doc.set_id(&result_doc_id);
+                result_doc.set_uri("rdf:type", &target_type);
+                result_doc.set_uri("v-s:attachment", &pipeline.get_first_literal("v-s:attachment").ok_or("fail read attachment")?);
+                result_doc.remove("v-bpa:targetType");
+                if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::Put, &result_doc) {
+                    error!("Pipeline [{}]: failed to update result document: {:?}", result_doc_id, e);
+                    return Err(format!("Failed to update result document: {:?}", e).into());
                 }
 
-                // Update progress based on analysis status and child progress
-                update_pipeline_progress(module, pipeline, "document_analysis", 0.0, Some(&next_stage_id))?;
+                pipeline.set_uri("v-bpa:resultDocument", &result_doc_id);
+                pipeline.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionCompleted");
+                pipeline.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
+                pipeline.set_datetime("v-bpa:endDate", Utc::now().timestamp());
+                pipeline.remove("v-bpa:currentStage");
+                pipeline.remove("v-bpa:hasStageRequest");
 
-                if next_stage.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
-                    info!("Document analysis completed, finalizing pipeline...");
-
-                    let result_id = next_stage.get_first_literal("v-bpa:hasResult").ok_or("No result found")?;
-
-                    // Update pipeline status
-                    pipeline.set_uri("v-bpa:resultDocument", &result_id);
-                    pipeline.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionCompleted");
-                    pipeline.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
-                    pipeline.set_datetime("v-bpa:endDate", Utc::now().timestamp());
-                    pipeline.remove("v-bpa:currentStage");
-                    pipeline.remove("v-bpa:hasNextStage");
-
-                    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, pipeline) {
-                        error!("Failed to update pipeline status: {:?}", e);
-                        return Err(format!("Failed to update pipeline: {:?}", e).into());
-                    }
-
-                    // Reset status tags as document was processed
-                    if let Err(e) = reset_document_status(module, &result_id) {
-                        warn!("Failed to reset document status: {:?}", e);
-                    }
-
-                    info!("Pipeline completed successfully");
+                if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, "", "BPA", IndvOp::SetIn, &pipeline) {
+                    error!("Pipeline [{}]: failed to update final status: {:?}", pipeline.get_id(), e);
+                    return Err(format!("Failed to update pipeline: {:?}", e).into());
                 }
+
+                if let Err(e) = reset_document_status(module, &result_id) {
+                    warn!("Pipeline [{}]: failed to reset status for document [{}]: {:?}", pipeline.get_id(), result_id, e);
+                }
+
+                info!("Pipeline [{}]: successfully completed", pipeline.get_id());
             }
         },
         _ => {
-            error!("Unknown pipeline stage: {}", current_stage);
+            error!("Pipeline [{}]: unknown stage [{}]", pipeline.get_id(), current_stage);
             return Err(format!("Invalid pipeline stage: {}", current_stage).into());
         },
     }
