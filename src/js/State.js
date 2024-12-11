@@ -1,6 +1,5 @@
 import {Emitter, Observable} from 'veda-client';
 
-const State = Observable(Emitter(Object))
-const state = new State();
+const state = new (Observable(Emitter(Object)));
 
 export default state;

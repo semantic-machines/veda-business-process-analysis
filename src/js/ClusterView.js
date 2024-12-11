@@ -22,7 +22,6 @@ export default class ClusterView extends Component(HTMLElement) {
           <div>
             <p class="mb-0 text-muted" about="v-bpa:ProcessCluster" property="rdfs:label"></p>
             <h3 class="mb-0">
-              <i class="bi bi-collection me-2"></i>
               <span property="rdfs:label"></span>
             </h3>
           </div>

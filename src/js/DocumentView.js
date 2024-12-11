@@ -46,14 +46,12 @@ export default class DocumentView extends Component(HTMLElement) {
       <div class="sheet">
         <div class="row">
           <div class="col-sm-9">
-            <h3 class="mb-3">
-              <i class="bi bi-file-earmark-text me-2"></i>
+            <h3>
               <span class="me-3" property="v-bpa:documentTitle"></span>
             </h3>
-            <div rel="v-s:attachment">
-              <a href="/files/{{this.model.id}}" target="_blank">
-                <i class="bi bi-file-earmark-text me-2"></i>
-                <span class="me-3" property="v-s:fileName"></span>
+            <div rel="v-s:attachment" class="mb-3">
+              <a class="text-secondary" href="/files/{{this.model.id}}" target="_blank">
+                <i class="bi bi-cloud-download me-2"></i><span class="me-3" property="v-s:fileName"></span>
               </a>
             </div>
             ${this.model['v-bpa:hasDocumentSection']?.map(section => html`

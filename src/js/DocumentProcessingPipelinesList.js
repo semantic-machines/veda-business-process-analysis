@@ -36,29 +36,12 @@ export default class DocumentProcessingPipelinesList extends Component(HTMLEleme
     }
     return html`
       <div class="sheet">
-        <h3>
-          <span about="v-bpa:RunningDocumentProcessingPipelines" property="rdfs:label"></span>
-        </h3>
         <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead>
-              <tr>
-                <th width="55%" class="text-secondary fw-normal">
-                  <!--span about="v-s:File" property="rdfs:label"></span-->
-                  Файл
-                </th>
-                <th width="15%" class="text-secondary fw-normal">
-                  <span about="v-bpa:currentStage" property="rdfs:label"></span>
-                </th>
-                <th width="30%" class="text-secondary fw-normal text-end">
-                  <span about="v-bpa:processingStatus" property="rdfs:label"></span>
-                </th>
-              </tr>
-            </thead>
+          <table class="table mb-0">
             <tbody>
               ${this.pipelines?.map(id => html`
                 <tr about="${id}">
-                  <td>
+                  <td width="55%">
                     <div class="d-flex align-items-center">
                       <i class="bi bi-file-earmark-text me-2"></i>
                       <span about="${id}" rel="v-s:attachment">
@@ -66,10 +49,10 @@ export default class DocumentProcessingPipelinesList extends Component(HTMLEleme
                       </span>
                     </div>
                   </td>
-                  <td>
+                  <td width="15%">
                     <${Literal} about="${id}" property="v-bpa:currentStage"></${Literal}>
                   </td>
-                  <td class="text-end" about="${id}" rel="v-bpa:hasExecutionState">
+                  <td width="30%" class="text-end" about="${id}" rel="v-bpa:hasExecutionState">
                     <div class="d-flex align-items-center justify-content-end">
                       <div class="spinner-grow spinner-grow-sm text-secondary me-2" role="status"></div>
                       <span property="rdfs:label"></span>

@@ -35,6 +35,18 @@ export default class Raw extends Component(HTMLElement) {
     }
   }
 
+  async remove() {
+    if (confirm('Вы действительно хотите удалить этот объект?')) {
+      try {
+        await this.model.remove();
+        history.back();
+      } catch (error) {
+        console.error('Ошибка при удалении объекта:', error);
+        alert('Ошибка при удалении объекта. Попробуйте позже.');
+      }
+    }
+  }
+
   render() {
     return html`
       <style>
@@ -96,11 +108,16 @@ export default class Raw extends Component(HTMLElement) {
               JSON
             </button>
           </div>
-          ${this.format === 'json' ? html`
-            <button type="button" class="btn text-dark" on:click="${(e) => this.toggleEdit(e)}">
-              <span about="v-bpa:Edit" property="rdfs:label"></span>
+          <div>
+            <button type="button" class="btn text-secondary" on:click="${(e) => this.remove(e)}">
+              <span about="v-bpa:Remove" property="rdfs:label"></span>
             </button>
-          ` : ''}
+            ${this.format === 'json' ? html`
+              <button type="button" class="btn text-dark" on:click="${(e) => this.toggleEdit(e)}">
+                <span about="v-bpa:Edit" property="rdfs:label"></span>
+              </button>
+            ` : ''}
+          </div>
         </div>
         <div class="sheet">
           <pre class="m-0"><code></code></pre>
@@ -163,7 +180,7 @@ const setOutline = (e) => {
       about.classList.add('outlined');
     }
   }
-}
+};
 
 const removeOutline = (e) => {
   if ((e.altKey && e.ctrlKey) || (e.metaKey && e.altKey)) {
@@ -177,7 +194,7 @@ const removeOutline = (e) => {
       about.classList.remove('outlined');
     }
   }
-}
+};
 
 const handleKeyUp = (e) => {
   if (['Alt','Control','Meta'].includes(e.key)) {

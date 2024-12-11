@@ -41,7 +41,6 @@ export default class ProcessView extends Component(HTMLElement) {
             <div class="mb-3">
               <p class="mb-0 text-muted" about="v-bpa:BusinessProcess" property="rdfs:label"></p>
               <h3 class="mb-0">
-                <i class="bi bi-gear me-2"></i>
                 <span class="me-3" property="rdfs:label"></span>
               </h3>
               <span class="me-3 align-middle" rel="v-bpa:hasProcessJustification">
