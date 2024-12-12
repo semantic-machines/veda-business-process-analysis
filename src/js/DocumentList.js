@@ -39,7 +39,7 @@ export default class DocumentList extends Component(HTMLElement) {
     if (!this.filtersData) {
       this.filtered = this.documents;
     } else {
-      this.filtered = this.documents.filter(([id, title, type, department, created]) => {
+      this.filtered = this.documents.filter(([id, title, type, department, departmentLabel, created]) => {
         // Фильтр по названию документа
         if (this.filtersData['v-bpa:documentTitle_filter'] && this.filtersData['v-bpa:documentTitle_filter'][0] &&
             !title.toLowerCase().includes(this.filtersData['v-bpa:documentTitle_filter'][0].toLowerCase())) {
@@ -52,7 +52,7 @@ export default class DocumentList extends Component(HTMLElement) {
         }
         // Фильтр по отделу
         if (this.filtersData['v-bpa:hasDepartment_filter'] && this.filtersData['v-bpa:hasDepartment_filter'][0] &&
-            !department.toLowerCase().includes(this.filtersData['v-bpa:hasDepartment_filter'][0].toLowerCase())) {
+            !departmentLabel.toLowerCase().includes(this.filtersData['v-bpa:hasDepartment_filter'][0].toLowerCase())) {
           return false;
         }
         // Фильтр по дате создания
@@ -76,15 +76,29 @@ export default class DocumentList extends Component(HTMLElement) {
   renderFilteredDocuments() {
     const container = this.querySelector('#filtered-documents');
     const fragment = document.createDocumentFragment();
+
+    let currentDepartment = '';
+
     this.filtered.forEach(([...values]) => {
-      const [id, title, type, department, created] = safe(values);
+      const [id, title, type, department, departmentLabel, created] = safe(values);
+
+      if (departmentLabel !== currentDepartment) {
+        currentDepartment = departmentLabel;
+        const departmentRow = document.createElement('tr');
+        departmentRow.className = 'table-light';
+        departmentRow.innerHTML = `
+          <td colspan="4" class="text-uppercase text-secondary rounded-bottom"><small>${departmentLabel || 'Без отдела'}</small></td>
+        `;
+        fragment.appendChild(departmentRow);
+      }
+
       const row = document.createElement('tr');
       row.onclick = () => location.hash = `#/DocumentView/${id}`;
       row.setAttribute('about', id);
       row.innerHTML = `
         <td class="align-middle"><h5 class="mb-0">${title}</h5></td>
         <td class="align-middle">${type}</td>
-        <td class="align-middle"><${Literal} about="${department}" property="rdfs:label"></${Literal}></td>
+        <td class="align-middle">${departmentLabel}</td>
         <td class="align-middle text-end">${new Date(created).toLocaleDateString('ru-RU')}</td>
       `;
       fragment.appendChild(row);
@@ -121,6 +135,14 @@ export default class DocumentList extends Component(HTMLElement) {
             }
             #documents-table td {
               cursor: pointer;
+            }
+            #documents-table tr.table-light > td {
+              background-color: #f2f2f2;
+              cursor: default;
+              border-bottom: 1px solid transparent;
+            }
+            #documents-table tr.table-light:hover > td {
+              box-shadow: none;
             }
           </style>
           <table class="table table-hover mb-0" id="documents-table">

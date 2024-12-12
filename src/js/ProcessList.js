@@ -145,7 +145,7 @@ export default class ProcessList extends Component(HTMLElement) {
               cursor: pointer;
             }
             #processes-table tr.table-light > td {
-              background-color: #f4f4f4;
+              background-color: #f2f2f2;
               cursor: default;
               border-bottom: 1px solid transparent;
             }

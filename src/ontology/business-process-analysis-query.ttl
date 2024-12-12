@@ -210,13 +210,16 @@ v-bpa:AllProcessDocuments
   v-s:authorizationLevel "query" ;
   v-s:queryString """
     SELECT
-      id,
-      arrayFirst(x -> x is NOT null, arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), v_bpa_documentTitle_str)) as "v-bpa:documentTitle",
-      v_bpa_documentType_str[1] as "v-bpa:documentType",
-      v_bpa_hasDepartment_str[1] as "v-bpa:hasDepartment",
-      v_s_created_date[1] as "v-s:created"
-    FROM veda_tt."v-bpa:ProcessDocument" FINAL
-    ORDER BY "v-bpa:hasDepartment" ASC, "v-bpa:documentTitle" ASC
+      doc.id as id,
+      arrayFirst(x -> x is NOT null, arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), doc.v_bpa_documentTitle_str)) as "v-bpa:documentTitle",
+      doc.v_bpa_documentType_str[1] as "v-bpa:documentType",
+      doc.v_bpa_hasDepartment_str[1] as "v-bpa:hasDepartment",
+      arrayFirst(x -> x is NOT null, arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), dep.rdfs_label_str)) as "department.rdfs:label",
+      doc.v_s_created_date[1] as "v-s:created"
+    FROM veda_tt."v-bpa:ProcessDocument" doc FINAL
+    LEFT JOIN veda_tt."v-s:Department" dep FINAL
+    ON doc.v_bpa_hasDepartment_str[1] = dep.id
+    ORDER BY "department.rdfs:label" ASC, "v-bpa:documentTitle" ASC
   """ ;
 .
 
