@@ -128,8 +128,8 @@ export default class DocumentList extends Component(HTMLElement) {
               <tr>
                 <th width="45%" class="text-secondary fw-normal" about="v-bpa:documentTitle" property="rdfs:label"></th>
                 <th width="15%" class="text-secondary fw-normal text-nowrap" about="v-bpa:documentType" property="rdfs:label"></th>
-                <th width="25%" class="text-secondary fw-normal text-nowrap" about="v-bpa:hasDepartment" property="rdfs:label"></th>
-                <th width="15%" class="text-secondary fw-normal text-end text-nowrap" about="v-s:created" property="rdfs:label"></th>
+                <th width="30%" class="text-secondary fw-normal text-nowrap" about="v-bpa:hasDepartment" property="rdfs:label"></th>
+                <th width="10%" class="text-secondary fw-normal text-end text-nowrap" about="v-s:created" property="rdfs:label"></th>
               </tr>
             </thead>
             <tbody id="filtered-documents"></tbody>
