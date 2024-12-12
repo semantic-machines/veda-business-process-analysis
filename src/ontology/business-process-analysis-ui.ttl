@@ -254,3 +254,9 @@ v-bpa:ChooseFiles
   rdfs:label "Выберите файлы"@ru ;
   rdfs:label "Choose files"@en ;
 .
+
+v-bpa:Error
+  rdf:type rdfs:Resource ;
+  rdfs:label "Ошибка"@ru ;
+  rdfs:label "Error"@en ;
+.

@@ -119,7 +119,7 @@ export default class DocumentList extends Component(HTMLElement) {
             #documents-table tbody tr:last-child {
               border-bottom: 1px solid transparent;
             }
-            #documents-table tr {
+            #documents-table td {
               cursor: pointer;
             }
           </style>

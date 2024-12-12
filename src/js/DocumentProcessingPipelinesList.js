@@ -40,31 +40,7 @@ export default class DocumentProcessingPipelinesList extends Component(HTMLEleme
           <table class="table mb-0">
             <tbody>
               ${this.pipelines?.map(id => html`
-                <tr about="${id}" is="${PipelineRow}">
-                  <td width="55%">
-                    <div class="d-flex align-items-center">
-                      <i class="bi bi-file-earmark-text me-2"></i>
-                      <span about="${id}" rel="v-s:attachment">
-                        <span property="v-s:fileName"></span>
-                      </span>
-                    </div>
-                  </td>
-                  <td width="15%" class="align-middle">
-                    <div class="progress border border-tertiary-subtle" style="height: 16px;">
-                      <div class="progress-bar fw-bold progress-bar-striped progress-bar-animated bg-success"
-                        role="progressbar"
-                        style="width:{{this.model?.['v-bpa:percentComplete']?.[0] || 0}}%"
-                        aria-valuenow="{{this.model?.['v-bpa:percentComplete']?.[0] || 0}}"
-                        aria-valuemin="0"
-                        aria-valuemax="100">
-                        {{this.model?.['v-bpa:percentComplete']?.[0] || 0}}%
-                      </div>
-                    </div>
-                  </td>
-                  <td width="30%" class="text-end" about="${id}" rel="v-bpa:hasExecutionState">
-                    <span property="rdfs:label"></span>
-                  </td>
-                </tr>
+                <tr about="${id}" is="${PipelineRow}"></tr>
               `).join('')}
             </tbody>
           </table>
@@ -86,7 +62,6 @@ class PipelineRow extends Component(HTMLTableRowElement) {
     this.update();
     if (this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionCompleted')) {
       state.emit('document-processing-pipeline-completed', this.model.id);
-      // await timeout(5000);
       // state.documentProcessingPipelines = state.documentProcessingPipelines.filter(id => id !== this.model.id);
     }
   }
@@ -94,6 +69,55 @@ class PipelineRow extends Component(HTMLTableRowElement) {
   removed() {
     this.model.off('modified', this.onCompleted);
   }
+
+  render() {
+    const inProgress = this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionInProgress');
+    const hasError = this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionError');
+    const completed = this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionCompleted');
+    const percentComplete = this.model['v-bpa:percentComplete']?.[0] || 0;
+    const lastError = this.model['v-bpa:lastError']?.[0] || '';
+
+    return html`
+      <td width="55%">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          <span rel="v-s:attachment">
+            <span property="v-s:fileName"></span>
+          </span>
+        </div>
+      </td>
+      <td width="15%" class="align-middle">
+        ${inProgress
+          ? html`
+            <div class="progress border border-tertiary-subtle" style="height: 20px;">
+              <div class="progress-bar fw-bold progress-bar-striped progress-bar-animated bg-success"
+                role="progressbar"
+                style="width:${percentComplete}%"
+                aria-valuenow="${percentComplete}"
+                aria-valuemin="0"
+                aria-valuemax="100">
+                ${percentComplete}%
+              </div>
+            </div>`
+          : hasError
+          ? html`<span class="badge bg-danger" title="${lastError}" about="v-bpa:Error" property="rdfs:label"></span>`
+          : ''
+        }
+      </td>
+      <td width="30%" class="text-end" rel="v-bpa:hasExecutionState">
+        ${completed
+          ? html`<span class="bi bi-check-circle-fill text-success"></span>`
+          : hasError
+          ? html`<span class="bi bi-exclamation-circle-fill text-danger"></span>`
+          : inProgress
+          ? html`
+            <div class="spinner-grow spinner-grow-sm text-secondary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>`
+          : ''}
+        <span class="ms-1" property="rdfs:label"></span>
+      </td>
+    `;
+  }
 }
 customElements.define(PipelineRow.tag, PipelineRow, {extends: 'tr'});
-
