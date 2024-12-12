@@ -78,7 +78,7 @@ class PipelineRow extends Component(HTMLTableRowElement) {
     const lastError = this.model['v-bpa:lastError']?.[0] || '';
 
     return html`
-      <td width="55%">
+      <td width="45%">
         <div class="d-flex align-items-center">
           <i class="bi bi-file-earmark-text me-2"></i>
           <span rel="v-s:attachment">
@@ -104,7 +104,7 @@ class PipelineRow extends Component(HTMLTableRowElement) {
           : ''
         }
       </td>
-      <td width="30%" class="text-end" rel="v-bpa:hasExecutionState">
+      <td width="40%" class="text-end" rel="v-bpa:hasExecutionState">
         ${completed
           ? html`<span class="bi bi-check-circle-fill text-success"></span>`
           : hasError
