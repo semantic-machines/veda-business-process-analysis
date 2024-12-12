@@ -1,8 +1,8 @@
 use crate::common::generate_event_id;
 use crate::document_status_handler::reset_document_status;
-use crate::extractors::extract_texts_or_images_from_document;
 use crate::extractors::types::ExtractedContent;
 use crate::extractors::types::ExtractedContent::Text;
+use crate::extractors::{extract_count_pages_document, extract_texts_or_images_from_document};
 use crate::queue_processor::BusinessProcessAnalysisModule;
 use chrono::Utc;
 use std::fs;
@@ -15,7 +15,7 @@ use v_common::v_api::obj::ResultCode;
 
 // Stage weights for progress calculation
 const FILE_PROCESSING_WEIGHT: f32 = 0.01; // 1% for initial file processing
-const DOCUMENT_ANALYSIS_WEIGHT: f32 = 0.33; // 33% for document analysis
+const DOCUMENT_ANALYSIS_WEIGHT: f32 = 0.42;
 
 fn calculate_text_extraction_weight(total_pages: usize) -> f32 {
     let remaining_weight = 1.0 - (FILE_PROCESSING_WEIGHT + DOCUMENT_ANALYSIS_WEIGHT);
@@ -25,8 +25,7 @@ fn calculate_text_extraction_weight(total_pages: usize) -> f32 {
     remaining_weight
 }
 
-/// Calculate estimated remaining time based on current progress and elapsed time
-fn calculate_estimated_time(pipeline: &mut Individual, current_stage: &str, stage_progress: f32) -> i64 {
+fn calculate_estimated_time(pipeline: &mut Individual, current_stage: &str, stage_progress: f32, total_pages: Option<usize>) -> i64 {
     let current_time = Utc::now().timestamp();
 
     // Get pipeline start time
@@ -37,16 +36,17 @@ fn calculate_estimated_time(pipeline: &mut Individual, current_stage: &str, stag
     });
 
     let total_elapsed = current_time - pipeline_start;
+    let base_request_time = 27;
 
-    // Calculate estimated time based on stage and overall progress
     let estimated = match current_stage {
         "initial_processing" => {
             if stage_progress >= 1.0 {
-                // Estimate for remaining stages
-                90 // ~1.5 minutes for remaining work
+                // Estimate for remaining stages based on page count
+                let pages = total_pages.unwrap_or(1) as i64;
+                (pages * base_request_time) + 60 // Add time for analysis stage
             } else {
-                // Initial estimate
-                30 // 30 seconds for initial processing
+                // Initial estimate based on page count
+                total_pages.unwrap_or(1) as i64 * base_request_time
             }
         },
         "text_extraction" => {
@@ -109,7 +109,7 @@ fn update_pipeline_progress(
     let progress_percent = (total_progress * 100.0).round() as i64;
 
     // Calculate estimated remaining time
-    let estimated_time = calculate_estimated_time(pipeline, current_stage, stage_progress);
+    let estimated_time = calculate_estimated_time(pipeline, current_stage, stage_progress, total_pages);
 
     info!(
         "Pipeline [{}]: stage={}, pages={:?}, text_extraction_weight={:.2}, stage_progress={:.2}, total_progress={:.2}, percent={}%, estimated_time={}s",
@@ -278,16 +278,17 @@ fn raw_document_extracting_and_structuring_internal(
             let (content, extension) = read_attachment_content(module, &attachment_id)?;
 
             // Extract text or images from document
+            let total_pages = extract_count_pages_document(&content, &extension)?;
+            update_pipeline_progress(event_id, module, &mut pipeline, "initial_processing", 1.0, Some(total_pages as usize))?;
+
             let extracted_contents = extract_texts_or_images_from_document(&content, &extension)?;
             info!("Pipeline [{}]: extracted {} content parts from document [{}]", pipeline.get_id(), extracted_contents.len(), attachment_id);
 
             // Create recognition requests for each content part
-            let mut total_pages = 0;
             for (idx, content) in extracted_contents.iter().enumerate() {
                 let request_id = create_processing_request(event_id, module, &mut pipeline, "v-bpa:ImagesToTextPrompt", content.clone())?;
                 info!("Pipeline [{}]: created recognition request [{}] for part {}/{}", pipeline.get_id(), request_id, idx + 1, extracted_contents.len());
                 pipeline.add_uri("v-bpa:hasStageRequest", &request_id);
-                total_pages += 1;
 
                 if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &format!("WKUP_{}", event_id), "", IndvOp::SetIn, &pipeline) {
                     error!("Pipeline [{}]: failed to update hasStageRequest: {:?}", pipeline.get_id(), e);
@@ -306,7 +307,7 @@ fn raw_document_extracting_and_structuring_internal(
             }
 
             info!("Pipeline [{}]: initialized", pipeline.get_id());
-            update_pipeline_progress(event_id, module, &mut pipeline, "initial_processing", 1.0, Some(total_pages))?;
+            update_pipeline_progress(event_id, module, &mut pipeline, "initial_processing", 1.0, Some(extracted_contents.len()))?;
         },
         "content_recognize" => {
             let request_ids = pipeline.get_literals("v-bpa:hasStageRequest").unwrap_or_default();

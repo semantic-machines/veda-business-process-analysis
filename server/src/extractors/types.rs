@@ -47,4 +47,16 @@ pub trait DocumentExtractor {
 
     /// Get list of supported file extensions
     fn get_supported_extensions(&self) -> Vec<&'static str>;
+
+    /// Count pages in document
+    ///
+    /// # Arguments
+    /// * `content` - Document content as bytes
+    ///
+    /// # Returns
+    /// * `Result<u32, Box<dyn std::error::Error>>` - Number of pages or error
+    fn count_pages(&self, _content: &[u8]) -> Result<u32, Box<dyn std::error::Error>> {
+        // Default implementation returns 1 page for text-based documents
+        Ok(1)
+    }
 }

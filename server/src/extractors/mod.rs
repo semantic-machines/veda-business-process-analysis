@@ -47,3 +47,13 @@ pub fn extract_texts_or_images_from_document(content: &[u8], extension: &str) ->
         Err(format!("Unsupported file format: {}", extension).into())
     }
 }
+
+pub fn extract_count_pages_document(content: &[u8], extension: &str) -> Result<u32, Box<dyn std::error::Error>> {
+    let factory = DocumentExtractorFactory::default();
+
+    if let Some(extractor) = factory.get_extractor(extension) {
+        extractor.count_pages(content)
+    } else {
+        Err(format!("Unsupported file format: {}", extension).into())
+    }
+}

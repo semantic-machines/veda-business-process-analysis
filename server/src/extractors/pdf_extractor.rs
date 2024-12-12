@@ -85,4 +85,24 @@ impl DocumentExtractor for PdfExtractor {
     fn get_supported_extensions(&self) -> Vec<&'static str> {
         vec!["pdf"]
     }
+
+    /// Count pages in PDF document
+    fn count_pages(&self, content: &[u8]) -> Result<u32, Box<dyn std::error::Error>> {
+        info!("Counting pages in PDF document");
+
+        // Create PDF object from bytes
+        let pdf = PDF::from_bytes(content.to_vec())?;
+
+        // Get page count using render method with minimal scaling
+        // Use minimal scale value to reduce memory usage during page counting
+        let options = RenderOptionsBuilder::default()
+            .scale(Scale::Uniform(1)) // Minimal scale of 1 pixel
+            .build()?;
+
+        let pages = pdf.render(Pages::All, options)?;
+        let page_count = pages.len() as u32;
+
+        info!("PDF document has {} pages", page_count);
+        Ok(page_count)
+    }
 }
