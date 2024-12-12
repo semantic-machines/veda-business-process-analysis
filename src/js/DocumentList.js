@@ -96,7 +96,7 @@ export default class DocumentList extends Component(HTMLElement) {
       row.onclick = () => location.hash = `#/DocumentView/${id}`;
       row.setAttribute('about', id);
       row.innerHTML = `
-        <td class="align-middle"><strong>${title}</strong> <small class="ms-1 badge bg-${statusTagColor}-subtle text-${statusTagColor}">${statusTag}</small></td>
+        <td class="align-middle"><strong class="me-1">${title}</strong> <small class="badge bg-${statusTagColor}-subtle text-${statusTagColor}">${statusTag}</small></td>
         <td class="align-middle">${type}</td>
         <td class="align-middle">${departmentLabel}</td>
         <td class="align-middle text-end">${new Date(created).toLocaleDateString('ru-RU')}</td>
