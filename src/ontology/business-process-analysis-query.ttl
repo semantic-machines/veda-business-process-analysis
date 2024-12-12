@@ -215,10 +215,14 @@ v-bpa:AllProcessDocuments
       doc.v_bpa_documentType_str[1] as "v-bpa:documentType",
       doc.v_bpa_hasDepartment_str[1] as "v-bpa:hasDepartment",
       arrayFirst(x -> x is NOT null, arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), dep.rdfs_label_str)) as "department.rdfs:label",
-      doc.v_s_created_date[1] as "v-s:created"
+      doc.v_s_created_date[1] as "v-s:created",
+      arrayFirst(x -> x is NOT null, arrayMap(x -> if(match(x, '(?i)@ru$') OR NOT match(x, '(?i)@[a-z][a-z]$'), replaceRegexpOne(x, '(?i)@[a-z][a-z]$', ''), null), tag.rdfs_label_str)) as "tag.rdfs:label",
+      tag.v_s_tag_str[1] as "tag.v-s:tag"
     FROM veda_tt."v-bpa:ProcessDocument" doc FINAL
     LEFT JOIN veda_tt."v-s:Department" dep FINAL
     ON doc.v_bpa_hasDepartment_str[1] = dep.id
+    LEFT JOIN veda_tt."v-bpa:DocumentStatusTag" tag FINAL
+    ON doc.v_bpa_hasStatusTag_str[1] = tag.id
     ORDER BY "department.rdfs:label" ASC, "v-bpa:documentTitle" ASC
   """ ;
 .

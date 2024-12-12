@@ -279,10 +279,11 @@ v-bpa:DocumentStatusTag
 # New document tag
 v-bpa:NewDocumentTag
   rdf:type v-bpa:DocumentStatusTag ;
-  rdfs:label "new"@en ;
-  rdfs:label "новый"@ru ;
+  rdfs:label "New"@en ;
+  rdfs:label "Новый"@ru ;
   v-s:shortLabel "N"@en ;
   v-s:shortLabel "Н"@ru ;
+  v-s:tag "success";
   rdfs:comment "Tag for newly created documents"@en ;
   rdfs:comment "Тег для новых документов"@ru ;
 .
@@ -290,10 +291,11 @@ v-bpa:NewDocumentTag
 # Modified document tag
 v-bpa:ModifiedDocumentTag
   rdf:type v-bpa:DocumentStatusTag ;
-  rdfs:label "modified"@en ;
-  rdfs:label "изменен"@ru ;
+  rdfs:label "Modified"@en ;
+  rdfs:label "Изменен"@ru ;
   v-s:shortLabel "M"@en ;
   v-s:shortLabel "И"@ru ;
+  v-s:tag "warning";
   rdfs:comment "Tag for modified documents"@en ;
   rdfs:comment "Тег для измененных документов"@ru ;
 .

@@ -39,7 +39,7 @@ export default class DocumentList extends Component(HTMLElement) {
     if (!this.filtersData) {
       this.filtered = this.documents;
     } else {
-      this.filtered = this.documents.filter(([id, title, type, department, departmentLabel, created]) => {
+      this.filtered = this.documents.filter(([id, title, type, department, departmentLabel, created, statusTag, statusTagColor]) => {
         // Фильтр по названию документа
         if (this.filtersData['v-bpa:documentTitle_filter'] && this.filtersData['v-bpa:documentTitle_filter'][0] &&
             !title.toLowerCase().includes(this.filtersData['v-bpa:documentTitle_filter'][0].toLowerCase())) {
@@ -80,7 +80,7 @@ export default class DocumentList extends Component(HTMLElement) {
     let currentDepartment = '';
 
     this.filtered.forEach(([...values]) => {
-      const [id, title, type, department, departmentLabel, created] = safe(values);
+      const [id, title, type, department, departmentLabel, created, statusTag, statusTagColor] = safe(values);
 
       if (departmentLabel !== currentDepartment) {
         currentDepartment = departmentLabel;
@@ -96,7 +96,7 @@ export default class DocumentList extends Component(HTMLElement) {
       row.onclick = () => location.hash = `#/DocumentView/${id}`;
       row.setAttribute('about', id);
       row.innerHTML = `
-        <td class="align-middle"><h5 class="mb-0">${title}</h5></td>
+        <td class="align-middle"><strong>${title}</strong> <small class="ms-1 badge bg-${statusTagColor}-subtle text-${statusTagColor}">${statusTag}</small></td>
         <td class="align-middle">${type}</td>
         <td class="align-middle">${departmentLabel}</td>
         <td class="align-middle text-end">${new Date(created).toLocaleDateString('ru-RU')}</td>
