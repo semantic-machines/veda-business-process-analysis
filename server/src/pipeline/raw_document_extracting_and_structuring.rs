@@ -14,18 +14,15 @@ use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
 // Stage weights for progress calculation
-const FILE_PROCESSING_WEIGHT: f32 = 0.3; // 30% for initial file processing
-const TEXT_EXTRACTION_WEIGHT: f32 = 0.3; // 30% for text extraction
-const DOCUMENT_ANALYSIS_WEIGHT: f32 = 0.4; // 40% for document analysis
+const FILE_PROCESSING_WEIGHT: f32 = 0.01; // 1% for initial file processing
+const DOCUMENT_ANALYSIS_WEIGHT: f32 = 0.33; // 33% for document analysis
 
-/// Gets progress from child process
-fn get_child_progress(module: &mut BusinessProcessAnalysisModule, child_id: &str) -> f32 {
-    if let Some(mut child) = module.backend.get_individual_s(child_id) {
-        if let Some(progress) = child.get_first_integer("v-bpa:percentComplete") {
-            return progress as f32 / 100.0;
-        }
+fn calculate_text_extraction_weight(total_pages: usize) -> f32 {
+    let remaining_weight = 1.0 - (FILE_PROCESSING_WEIGHT + DOCUMENT_ANALYSIS_WEIGHT);
+    if total_pages == 0 {
+        return 0.1;
     }
-    0.0
+    remaining_weight
 }
 
 /// Updates pipeline progress including child process progress
@@ -35,36 +32,47 @@ fn update_pipeline_progress(
     pipeline: &mut Individual,
     current_stage: &str,
     stage_progress: f32,
-    child_id: Option<&str>,
+    total_pages: Option<usize>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Get child progress if available
-    let child_progress = if let Some(id) = child_id {
-        get_child_progress(module, id)
-    } else {
-        stage_progress
+    let text_extraction_weight = match total_pages {
+        Some(pages) => calculate_text_extraction_weight(pages),
+        None => 0.66, // Default weight if pages count unknown
     };
 
-    // Calculate total progress based on stage weights and current progress
     let total_progress = match current_stage {
-        "initial_processing" => child_progress * FILE_PROCESSING_WEIGHT,
-        "text_extraction" => FILE_PROCESSING_WEIGHT + (child_progress * TEXT_EXTRACTION_WEIGHT),
-        "document_analysis" => FILE_PROCESSING_WEIGHT + TEXT_EXTRACTION_WEIGHT + (child_progress * DOCUMENT_ANALYSIS_WEIGHT),
+        "initial_processing" => FILE_PROCESSING_WEIGHT,
+        "text_extraction" => FILE_PROCESSING_WEIGHT + (stage_progress * text_extraction_weight),
+        "document_analysis" => {
+            let doc_analysis_progress = if stage_progress > 0.0 {
+                0.5
+            } else {
+                0.0
+            };
+            FILE_PROCESSING_WEIGHT + text_extraction_weight + (doc_analysis_progress * DOCUMENT_ANALYSIS_WEIGHT)
+        },
         _ => 0.0,
     };
 
-    // Convert to percentage (0-100) and round to integer
     let progress_percent = (total_progress * 100.0).round() as i64;
 
-    // Update pipeline progress
+    info!(
+        "Pipeline [{}]: stage={}, pages={:?}, text_extraction_weight={:.2}, stage_progress={:.2}, total_progress={:.2}, percent={}%",
+        pipeline.get_id(),
+        current_stage,
+        total_pages,
+        text_extraction_weight,
+        stage_progress,
+        total_progress,
+        progress_percent
+    );
+
     pipeline.set_integer("v-bpa:percentComplete", progress_percent);
 
-    // Save updated progress
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::SetIn, pipeline) {
         error!("Pipeline [{}]: failed to update progress to {}%: {:?}", pipeline.get_id(), progress_percent, e);
         return Err(format!("Failed to update pipeline progress: {:?}", e).into());
     }
 
-    info!("Pipeline [{}]: progress updated to {}%", pipeline.get_id(), progress_percent);
     Ok(())
 }
 
@@ -216,16 +224,17 @@ fn raw_document_extracting_and_structuring_internal(
             info!("Pipeline [{}]: extracted {} content parts from document [{}]", pipeline.get_id(), extracted_contents.len(), attachment_id);
 
             // Create recognition requests for each content part
-            let mut request_ids = Vec::new();
+            let mut total_pages = 0;
             for (idx, content) in extracted_contents.iter().enumerate() {
                 let request_id = create_processing_request(event_id, module, &mut pipeline, "v-bpa:ImagesToTextPrompt", content.clone())?;
                 info!("Pipeline [{}]: created recognition request [{}] for part {}/{}", pipeline.get_id(), request_id, idx + 1, extracted_contents.len());
-                request_ids.push(request_id);
-            }
+                pipeline.add_uri("v-bpa:hasStageRequest", &request_id);
+                total_pages += 1;
 
-            // Save request IDs to pipeline
-            for request_id in &request_ids {
-                pipeline.add_uri("v-bpa:hasStageRequest", request_id);
+                if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &format!("WKUP_{}", event_id), "", IndvOp::SetIn, &pipeline) {
+                    error!("Pipeline [{}]: failed to update hasStageRequest: {:?}", pipeline.get_id(), e);
+                    return Err(format!("Failed to update pipeline: {:?}", e).into());
+                }
             }
 
             // Update pipeline stage
@@ -238,8 +247,8 @@ fn raw_document_extracting_and_structuring_internal(
                 return Err(format!("Failed to update pipeline: {:?}", e).into());
             }
 
-            info!("Pipeline [{}]: initialized with {} recognition requests", pipeline.get_id(), request_ids.len());
-            update_pipeline_progress(event_id, module, &mut pipeline, "initial_processing", 1.0, None)?;
+            info!("Pipeline [{}]: initialized", pipeline.get_id());
+            update_pipeline_progress(event_id, module, &mut pipeline, "initial_processing", 1.0, Some(total_pages))?;
         },
         "content_recognize" => {
             let request_ids = pipeline.get_literals("v-bpa:hasStageRequest").unwrap_or_default();
@@ -247,6 +256,7 @@ fn raw_document_extracting_and_structuring_internal(
             let mut all_completed = true;
             let mut combined_text = String::new();
             let mut completed_count = 0;
+            let total_request_count = request_ids.len();
 
             for request_id in &request_ids {
                 let mut request = Individual::default();
@@ -284,16 +294,16 @@ fn raw_document_extracting_and_structuring_internal(
                 }
             }
 
-            let stage_progress = if request_ids.is_empty() {
+            let stage_progress = if total_request_count == 0 {
                 0.0
             } else {
-                completed_count as f32 / request_ids.len() as f32
+                completed_count as f32 / total_request_count as f32
             };
 
-            update_pipeline_progress(event_id, module, &mut pipeline, "text_extraction", stage_progress, None)?;
+            update_pipeline_progress(event_id, module, &mut pipeline, "text_extraction", stage_progress, Some(total_request_count))?;
 
             if !all_completed {
-                info!("Pipeline [{}]: content recognition in progress, {}/{} requests completed", pipeline.get_id(), completed_count, request_ids.len());
+                info!("Pipeline [{}]: content recognition in progress, {}/{} requests completed", pipeline.get_id(), completed_count, total_request_count);
                 return Ok(());
             }
 
@@ -348,7 +358,7 @@ fn raw_document_extracting_and_structuring_internal(
                 0.0
             };
 
-            update_pipeline_progress(event_id, module, &mut pipeline, "document_analysis", stage_progress, None)?;
+            update_pipeline_progress(event_id, module, &mut pipeline, "document_analysis", stage_progress, Some(request_ids.len()))?;
 
             if !request.any_exists("v-bpa:processingStatus", &["v-bpa:Completed"]) {
                 info!("Pipeline [{}]: document analysis request [{}] in progress", pipeline.get_id(), request_id);
@@ -363,7 +373,7 @@ fn raw_document_extracting_and_structuring_internal(
                     error!("Result doc [{}]: failed to load", result_id);
                     return Err(format!("Failed to load result doc [{}]", result_id).into());
                 }
-                result_doc.parse_all(); // по умолчанию и для экономии ресурсов, парсятся в individual не все поля, если нужны все поля сразу то, для парсинга всего что есть надо выполнить parse_all
+                result_doc.parse_all();
                 let target_type = result_doc.get_first_literal("v-bpa:targetType").ok_or("fail read target type")?;
 
                 let result_doc_id = format!("d:doc_{}", Uuid::new_v4());
@@ -382,6 +392,7 @@ fn raw_document_extracting_and_structuring_internal(
                 pipeline.set_datetime("v-bpa:endDate", Utc::now().timestamp());
                 pipeline.remove("v-bpa:currentStage");
                 pipeline.remove("v-bpa:hasStageRequest");
+                pipeline.set_integer("v-bpa:percentComplete", 100);
 
                 if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::SetIn, &pipeline) {
                     error!("Pipeline [{}]: failed to update final status: {:?}", pipeline.get_id(), e);
