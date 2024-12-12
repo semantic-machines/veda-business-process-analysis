@@ -347,26 +347,34 @@ v-bpa:ProcessListExtractionPrompt
 {
   "type": "object",
   "properties": {
-    "processes": {
-      "type": "array",
+    "operations": {
+      "type": "array", 
       "mapping": "v-bpa:hasProcess",
       "create_new_individuals": true,
       "items": {
         "type": "object",
         "properties": {
-          "label": { 
+          "action": {
             "type": "string", 
+            "mapping": "v-bpa:action"
+          },
+          "id": {
+            "type": "string",
+            "mapping": "v-bpa:id"
+          },
+          "label": {
+            "type": "string",
             "mapping": "rdfs:label"
           },
           "description": {
-            "type": "string", 
+            "type": "string",
             "mapping": "v-bpa:processDescription"
           },
           "department": {
             "type": "string",
-            "mapping": "v-bpa:responsibleDepartment"
+            "mapping": "v-bpa:responsibleDepartment" 
           },
-          "participants": {
+            "participants": {
             "type": "string",
             "mapping": "v-bpa:processParticipant"
           },
