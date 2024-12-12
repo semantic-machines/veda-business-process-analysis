@@ -25,7 +25,60 @@ fn calculate_text_extraction_weight(total_pages: usize) -> f32 {
     remaining_weight
 }
 
-/// Updates pipeline progress including child process progress
+/// Calculate estimated remaining time based on current progress and elapsed time
+fn calculate_estimated_time(pipeline: &mut Individual, current_stage: &str, stage_progress: f32) -> i64 {
+    let current_time = Utc::now().timestamp();
+
+    // Get pipeline start time
+    let pipeline_start = pipeline.get_first_datetime("v-bpa:startDate").unwrap_or_else(|| {
+        let now = Utc::now().timestamp();
+        pipeline.set_datetime("v-bpa:startDate", now);
+        now
+    });
+
+    let total_elapsed = current_time - pipeline_start;
+
+    // Calculate estimated time based on stage and overall progress
+    let estimated = match current_stage {
+        "initial_processing" => {
+            if stage_progress >= 1.0 {
+                // Estimate for remaining stages
+                90 // ~1.5 minutes for remaining work
+            } else {
+                // Initial estimate
+                30 // 30 seconds for initial processing
+            }
+        },
+        "text_extraction" => {
+            if stage_progress >= 1.0 {
+                // Estimate for final analysis stage
+                60 // ~1 minute for analysis
+            } else {
+                // Calculate based on elapsed time
+                let time_per_percent = total_elapsed as f32 / (stage_progress * 100.0);
+                let remaining_percent = (1.0 - stage_progress) * 100.0;
+                (time_per_percent * remaining_percent) as i64 + 60 // Add time for final stage
+            }
+        },
+        "document_analysis" => {
+            if stage_progress >= 1.0 {
+                0 // Complete
+            } else if stage_progress <= 0.0 {
+                // Initial estimate for analysis
+                45 // 45 seconds for analysis
+            } else {
+                // Calculate remaining time
+                let time_per_percent = total_elapsed as f32 / (stage_progress * 100.0);
+                let remaining_percent = (1.0 - stage_progress) * 100.0;
+                (time_per_percent * remaining_percent) as i64
+            }
+        },
+        _ => 0,
+    };
+
+    estimated.max(0) // Ensure we never return negative time
+}
+
 fn update_pipeline_progress(
     event_id: &str,
     module: &mut BusinessProcessAnalysisModule,
@@ -36,7 +89,7 @@ fn update_pipeline_progress(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let text_extraction_weight = match total_pages {
         Some(pages) => calculate_text_extraction_weight(pages),
-        None => 0.66, // Default weight if pages count unknown
+        None => 0.66,
     };
 
     let total_progress = match current_stage {
@@ -44,7 +97,7 @@ fn update_pipeline_progress(
         "text_extraction" => FILE_PROCESSING_WEIGHT + (stage_progress * text_extraction_weight),
         "document_analysis" => {
             let doc_analysis_progress = if stage_progress > 0.0 {
-                0.5
+                stage_progress
             } else {
                 0.0
             };
@@ -55,18 +108,23 @@ fn update_pipeline_progress(
 
     let progress_percent = (total_progress * 100.0).round() as i64;
 
+    // Calculate estimated remaining time
+    let estimated_time = calculate_estimated_time(pipeline, current_stage, stage_progress);
+
     info!(
-        "Pipeline [{}]: stage={}, pages={:?}, text_extraction_weight={:.2}, stage_progress={:.2}, total_progress={:.2}, percent={}%",
+        "Pipeline [{}]: stage={}, pages={:?}, text_extraction_weight={:.2}, stage_progress={:.2}, total_progress={:.2}, percent={}%, estimated_time={}s",
         pipeline.get_id(),
         current_stage,
         total_pages,
         text_extraction_weight,
         stage_progress,
         total_progress,
-        progress_percent
+        progress_percent,
+        estimated_time
     );
 
     pipeline.set_integer("v-bpa:percentComplete", progress_percent);
+    pipeline.set_integer("v-bpa:estimatedTime", estimated_time);
 
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::SetIn, pipeline) {
         error!("Pipeline [{}]: failed to update progress to {}%: {:?}", pipeline.get_id(), progress_percent, e);
