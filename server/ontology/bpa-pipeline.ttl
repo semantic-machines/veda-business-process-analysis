@@ -149,3 +149,4 @@ v-bpa:hasStageRequest
   rdfs:domain v-bpa:Pipeline ;
   rdfs:range v-bpa:GenericProcessingRequest ;
 .
+

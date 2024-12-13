@@ -272,7 +272,7 @@ v-bpa:RunningDocumentProcessingPipelines
       v_bpa_resultDocument_str[1] as "v-bpa:resultDocument"
     FROM veda_tt."v-bpa:PipelineRequest" FINAL
     WHERE v_bpa_hasExecutionState_str = ['v-bpa:ExecutionInProgress']
-    AND v_bpa_pipeline_str[1] = 'v-bpa:RawDocumentExtractingAndStructuringPipeline'
+    AND v_bpa_pipeline_str[1] = 'v-bpa:rawDocumentExtractingAndStructuringPipeline'
     ORDER BY v_bpa_startDate_date[1] DESC
   """ ;
 .

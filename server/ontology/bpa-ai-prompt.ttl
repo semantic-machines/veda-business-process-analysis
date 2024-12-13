@@ -358,6 +358,10 @@ v-bpa:ProcessListExtractionPrompt
       "items": {
         "type": "object",
         "properties": {
+          "reason": {
+            "type": "string",
+            "mapping": "v-s:reason"
+          },
           "action": {
             "type": "string", 
             "mapping": "v-bpa:action"
