@@ -5,8 +5,7 @@ use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
 use crate::document_status_handler::handle_document_status;
 use crate::generic_processing_handler::process_generic_request;
-use crate::pipeline::business_process_extraction;
-use crate::pipeline::business_process_extraction::process_extraction_pipeline;
+use crate::pipeline::business_process_extraction::business_process_extraction_pipeline;
 use crate::pipeline::raw_document_extracting_and_structuring::raw_document_extracting_and_structuring;
 use openai_dive::v1::api::Client;
 use v_common::ft_xapian::xapian_reader::XapianReader;
@@ -133,15 +132,6 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         }
 
         // Inside prepare_queue_element function, add new condition:
-    } else if new_state.any_exists("rdf:type", &[&"v-bpa:ProcessExtractionPipeline".to_string()]) {
-        if source == "BPA" {
-            return Ok(true);
-        }
-
-        if let Err(e) = process_extraction_pipeline(module, &mut new_state, &event_id) {
-            error!("Error processing extraction pipeline: {:?}", e);
-            business_process_extraction::handle_pipeline_error(module, &mut new_state, &event_id, e);
-        }
     } else if new_state.any_exists("rdf:type", &["v-bpa:PipelineRequest"]) {
         if source == "BPA" {
             return Ok(true);
@@ -150,9 +140,14 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
         // Проверяем тип запрашиваемого пайплайна
         if let Some(pipeline_type) = new_state.get_first_literal("v-bpa:pipeline") {
             match pipeline_type.as_str() {
-                "v-bpa:RawDocumentExtractingAndStructuringPipeline" => {
+                "v-bpa:rawDocumentExtractingAndStructuringPipeline" => {
                     if let Err(e) = raw_document_extracting_and_structuring(module, &mut new_state, &event_id) {
                         error!("Error processing raw document pipeline request: {:?}", e);
+                    }
+                },
+                "v-bpa:businessProcessExtractionPipeline" => {
+                    if let Err(e) = business_process_extraction_pipeline(module, &mut new_state, &event_id) {
+                        error!("Error processing extraction pipeline request: {:?}", e);
                     }
                 },
                 _ => {

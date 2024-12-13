@@ -12,40 +12,65 @@ use v_common::v_api::api_client::IndvOp;
 use v_common::v_api::obj::ResultCode;
 
 /// Process extraction pipeline handler
-pub fn process_extraction_pipeline(
+pub fn business_process_extraction_pipeline(
     module: &mut BusinessProcessAnalysisModule,
     pipeline_in_queue: &mut Individual,
     in_event_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let event_id = match generate_event_id("PEP", pipeline_in_queue.get_id(), in_event_id) {
+    let event_id = match generate_event_id("BPEP", pipeline_in_queue.get_id(), in_event_id) {
         Some(s) => s,
         None => return Ok(()),
     };
 
+    if let Err(e) = business_process_extraction_pipeline_internal(module, pipeline_in_queue, &event_id) {
+        error!("Processing failed: {:?}", e);
+
+        // Set error status and details
+        pipeline_in_queue.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionError");
+        pipeline_in_queue.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
+        pipeline_in_queue.set_datetime("v-bpa:endDate", Utc::now().timestamp());
+
+        // Save error status
+        if let Err(update_err) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, pipeline_in_queue) {
+            error!("Failed to update pipeline error status: {:?}", update_err);
+            return Err(format!("Failed to update pipeline: {:?}", update_err).into());
+        }
+
+        return Err(e);
+    }
+
+    Ok(())
+}
+
+fn business_process_extraction_pipeline_internal(
+    module: &mut BusinessProcessAnalysisModule,
+    pipeline_req_in_queue: &mut Individual,
+    event_id: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     // reread current state piprline
-    let mut pipeline = Individual::default();
-    if module.backend.storage.get_individual(&pipeline_in_queue.get_id(), &mut pipeline) != ResultCode::Ok {
-        error!("Pipeline [{}]: failed to load", pipeline.get_id());
-        return Err(format!("Failed to load pipeline [{}]", pipeline.get_id()).into());
+    let mut pipeline_req = Individual::default();
+    if module.backend.storage.get_individual(&pipeline_req_in_queue.get_id(), &mut pipeline_req) != ResultCode::Ok {
+        error!("Pipeline [{}]: failed to load", pipeline_req.get_id());
+        return Err(format!("Failed to load pipeline [{}]", pipeline_req.get_id()).into());
     }
 
     // Get current stage
-    if pipeline.is_exists("v-bpa:hasExecutionState") {
+    if pipeline_req.is_exists("v-bpa:hasExecutionState") {
         return Ok(());
     }
 
-    info!("Starting Process Extraction Pipeline,  ID: {}", pipeline_in_queue.get_id());
+    info!("Starting Process Extraction Pipeline,  ID: {}", pipeline_req_in_queue.get_id());
 
     // Update start time and state
     info!("Initializing pipeline state...");
     let start_time = Utc::now().timestamp();
-    pipeline.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionInProgress");
-    pipeline.set_datetime("v-bpa:startDate", start_time);
-    pipeline.set_uri("v-bpa:processingStatus", "v-bpa:Processing");
+    pipeline_req.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionInProgress");
+    pipeline_req.set_datetime("v-bpa:startDate", start_time);
+    pipeline_req.set_uri("v-bpa:processingStatus", "v-bpa:Processing");
 
     // Save initial state
     info!("Saving initial pipeline state to database...");
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, &mut pipeline) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, &mut pipeline_req) {
         error!("Failed to save initial state: {:?}", e);
         return Err(format!("Failed to update pipeline state: {:?}", e).into());
     }
@@ -55,11 +80,14 @@ pub fn process_extraction_pipeline(
     info!("Retrieved extraction prompt");
 
     // Get target department
-    let department = pipeline.get_first_literal("v-bpa:targetDepartment").ok_or_else(|| {
+    let department = pipeline_req.get_first_literal("v-bpa:targetDepartment").ok_or_else(|| {
         error!("No target department found in pipeline configuration");
         "No target department specified"
     })?;
     info!("Target Department: {}", department);
+
+    let mut pipeline =
+        module.backend.get_individual_s(&pipeline_req.get_first_literal("v-bpa:pipeline").ok_or("fail read field [pipeline]")?).ok_or("fail read pipeline")?;
 
     // Get required section types
     let section_types = pipeline.get_literals("v-bpa:hasDocumentSectionTypes").ok_or_else(|| {
@@ -88,8 +116,8 @@ pub fn process_extraction_pipeline(
 
     // Set initial estimated time
     let initial_estimated_time = calculate_estimated_time(document_ids.len(), processed_docs, 0);
-    pipeline.set_integer("v-bpa:estimatedTime", initial_estimated_time);
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, &pipeline) {
+    pipeline_req.set_integer("v-bpa:estimatedTime", initial_estimated_time);
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, &pipeline_req) {
         warn!("Failed to update initial estimated time: {:?}", e);
     }
 
@@ -170,8 +198,8 @@ pub fn process_extraction_pipeline(
         let elapsed_time = current_time - start_time;
         let estimated_time = calculate_estimated_time(document_ids.len(), processed_docs, elapsed_time);
 
-        pipeline.set_integer("v-bpa:estimatedTime", estimated_time);
-        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, &mut pipeline) {
+        pipeline_req.set_integer("v-bpa:estimatedTime", estimated_time);
+        if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, &mut pipeline_req) {
             warn!("Failed to update pipeline estimated time: {:?}", e);
         }
         debug!("Updated estimated time: {} seconds", estimated_time);
@@ -210,15 +238,15 @@ pub fn process_extraction_pipeline(
     let response_text = ai_response.get("result").and_then(|v| v.as_str()).ok_or("Failed to get text from AI response")?;
 
     // Process extracted text through ProcessListExtractionPrompt
-    create_and_process_extraction_request(module, response_text, &mut pipeline, &event_id)?;
+    create_and_process_extraction_request(module, response_text, &mut pipeline_req, &event_id)?;
 
     // Update pipeline status
     info!("Updating pipeline completion status...");
-    pipeline.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionCompleted");
-    pipeline.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
-    pipeline.set_datetime("v-bpa:endDate", Utc::now().timestamp());
+    pipeline_req.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionCompleted");
+    pipeline_req.set_uri("v-bpa:processingStatus", "v-bpa:Completed");
+    pipeline_req.set_datetime("v-bpa:endDate", Utc::now().timestamp());
 
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, &mut pipeline) {
+    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, &mut pipeline_req) {
         return Err(format!("Failed to update pipeline completion state: {:?}", e).into());
     }
 
@@ -239,24 +267,6 @@ fn calculate_estimated_time(total_docs: usize, processed_docs: usize, elapsed_ti
 
     // Calculate estimated remaining time
     (avg_time_per_doc * remaining_docs as f64) as i64
-}
-
-/// Handles errors in pipeline execution
-pub(crate) fn handle_pipeline_error(module: &mut BusinessProcessAnalysisModule, pipeline: &mut Individual, event_id: &str, error: Box<dyn std::error::Error>) {
-    error!("=== Pipeline Execution Failed ===");
-    error!("Error details: {}", error);
-
-    info!("Updating pipeline error state...");
-    pipeline.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionError");
-    pipeline.set_uri("v-bpa:processingStatus", "v-bpa:Failed");
-    pipeline.set_string("v-bpa:lastError", &error.to_string(), Lang::none());
-    pipeline.set_datetime("v-bpa:endDate", Utc::now().timestamp());
-
-    if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::SetIn, pipeline) {
-        error!("Failed to update pipeline error state: {:?}", e);
-        error!("Additional error occurred while handling original error");
-    }
-    error!("=== Pipeline Error Handling Completed ===");
 }
 
 /// Creates and processes a request to extract business processes from text

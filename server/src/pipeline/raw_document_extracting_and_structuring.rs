@@ -232,6 +232,7 @@ pub fn raw_document_extracting_and_structuring(
         // Set error status and details
         pipeline_in_queue.set_uri("v-bpa:hasExecutionState", "v-bpa:ExecutionError");
         pipeline_in_queue.set_string("v-bpa:lastError", &e.to_string(), Lang::none());
+        pipeline_in_queue.set_datetime("v-bpa:endDate", Utc::now().timestamp());
 
         // Save error status
         if let Err(update_err) = module.backend.mstorage_api.update_or_err(&module.ticket, &event_id, "BPA", IndvOp::SetIn, pipeline_in_queue) {
