@@ -5,8 +5,8 @@ use crate::cluster_optimizer::analyze_and_optimize_cluster;
 use crate::clustering_handler::analyze_process_clusters;
 use crate::document_status_handler::handle_document_status;
 use crate::generic_processing_handler::process_generic_request;
-use crate::pipeline::process_extraction;
-use crate::pipeline::process_extraction::process_extraction_pipeline;
+use crate::pipeline::business_process_extraction;
+use crate::pipeline::business_process_extraction::process_extraction_pipeline;
 use crate::pipeline::raw_document_extracting_and_structuring::raw_document_extracting_and_structuring;
 use openai_dive::v1::api::Client;
 use v_common::ft_xapian::xapian_reader::XapianReader;
@@ -138,11 +138,9 @@ fn prepare_queue_element(module: &mut BusinessProcessAnalysisModule, queue_eleme
             return Ok(true);
         }
 
-        info!("Found process extraction pipeline: {}", new_state.get_id());
-
         if let Err(e) = process_extraction_pipeline(module, &mut new_state, &event_id) {
             error!("Error processing extraction pipeline: {:?}", e);
-            process_extraction::handle_pipeline_error(module, &mut new_state, &event_id, e);
+            business_process_extraction::handle_pipeline_error(module, &mut new_state, &event_id, e);
         }
     } else if new_state.any_exists("rdf:type", &["v-bpa:PipelineRequest"]) {
         if source == "BPA" {

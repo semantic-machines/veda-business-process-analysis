@@ -367,6 +367,7 @@ impl ResponseSchema {
         let result_id = format!("d:result_{}", uuid::Uuid::new_v4());
         info!("Created result ID: {}", result_id);
         result.main_individual.set_id(&result_id);
+        result.main_individual.set_uri("rdf:type", "v-bpa:GenericProcessingResult");
 
         if let Some(obj) = response.as_object() {
             for (key, prop_mapping) in &self.properties {
