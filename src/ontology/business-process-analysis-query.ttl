@@ -253,10 +253,10 @@ v-bpa:DocumentInProcess
 
 v-bpa:RunningDocumentProcessingPipelines
   rdf:type v-s:StoredQuery ;
-  rdfs:label "Документы в обработке"@ru ;
-  rdfs:label "Documents in processing pipeline"@en ;
-  rdfs:comment "Запрос возвращает все документы, которые находятся в процессе обработки"@ru ;
-  rdfs:comment "Query returns all documents that are in the processing pipeline"@en ;
+  rdfs:label "Запрос: Запущенные запросы на обработку документов"@ru ;
+  rdfs:label "Query: Running document processing pipelines"@en ;
+  rdfs:comment "Запрос возвращает все запросы на обработку документов, которые находятся в процессе выполнения"@ru ;
+  rdfs:comment "Query returns all document processing pipeline requests that are in the execution process"@en ;
   v-s:source "clickhouse" ;
   v-s:resultFormat "rows" ;
   v-s:authorizationLevel "query" ;
@@ -272,6 +272,30 @@ v-bpa:RunningDocumentProcessingPipelines
       v_bpa_resultDocument_str[1] as "v-bpa:resultDocument"
     FROM veda_tt."v-bpa:PipelineRequest" FINAL
     WHERE v_bpa_hasExecutionState_str = ['v-bpa:ExecutionInProgress']
+    AND v_bpa_pipeline_str[1] = 'v-bpa:RawDocumentExtractingAndStructuringPipeline'
     ORDER BY v_bpa_startDate_date[1] DESC
+  """ ;
+.
+
+v-bpa:RunningProcessExtractionPipelines
+  rdf:type v-s:StoredQuery ;
+  rdfs:label "Запрос: Запущенные запросы на вычисление процессов"@ru ;
+  rdfs:label "Query: Running process extraction pipeline requests"@en ;
+  rdfs:comment "Запрос возвращает все запросы на вычисление процессов, которые находятся в процессе выполнения"@ru ;
+  rdfs:comment "Query returns running process extraction pipeline requests that are in the execution process"@en ;
+  v-s:source "clickhouse" ;
+  v-s:resultFormat "rows" ;
+  v-s:authorizationLevel "query" ;
+  v-s:queryString """
+    SELECT
+      id,
+      v_bpa_pipeline_str[1] as "v-bpa:pipeline",
+      v_bpa_hasExecutionState_str[1] as "v-bpa:hasExecutionState",
+      v_bpa_targetDepartment_str[1] as "v-bpa:targetDepartment"
+    FROM veda_tt."v-bpa:PipelineRequest" FINAL
+    WHERE
+      v_bpa_hasExecutionState_str = ['v-bpa:ExecutionInProgress']
+      AND v_bpa_pipeline_str[1] = 'v-bpa:businessProcessExtractionPipeline'
+    ORDER BY "v-bpa:targetDepartment" ASC
   """ ;
 .

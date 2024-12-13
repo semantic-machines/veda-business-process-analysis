@@ -4,6 +4,10 @@ import DocumentUploadModal from './DocumentUploadModal.js';
 import Literal from './Literal.js';
 import state from './State.js';
 
+function zip(a, b) {
+  return a.map((_, i) => [a[i], b[i]]);
+}
+
 export default class DocumentList extends Component(HTMLElement) {
   static tag = 'bpa-document-list';
 
@@ -13,18 +17,37 @@ export default class DocumentList extends Component(HTMLElement) {
 
   onPipelineCompleted = () => this.update();
 
-  async pre() {
+  async getDocuments() {
     const params = new Model;
     params['rdf:type'] = 'v-s:QueryParams';
     params['v-s:storedQuery'] = 'v-bpa:AllProcessDocuments';
     params['v-s:resultFormat'] = 'rows';
     try {
       const {rows: documents} = await Backend.stored_query(params);
-      this.documents = documents;
+      return documents;
     } catch (e) {
       console.error('Error querying documents', e);
-      this.documents = [];
+      return [];
     }
+  }
+
+  async getRunningProcessExtractionPipelines() {
+    const params = new Model;
+    params['rdf:type'] = 'v-s:QueryParams';
+    params['v-s:storedQuery'] = 'v-bpa:RunningProcessExtractionPipelines';
+    params['v-s:resultFormat'] = 'cols';
+    try {
+      const {id: pipelines, "v-bpa:targetDepartment": departments} = await Backend.stored_query(params);
+      return new Map(zip(departments, pipelines));
+    } catch (e) {
+      console.error('Error querying running process extraction pipelines', e);
+      return new Map();
+    }
+  }
+
+  async pre() {
+    this.documents = await this.getDocuments();
+    this.runningProcessExtractionPipelinesByDepartment = await this.getRunningProcessExtractionPipelines();
     this.filtersData = null;
     this.filtered = this.documents;
   }
@@ -77,34 +100,72 @@ export default class DocumentList extends Component(HTMLElement) {
     const container = this.querySelector('#filtered-documents');
     const fragment = document.createDocumentFragment();
 
-    let currentDepartment = '';
-
-    this.filtered.forEach(([...values]) => {
+    // Группируем документы по подразделениям
+    const departments = {};
+    this.filtered.forEach(values => {
       const [id, title, type, department, departmentLabel, created, statusTag, statusTagColor] = safe(values);
-
-      if (departmentLabel !== currentDepartment) {
-        currentDepartment = departmentLabel;
-        const departmentRow = document.createElement('tr');
-        departmentRow.className = 'table-light';
-        departmentRow.innerHTML = `
-          <td colspan="4" class="text-uppercase text-secondary rounded-bottom"><small>${departmentLabel || 'Без отдела'}</small></td>
-        `;
-        fragment.appendChild(departmentRow);
+      if (!departments[department]) {
+        departments[department] = {
+          label: departmentLabel || 'Без отдела',
+          hasChanges: false,
+          docs: []
+        };
       }
-
-      const row = document.createElement('tr');
-      row.onclick = () => location.hash = `#/DocumentView/${id}`;
-      row.setAttribute('about', id);
-      row.innerHTML = `
-        <td class="align-middle"><strong class="me-1">${title}</strong> <small class="badge bg-${statusTagColor}-subtle text-${statusTagColor}">${statusTag}</small></td>
-        <td class="align-middle">${type}</td>
-        <td class="align-middle">${departmentLabel}</td>
-        <td class="align-middle text-end">${new Date(created).toLocaleDateString('ru-RU')}</td>
-      `;
-      fragment.appendChild(row);
+      departments[department].hasChanges = departments[department].hasChanges || !!statusTag;
+      departments[department].docs.push({id, title, type, departmentLabel, created, statusTag, statusTagColor});
     });
+
+    // Рендерим по подразделениям
+    Object.entries(departments).forEach(([department, {label, hasChanges, docs}]) => {
+      // Заголовок подразделения
+      const departmentRow = document.createElement('tr');
+      departmentRow.setAttribute('about', department);
+      departmentRow.className = 'table-light';
+      departmentRow.innerHTML = `
+        <td colspan="4" class="text-uppercase text-secondary rounded-bottom">
+          <div class="d-flex align-items-center justify-content-between">
+            <small>${label}</small>
+            <button class="btn btn-sm btn-outline-secondary-light apply-changes d-none">Применить изменения</button>
+          </div>
+        </td>
+      `;
+      if (hasChanges) {
+        const applyChangesButton = departmentRow.querySelector('.apply-changes');
+        applyChangesButton.classList.remove('d-none');
+        applyChangesButton.addEventListener('click', () => this.applyChanges(department));
+      }
+      fragment.appendChild(departmentRow);
+
+      // Документы подразделения
+      docs.forEach(doc => {
+        const row = document.createElement('tr');
+        row.onclick = () => location.hash = `#/DocumentView/${doc.id}`;
+        row.setAttribute('about', doc.id);
+        row.innerHTML = `
+          <td class="align-middle"><strong class="me-1">${doc.title}</strong> <small class="badge bg-${doc.statusTagColor}-subtle text-${doc.statusTagColor}">${doc.statusTag}</small></td>
+          <td class="align-middle">${doc.type}</td>
+          <td class="align-middle">${doc.departmentLabel}</td>
+          <td class="align-middle text-end">${new Date(doc.created).toLocaleDateString('ru-RU')}</td>
+        `;
+        fragment.appendChild(row);
+      });
+    });
+
     container.innerHTML = '';
     container.appendChild(fragment);
+  }
+
+  applyChanges = (department) => {
+    try {
+      const businessProcessExtractionPipeline = new Model;
+      businessProcessExtractionPipeline['rdf:type'] = 'v-bpa:PipelineRequest';
+      businessProcessExtractionPipeline['v-bpa:pipeline'] = 'v-bpa:businessProcessExtractionPipeline';
+      businessProcessExtractionPipeline['v-bpa:targetDepartment'] = department;
+      businessProcessExtractionPipeline.save();
+    } catch (e) {
+      console.error('Ошибка запуска процедуры вычисления процессов', e);
+      alert('Ошибка запуска процедуры вычисления процессов');
+    }
   }
 
   post() {
