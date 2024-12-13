@@ -21,7 +21,7 @@ const updateServiceWorkerVersion = {
   name: 'update-sw-version',
   setup(build) {
     build.onEnd(async () => {
-      const swPath = './src/ServiceWorker.js';
+      const swPath = './dist/public/ServiceWorker.js';
       let swContent = await fs.promises.readFile(swPath, 'utf8');
       const version = Date.now();
       swContent = swContent.replace(/const VERSION = \d+/, `const VERSION = ${version}`);
@@ -48,7 +48,6 @@ const options = {
   },
   plugins: [
     // htmlMin,
-    updateServiceWorkerVersion,
     sassPlugin(),
     copy({
       assets: {
@@ -72,6 +71,7 @@ const options = {
       },
       watch: true,
     }),
+    updateServiceWorkerVersion,
   ],
 };
 
