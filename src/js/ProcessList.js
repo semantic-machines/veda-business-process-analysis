@@ -87,7 +87,7 @@ export default class ProcessList extends Component(HTMLElement) {
       row.onclick = () => location.hash = `#/ProcessView/${id}`;
       row.setAttribute('about', id);
       row.innerHTML = `
-        <td class="align-middle"><h5 class="mb-0">${label}</h5><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
+        <td class="align-middle"><strong class="mb-0">${label}</strong><p class="text-muted mb-0">${description && description.length > 60 ? description.slice(0, 60) + '...' : description}</p></td>
         <td class="align-middle"><${ProcessJustificationIndicator} class="text-nowrap" about="${justification}" property="rdfs:label"></${ProcessJustificationIndicator}></td>
         <td class="align-middle">${responsibleDepartment}</td>
         <td class="align-middle text-end">
