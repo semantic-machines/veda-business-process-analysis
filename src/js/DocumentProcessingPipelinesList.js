@@ -51,31 +51,65 @@ export default class DocumentProcessingPipelinesList extends Component(HTMLEleme
 }
 customElements.define(DocumentProcessingPipelinesList.tag, DocumentProcessingPipelinesList);
 
+const debounce = (func, wait) => {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+};
+
 class PipelineRow extends Component(HTMLTableRowElement) {
   static tag = 'bpa-pipeline-row';
 
   async added() {
     this.model.on('modified', this.handler);
+    this.model.on('v-bpa:estimatedTime', this.updateProgress);
   }
 
-  handler = async () => {
+  updateProgress = async (arg) => {
+    let modelEstimatedTime;
+    if (arg instanceof Array) {
+      modelEstimatedTime = arg[0] * 1000;
+    }
+    const now = Date.now();
+    this.started = this.started || now;
+    this.progress = this.progress || 0;
+    const modelProgress = (this.model['v-bpa:percentComplete']?.[0] ?? 0) / 100;
+    this.estimatedTime = this.estimatedTime || modelEstimatedTime || Infinity;
+    const elapsed = now - this.started;
+
+    if (modelEstimatedTime) {
+      this.estimatedTime = elapsed + modelEstimatedTime;
+    }
+    this.progress = Math.min(0.99, Math.max(this.progress, modelProgress, elapsed / this.estimatedTime));
+
     this.update();
-    if (this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionCompleted')) {
-      state.emit('document-processing-pipeline-completed', this.model.id);
-      // state.documentProcessingPipelines = state.documentProcessingPipelines.filter(id => id !== this.model.id);
+
+    if (this.progress < 0.99) {
+      await timeout(1000);
+      requestAnimationFrame(this.updateProgress);
     }
   }
 
+  handler = debounce(async () => {
+    this.update();
+    if (this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionCompleted')) {
+      state.emit('document-processing-pipeline-completed', this.model.id);
+    }
+  }, 100);
+
   removed() {
-    this.model.off('modified', this.onCompleted);
+    this.model.off('modified', this.handler);
+    this.model.off('v-bpa:estimatedTime', this.updateProgress);
   }
 
   render() {
     const inProgress = this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionInProgress');
     const hasError = this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionError');
-    const completed = this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionCompleted');
-    const percentComplete = this.model['v-bpa:percentComplete']?.[0] || 0;
+    const isCompleted = this.model.hasValue('v-bpa:hasExecutionState', 'v-bpa:ExecutionCompleted');
     const lastError = this.model['v-bpa:lastError']?.[0] || '';
+    const progress = this.progress * 100 || (this.model['v-bpa:percentComplete']?.[0] ?? 0);
 
     return html`
       <td width="45%">
@@ -86,17 +120,17 @@ class PipelineRow extends Component(HTMLTableRowElement) {
           </span>
         </div>
       </td>
-      <td width="15%" class="align-middle">
+      <td width="30%" class="align-middle">
         ${inProgress
           ? html`
-            <div class="progress border border-tertiary-subtle" style="height: 20px;">
-              <div class="progress-bar fw-bold progress-bar-striped progress-bar-animated bg-success"
+            <div class="progress border border-tertiary-subtle" style="height:20px;">
+              <div class="progress-bar progress-bar-striped bg-success fw-bold"
                 role="progressbar"
-                style="width:${percentComplete}%"
-                aria-valuenow="${percentComplete}"
+                style="width:${progress}%"
+                aria-valuenow="${Math.floor(progress)}"
                 aria-valuemin="0"
                 aria-valuemax="100">
-                ${percentComplete}%
+                ${Math.floor(progress)}%
               </div>
             </div>`
           : hasError
@@ -104,16 +138,13 @@ class PipelineRow extends Component(HTMLTableRowElement) {
           : ''
         }
       </td>
-      <td width="40%" class="text-end" rel="v-bpa:hasExecutionState">
-        ${completed
+      <td width="25%" class="text-end" rel="v-bpa:hasExecutionState">
+        ${isCompleted
           ? html`<span class="bi bi-check-circle-fill text-success"></span>`
           : hasError
           ? html`<span class="bi bi-exclamation-circle-fill text-danger"></span>`
           : inProgress
-          ? html`
-            <div class="spinner-grow spinner-grow-sm text-secondary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>`
+          ? html`<span class="bi bi-clock-history text-secondary"></span>`
           : ''}
         <span class="ms-1" property="rdfs:label"></span>
       </td>
