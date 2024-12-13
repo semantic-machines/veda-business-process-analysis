@@ -68,10 +68,6 @@ fn process_structured_schema_internal(
 
     let messages = vec![
         ChatMessage::System {
-            content: ChatMessageContent::Text("You must respond only in Russian language. Use only Russian for all text fields.".to_string()),
-            name: None,
-        },
-        ChatMessage::System {
             content: ChatMessageContent::Text(prompt_text),
             name: None,
         },
@@ -101,6 +97,7 @@ fn process_structured_schema_internal(
     // Create and save result
     let result_id = format!("d:result_{}", uuid::Uuid::new_v4());
     parse_result.main_individual.set_id(&result_id);
+    parse_result.main_individual.set_uri("rdf:type", "v-bpa:GenericProcessingResult");
 
     // Save main individual
     if let Err(e) = module.backend.mstorage_api.update_or_err(&module.ticket, event_id, "BPA", IndvOp::Put, &mut parse_result.main_individual) {

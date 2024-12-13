@@ -83,7 +83,7 @@ v-bpa:hasResult
   rdfs:label "Результат"@ru ;
   rdfs:label "Result"@en ;
   rdfs:domain v-bpa:GenericProcessingRequest ;
-  rdfs:range owl:Thing ;
+  rdfs:range v-bpa:GenericProcessingResult ;
 .
 
 # Статусы обработки
@@ -180,4 +180,20 @@ v-bpa:hasNextStage
   rdfs:range v-bpa:GenericProcessingRequest ;
   rdfs:comment "Ссылка на следующий этап обработки в пайплайне"@ru ;
   rdfs:comment "Link to the next processing stage in the pipeline"@en ;
+.
+
+v-bpa:id
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Идентификатор"@ru ;
+  rdfs:label "Identifier"@en ;
+  rdfs:domain v-bpa:GenericProcessingRequest ;
+  rdfs:range xsd:string ;
+.
+
+v-bpa:action
+  rdf:type owl:DatatypeProperty ;
+  rdfs:label "Действие"@ru ;
+  rdfs:label "Action"@en ;
+  rdfs:domain v-bpa:GenericProcessingRequest ;
+  rdfs:range xsd:string ;
 .
